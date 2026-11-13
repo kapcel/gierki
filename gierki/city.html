@@ -2,40 +2,110 @@
 <html lang="pl">
 <head>
 <meta charset="utf-8">
-<meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Miasto Wspólne</title>
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
+<title>Miasto Wspólne – Transport Tycoon</title>
 <style>
-  html,body{margin:0;height:100%;overflow:hidden;background:#12303b;font:14px ui-sans-serif,system-ui,sans-serif;color:#f2efe6}
-  canvas{display:block;touch-action:none}
-  #top{position:fixed;top:0;left:0;right:0;display:flex;gap:20px;align-items:center;padding:8px 14px;background:#0c2129e6}
-  #top b{font-size:16px}
-  #board{position:fixed;top:44px;right:10px;background:#0c2129e6;padding:8px 12px;border-radius:6px;min-width:150px}
-  #bar{position:fixed;bottom:0;left:0;right:0;display:flex;flex-wrap:wrap;gap:8px;justify-content:center;padding:10px;background:#0c2129e6}
-  #bar button{background:#1d4b5c;color:#f2efe6;border:2px solid transparent;border-radius:6px;padding:6px 9px;cursor:pointer;font:inherit}
-  #bar button.on{border-color:#f0b24a}
-  #bar button:hover{background:#27627a}
-  #con{position:fixed;top:0;left:0;right:0;height:40%;background:#000d;color:#7dffa0;font:13px ui-monospace,monospace;display:none;flex-direction:column;padding:8px;box-sizing:border-box}
-  #out{flex:1;overflow:auto;white-space:pre-wrap}
-  #in{background:none;border:0;border-top:1px solid #7dffa055;color:inherit;font:inherit;outline:none;padding-top:6px}
-  #mini{position:fixed;left:10px;bottom:100px;width:160px;height:160px;border:2px solid #1d4b5c;image-rendering:pixelated;cursor:pointer}
-  #tip{position:fixed;bottom:105px;left:50%;transform:translateX(-50%);opacity:.7}
+:root{--bg:#0b1d24;--pan:#10262ef2;--pan2:#163640;--line:#24505e;--tx:#f2efe6;--mut:#9fbac2;--acc:#f0b24a;--ok:#7dffa0;--bad:#ff7a7a}
+*{box-sizing:border-box}
+html,body{margin:0;height:100%;overflow:hidden;background:#0f2a35;font:13px ui-sans-serif,system-ui,-apple-system,"Segoe UI",sans-serif;color:var(--tx)}
+canvas#c{display:block;touch-action:none}
+button{font:inherit;color:var(--tx);cursor:pointer}
+.panel{background:var(--pan);border:1px solid var(--line);box-shadow:0 8px 30px #0008;backdrop-filter:blur(6px)}
+#top{position:fixed;top:0;left:0;right:0;height:46px;display:flex;align-items:center;gap:14px;padding:0 12px;z-index:5;border-width:0 0 1px}
+#top .co{display:flex;align-items:center;gap:8px;font-size:15px;min-width:0}
+#top .co b{white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:180px}
+#sw{width:14px;height:14px;border-radius:3px;box-shadow:0 0 0 2px #0006}
+.stat{display:flex;align-items:center;gap:5px;padding:5px 10px;background:#0a1a20;border-radius:8px;white-space:nowrap}
+.stat small{color:var(--mut)}
+#cash.neg{color:var(--bad)}
+.sp{flex:1}
+#wbtn{display:flex;gap:4px}
+#wbtn button,.btn{background:var(--pan2);border:1px solid var(--line);border-radius:7px;padding:6px 10px}
+#wbtn button:hover,.btn:hover{background:#1f4a57;border-color:var(--acc)}
+.btn.pri{background:var(--acc);color:#1b1408;border-color:var(--acc);font-weight:700}
+.btn.red{background:#7a2a2a;border-color:#a33}
+.btn:disabled{opacity:.4;cursor:default}
+#hostb{font-size:10px;padding:2px 6px;border-radius:4px;background:#2d6a4f;display:none}
+#tools{position:fixed;left:10px;top:58px;display:flex;flex-direction:column;gap:6px;padding:6px;border-radius:12px;z-index:4}
+#tools button{width:46px;height:46px;border-radius:10px;border:2px solid transparent;background:var(--pan2);font-size:22px;line-height:1;position:relative}
+#tools button:hover{border-color:#3d7d8f}
+#tools button.on{border-color:var(--acc);background:#24505e}
+#tools button[data-tip]:hover:after{content:attr(data-tip);position:absolute;left:54px;top:12px;background:#000c;padding:4px 8px;border-radius:5px;font-size:12px;white-space:nowrap;pointer-events:none}
+#pal{position:fixed;left:72px;top:58px;width:250px;padding:8px;border-radius:12px;z-index:4;display:none;max-height:calc(100vh - 130px);overflow:auto}
+#pal h4{margin:2px 4px 8px;font-size:12px;letter-spacing:1px;color:var(--acc);text-transform:uppercase}
+.tool{display:flex;gap:10px;align-items:center;width:100%;text-align:left;background:transparent;border:2px solid transparent;border-radius:9px;padding:6px 8px;margin-bottom:3px}
+.tool:hover{background:#1b3f4a}
+.tool.on{border-color:var(--acc);background:#1b3f4a}
+.tool .ic{font-size:22px;width:28px;text-align:center}
+.tool .tt{flex:1;min-width:0}
+.tool .tt b{display:block}
+.tool .tt small{color:var(--mut);display:block;line-height:1.25}
+.tool .pr{color:var(--acc);font-weight:700;white-space:nowrap}
+#win{position:fixed;right:10px;top:58px;width:360px;max-height:calc(100vh - 120px);display:none;flex-direction:column;border-radius:12px;z-index:4}
+#win .wh{display:flex;align-items:center;padding:10px 12px;border-bottom:1px solid var(--line);gap:8px}
+#win .wh b{flex:1;font-size:15px}
+#wx{background:none;border:0;font-size:16px;color:var(--mut)}
+#wb{overflow:auto;padding:10px 12px}
+#wb table{width:100%;border-collapse:collapse}
+#wb td,#wb th{padding:4px 3px;border-bottom:1px solid #ffffff10;text-align:left;vertical-align:top}
+#wb th{color:var(--mut);font-weight:500;font-size:12px}
+#wb td.r,#wb th.r{text-align:right}
+.card{background:#0b1d24;border:1px solid #ffffff12;border-radius:9px;padding:8px 10px;margin-bottom:8px}
+.card .hd{display:flex;align-items:center;gap:6px;margin-bottom:4px}
+.card .hd b{flex:1}
+.mut{color:var(--mut)}
+.pos{color:var(--ok)}.neg{color:var(--bad)}
+.chip{display:inline-flex;align-items:center;gap:4px;padding:1px 7px;border-radius:99px;background:#ffffff12;margin:2px 3px 2px 0;font-size:12px;white-space:nowrap}
+.chip i{width:8px;height:8px;border-radius:2px;display:inline-block}
+.mbtn{display:block;width:100%;text-align:left;background:#0b1d24;border:2px solid #ffffff12;border-radius:9px;padding:7px 9px;margin-bottom:5px}
+.mbtn.on{border-color:var(--acc)}
+.mbtn small{color:var(--mut)}
+.row{display:flex;gap:6px;align-items:center;flex-wrap:wrap;margin:6px 0}
+.bar{height:6px;background:#ffffff14;border-radius:3px;overflow:hidden}.bar i{display:block;height:100%;background:var(--acc)}
+.sec{font-size:11px;letter-spacing:1px;text-transform:uppercase;color:var(--acc);margin:12px 0 6px}
+#status{position:fixed;left:50%;bottom:10px;transform:translateX(-50%);padding:7px 14px;border-radius:99px;z-index:3;max-width:min(760px,calc(100vw - 380px));white-space:nowrap;overflow:hidden;text-overflow:ellipsis;font-size:12.5px}
+#news{position:fixed;left:50%;top:56px;transform:translateX(-50%);z-index:3;display:flex;flex-direction:column;gap:5px;align-items:center;pointer-events:none}
+#news div{background:#0c2129f0;border:1px solid var(--line);border-left:4px solid var(--acc);padding:7px 14px;border-radius:8px;box-shadow:0 6px 20px #0007;animation:nin .3s ease-out;max-width:520px}
+#news div.good{border-left-color:var(--ok)}#news div.bad{border-left-color:var(--bad)}
+@keyframes nin{from{opacity:0;transform:translateY(-8px)}}
+#mini{position:fixed;left:10px;bottom:10px;width:170px;height:170px;border-radius:10px;border:2px solid var(--line);image-rendering:pixelated;cursor:pointer;z-index:3;background:#000}
+#con{position:fixed;top:0;left:0;right:0;height:40%;background:#000d;color:#7dffa0;font:13px ui-monospace,monospace;display:none;flex-direction:column;padding:8px;z-index:20}
+#out{flex:1;overflow:auto;white-space:pre-wrap}
+#in{background:none;border:0;border-top:1px solid #7dffa055;color:inherit;font:inherit;outline:none;padding-top:6px}
+#load{position:fixed;inset:0;display:flex;align-items:center;justify-content:center;z-index:30;background:radial-gradient(ellipse at center,#163640,#071318);flex-direction:column;gap:12px;transition:opacity .5s}
+#load h1{margin:0;font-size:34px;letter-spacing:2px}#load h1 span{color:var(--acc)}
+@media(max-width:820px){
+ #wbtn button{padding:5px 6px;font-size:12px}.stat small{display:none}#top{gap:6px;overflow-x:auto}#top .co b{max-width:90px}
+ #win{left:10px;right:10px;width:auto;top:auto;bottom:10px;max-height:55vh}
+ #mini{width:110px;height:110px}#status{display:none}
+ #tools{top:auto;bottom:130px;flex-direction:row;flex-wrap:wrap;width:calc(100vw - 20px)}#tools button{width:40px;height:40px;font-size:19px}
+ #pal{left:10px;top:58px}
+}
 </style>
 </head>
 <body>
 <canvas id="c"></canvas>
 
-<div id="top">
-  <b id="name">...</b>
-  <span>Gotówka: <b id="cash">0</b> $</span>
-  <span>Przychód: <b id="inc">0</b> $ / 5 s</span>
-  <span id="msg"></span>
+<div id="top" class="panel">
+  <div class="co"><span id="sw"></span><b id="name">…</b><span id="hostb" title="Twój klient symuluje miasta i przemysł systemowy">HOST</span></div>
+  <div class="stat">📅 <b id="date">—</b></div>
+  <div class="stat">💰 <b id="cash">0</b></div>
+  <div class="stat"><small>kredyt</small> <b id="loan">0</b></div>
+  <div class="stat" title="Gracze online">🌐 <b id="online">0</b></div>
+  <div class="sp"></div>
+  <div id="wbtn">
+    <button data-w="fin">💼 Finanse</button><button data-w="veh">🚌 Pojazdy</button><button data-w="sta">🚉 Stacje</button>
+    <button data-w="town">🏘️ Miasta</button><button data-w="rank">🏆 Ranking</button><button data-w="help">❓</button>
+  </div>
 </div>
-<div id="board"></div>
-<div id="bar"></div>
+<div id="tools" class="panel"></div>
+<div id="pal" class="panel"></div>
+<div id="win" class="panel"><div class="wh"><b id="wt"></b><button id="wx">✕</button></div><div id="wb"></div></div>
+<div id="news"></div>
+<div id="status" class="panel"></div>
 <canvas id="mini"></canvas>
-<div id="tip">Przeciągnij – przesuwanie · kółko – zoom · ` – konsola · pojazd: kliknij dwie stacje</div>
-
 <div id="con"><div id="out"></div><input id="in" autocomplete="off" placeholder="wpisz help"></div>
+<div id="load"><h1>MIASTO <span>WSPÓLNE</span></h1><div class="mut">łączenie ze wspólnym światem…</div></div>
 
 <script type="module">
 // ============================================================
@@ -54,69 +124,150 @@ const firebaseConfig = {
 
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
 import { getAuth, signInAnonymously } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js";
-import { getDatabase, ref, set, remove, get, runTransaction, onValue, onChildAdded, onChildChanged, onChildRemoved }
+import { getDatabase, ref, set, remove, get, update, runTransaction, onValue, onChildAdded, onChildChanged, onChildRemoved }
   from "https://www.gstatic.com/firebasejs/10.12.2/firebase-database.js";
 
 const app = initializeApp(firebaseConfig);
 const db = getDatabase(app);
 
+// Struktura bazy (jedna mapa dla wszystkich):
+//   tiles/x_y      – każdy obiekt na mapie {t: typ, o: właściciel (uid | "town" | "sys"), ...}
+//                    miasta to kafle "townhall" (ratusz), domy mają tw = klucz ratusza
+//   stock/klucz    – magazyny budynków; stock/T_<ratusz> – pasażerowie, poczta i zaopatrzenie miasta
+//   stock/_seed    – znacznik startu świata (data 1950 r.) – ustawiany raz przez hosta
+//   vehicles/id    – pojazdy {k: model, o: uid, st: [stacje], w: wagony, t0: start, ld: ładunek, py/pl: zysk}
+//   players/uid    – firma {name, cash, loan, hb: heartbeat, fin, val}
+//   resetAt        – sygnał resetu mapy (admin)
+
 // ============================================================
 // 2. USTAWIENIA GRY
 // ============================================================
-const N = 128;              // mapa N x N kafelków (128 x 128 = 16 384 pól)
-const TW = 64, TH = 32;     // wymiary kafelka izometrycznego
-const START_CASH = 5000;
+const N = 128;                 // mapa N x N kafelków
+const TW = 64, TH = 32;        // kafelek izometryczny
+const START_CASH = 30000, MAX_LOAN = 150000, LOAN_STEP = 10000, RATE = 0.05;
+const DAY_MS = 3000;           // 1 dzień gry = 3 s  (miesiąc = 90 s, rok = 18 min)
+const TICK = 5000;             // takt ekonomii
+const DWELL = 2.5;             // postój na stacji [s]
+const CAP = 200;               // pojemność magazynu budynku
 
-// Typy budynków: koszt, wysokość bryły, kolory
 const BUILD = {
-  road:    { name: "Droga",   cost: 10,  h: 0,  color: "#4b4f55" },
-  house:   { name: "Dom",     cost: 100, h: 18, color: "#e0a368" },
-  shop:    { name: "Sklep",   cost: 300, h: 24, color: "#5fa8d3" },
-  factory: { name: "Fabryka", cost: 600, h: 34, color: "#b8555c" },
-  rail:    { name: "Tor",      cost: 20,  h: 0,  color: "#8d8470" },
-  station: { name: "Stacja",   cost: 150, h: 4,  color: "#c9c2b0" },
-  mine:    { name: "Kopalnia", cost: 500, h: 14, color: "#6e5a48" },
-  sawmill: { name: "Tartak",   cost: 400, h: 14, color: "#a67c52" },
-  steel:   { name: "Huta",     cost: 800, h: 28, color: "#7b8794" },
-  buyer:   { name: "Skup",     cost: 0,   h: 22, color: "#d4b254" },   // budowany przez system na brzegach mapy
+  road:     { name: "Droga",          cost: 60,    cat: "road", ic: "🛣️", d: "Przeciągnij, by budować linię. Przez wodę – most (×6)." },
+  stop:     { name: "Przystanek",     cost: 500,   cat: "road", ic: "🚏", d: "Dla autobusów i ciężarówek. Zasięg 3 pól. Można postawić na drodze." },
+  rail:     { name: "Tor",            cost: 120,   cat: "rail", ic: "🛤️", d: "Przeciągnij, by położyć tor. Krzyżuje się z drogą (przejazd). Przez wodę – most." },
+  station:  { name: "Dworzec",        cost: 1500,  cat: "rail", ic: "🚉", d: "Dla pociągów (i ciężarówek). Zasięg 4 pól. Stawiaj na prostym torze." },
+  dock:     { name: "Port",           cost: 3000,  cat: "water", ic: "⚓", d: "Na brzegu wody. Obsługuje barki i promy. Zasięg 4 pól." },
+  house:    { name: "Dom",            cost: 900,   cat: "city", ic: "🏠", d: "Czynsz 4 $ / takt (przy drodze). 10 mieszkańców dla pobliskiego miasta." },
+  flat:     { name: "Kamienica",      cost: 3800,  cat: "city", ic: "🏢", d: "Czynsz 14 $. 40 mieszkańców. Przyjmuje towary i żywność." },
+  tower:    { name: "Wieżowiec",      cost: 14000, cat: "city", ic: "🏙️", d: "Czynsz 50 $. 110 mieszkańców. Przyjmuje towary i żywność." },
+  shop:     { name: "Sklep",          cost: 2500,  cat: "city", ic: "🏪", d: "Sprzedaje dowiezione towary (40 $) i żywność (30 $)." },
+  park:     { name: "Park",           cost: 700,   cat: "city", ic: "🌳", d: "+15% czynszu domów w promieniu 2 pól (maks. 3 parki)." },
+  hq:       { name: "Siedziba firmy", cost: 20000, cat: "city", ic: "🏛️", d: "Jedna na firmę. Prestiż: +10% do wszystkich dostaw." },
+  townhall: { name: "Nowe miasto",    cost: 40000, cat: "city", ic: "🏰", d: "Zakłada nowe miasto, które samo będzie rosło." },
+  coal:     { name: "Kopalnia węgla", cost: 9000,  cat: "ind", ic: "⛏️", d: "Wydobywa węgiel → elektrownia." },
+  mine:     { name: "Kopalnia rudy",  cost: 9000,  cat: "ind", ic: "⛰️", d: "Wydobywa rudę → huta." },
+  sawmill:  { name: "Tartak",         cost: 7000,  cat: "ind", ic: "🪵", d: "Tylko w lesie. Drewno → fabryka." },
+  farm:     { name: "Farma",          cost: 6000,  cat: "ind", ic: "🌾", d: "Tylko na łące. Zboże → przetwórnia." },
+  steel:    { name: "Huta",           cost: 16000, cat: "ind", ic: "🔥", d: "Ruda → stal." },
+  factory:  { name: "Fabryka",        cost: 15000, cat: "ind", ic: "🏭", d: "Stal lub drewno → towary (do miast i sklepów)." },
+  foodplant:{ name: "Przetwórnia",    cost: 12000, cat: "ind", ic: "🥫", d: "Zboże → żywność (do miast i sklepów)." },
+  power:    { name: "Elektrownia",    cost: 14000, cat: "ind", ic: "⚡", d: "Spala węgiel (4 $ / t dla właściciela)." },
+  xing:     { name: "Przejazd kolejowy", cost: 150 },
+  buyer:    { name: "Skup", cost: 0 },
 };
-// Pojazdy: cap = ładowność, speed = kafelki na sekundę
+const CARGO = {
+  pass:  { n: "pasażerowie", c: "#4fc3f7", cl: "p", price: 3.4, days: 12 },
+  mail:  { n: "poczta",      c: "#f2f2f2", cl: "m", price: 4.6, days: 8 },
+  coal:  { n: "węgiel",      c: "#2b2b2b", cl: "f", price: 2.6, days: 40 },
+  ore:   { n: "ruda",        c: "#a0603c", cl: "f", price: 2.8, days: 40 },
+  wood:  { n: "drewno",      c: "#a87b45", cl: "f", price: 2.7, days: 30 },
+  grain: { n: "zboże",       c: "#e8c547", cl: "f", price: 2.9, days: 20 },
+  steel: { n: "stal",        c: "#9fb3c8", cl: "f", price: 4.3, days: 30 },
+  goods: { n: "towary",      c: "#e57373", cl: "f", price: 5.6, days: 15 },
+  food:  { n: "żywność",     c: "#7fd17f", cl: "f", price: 5.0, days: 10 },
+};
+const FREIGHT = Object.keys(CARGO).filter(c => CARGO[c].cl === "f");
+const RECIPE = {
+  coal:      { out: "coal",  rate: 8 },
+  mine:      { out: "ore",   rate: 8 },
+  sawmill:   { out: "wood",  rate: 7 },
+  farm:      { out: "grain", rate: 8 },
+  steel:     { in: ["ore"], out: "steel", rate: 9 },
+  factory:   { in: ["steel", "wood"], out: "goods", rate: 12 },
+  foodplant: { in: ["grain"], out: "food", rate: 10 },
+  power:     { in: ["coal"], consume: 1, rate: 30, sell: { coal: 4 } },
+  shop:      { in: ["goods", "food"], consume: 1, rate: 8, sell: { goods: 40, food: 30 } },
+};
+const ACCEPT = {
+  house: ["pass", "mail"], flat: ["pass", "mail", "goods", "food"], tower: ["pass", "mail", "goods", "food"],
+  townhall: ["pass", "mail", "goods", "food"], hq: ["pass", "mail"], shop: ["goods", "food"],
+  steel: ["ore"], factory: ["steel", "wood"], foodplant: ["grain"], power: ["coal"], buyer: FREIGHT,
+};
+const POP = { house: 10, flat: 40, tower: 110, townhall: 20 };
+const RENT = { house: 4, flat: 14, tower: 50 };
+const RAD = { stop: 3, station: 4, dock: 4, buyer: 2 };
 const VEH = {
-  truck: { name: "Ciężarówka", cost: 200, cap: 12, speed: 1.2 },
-  train: { name: "Pociąg",     cost: 600, cap: 40, speed: 2.2 },
+  bus:     { name: "Autobus „Jelcz”",    kind: "road",  cost: 4000,  run: 900,  speed: 1.7, cap: { p: 35 }, ic: "🚌" },
+  mailv:   { name: "Furgon pocztowy",    kind: "road",  cost: 3500,  run: 700,  speed: 2.0, cap: { m: 22 }, ic: "🚐" },
+  truck:   { name: "Ciężarówka „Star”",  kind: "road",  cost: 5000,  run: 1100, speed: 1.5, cap: { f: 24 }, ic: "🚚" },
+  train:   { name: "Parowóz „Kos”",      kind: "rail",  cost: 10000, run: 2600, speed: 2.4, maxw: 5,  ic: "🚂" },
+  diesel:  { name: "Spalinowa „Rys”",    kind: "rail",  cost: 22000, run: 4200, speed: 3.6, maxw: 8,  ic: "🚆" },
+  express: { name: "Ekspres „Sokół”",    kind: "rail",  cost: 38000, run: 6500, speed: 5.2, maxw: 10, ic: "🚄" },
+  barge:   { name: "Barka rzeczna",      kind: "water", cost: 9000,  run: 1500, speed: 1.2, cap: { f: 140 }, ic: "🛳️" },
+  ferry:   { name: "Prom pasażerski",    kind: "water", cost: 11000, run: 1900, speed: 1.6, cap: { p: 120, m: 20 }, ic: "⛴️" },
 };
+const WAGON = { p: { name: "pasażerski", cost: 1800, cap: 40, run: 200 }, m: { name: "pocztowy", cost: 1500, cap: 30, run: 150 }, f: { name: "towarowy", cost: 1400, cap: 35, run: 150 } };
+const STOPS_FOR = { road: ["stop", "station", "buyer"], rail: ["station", "buyer"], water: ["dock"] };
+const TOWN_NAMES = ["Nowa Wola", "Górki", "Stare Pole", "Kamieniec", "Zielonka", "Brzozów", "Lipno", "Dębina", "Wrzosowo", "Sosnowa Góra",
+  "Jeziorki", "Przystań", "Białe Błota", "Krzywe Koło", "Złoty Potok", "Mostki", "Rybaki", "Olszyna", "Wiśniowa", "Kruczy Dwór"];
+const MON = ["sty", "lut", "mar", "kwi", "maj", "cze", "lip", "sie", "wrz", "paź", "lis", "gru"];
+const DIRS = [[1, 0], [-1, 0], [0, 1], [0, -1]], BIT = [1, 2, 4, 8], OPP = [1, 0, 3, 2];
+const ROADSET = new Set(["road", "xing", "stop", "station", "buyer"]);
+const RAILSET = new Set(["rail", "xing", "station", "buyer"]);
+const NETWORK = new Set(["road", "rail", "xing"]);
 
 // ============================================================
 // 3. STAN
 // ============================================================
-let uid, myName, cash = START_CASH;
-let isAdmin = false;
-let tool = "road";                      // aktualne narzędzie ("bulldoze" = burzenie)
-const tiles = {};                       // "x_y" -> { t: typ, o: właściciel(uid), n: nazwa }
-const cam = { x: 0, y: 0, z: 1 };       // kamera
-let hover = null;
+let uid = null, myName = "", cash = START_CASH, loan = 0, isAdmin = false;
+let fin = newFin(), lastFin = null;
+let tool = "info";
+const tiles = {};
+let stock = {}, vehicles = {}, players = {}, stockLoaded = false;
+let ver = 0, roadVer = 0, railVer = 0, shipVer = 0, off = 0;
+const cam = { x: 0, y: 0, z: 1 };
+let hover = null, follow = null, win = null, winArg = null;
+const buy = { k: "bus", w: { p: 3, m: 0, f: 0 }, st: [] };
+function newFin() { return { transport: 0, rent: 0, sales: 0, industry: 0, build: 0, vehicles: 0, run: 0, interest: 0 }; }
 
 const $ = id => document.getElementById(id);
 const canvas = $("c"), ctx = canvas.getContext("2d");
+const K = (x, y) => x + "_" + y;
+const xy = k => k.split("_").map(Number);
+const inMap = (x, y) => x >= 0 && y >= 0 && x < N && y < N;
+const mod = (a, n) => ((a % n) + n) % n;
+const esc = s => String(s ?? "").replace(/[&<>"']/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
+const fmt = n => Math.round(n).toLocaleString("pl-PL");
+const money = n => (n < 0 ? "−" : "") + fmt(Math.abs(n)) + " $";
+const now = () => Date.now() + off;
 
 // ============================================================
 // 4. TEREN (generowany z szumu — identyczny u wszystkich graczy)
 // ============================================================
 const hash = (x, y) => { const n = Math.sin(x * 127.1 + y * 311.7) * 43758.5453; return n - Math.floor(n); };
-function noise(x, y, s) {                       // szum wartościowy; s = skala (większe = gładszy teren)
+function noise(x, y, s) {
   const xi = Math.floor(x / s), yi = Math.floor(y / s), fx = x / s - xi, fy = y / s - yi;
   const sx = fx * fx * (3 - 2 * fx), sy = fy * fy * (3 - 2 * fy);
   const top = hash(xi, yi) * (1 - sx) + hash(xi + 1, yi) * sx;
   const bot = hash(xi, yi + 1) * (1 - sx) + hash(xi + 1, yi + 1) * sx;
   return top * (1 - sy) + bot * sy;
 }
-const terrain = [], depth = [], groundCol = [];  // 0 woda, 1 trawa, 2 las, 3 piasek
+const terrain = [], groundCol = [];   // 0 woda, 1 trawa, 2 las, 3 piasek
 for (let y = 0; y < N; y++) for (let x = 0; x < N; x++) {
   const i = y * N + x, r = hash(x * 3, y * 7);
   const v = 0.55 * noise(x, y, 26) + 0.3 * noise(x + 50, y + 50, 11) + 0.15 * noise(x, y, 4);
   const forest = noise(x + 200, y + 90, 8);
   terrain[i] = v < 0.43 ? 0 : v < 0.46 ? 3 : forest > 0.6 ? 2 : 1;
-  const d = Math.max(0, 0.43 - v);               // głębokość wody
+  const d = Math.max(0, 0.43 - v);
   groundCol[i] = [
     `hsl(${200 + d * 40},58%,${Math.max(22, 46 - d * 80)}%)`,
     `hsl(${88 + r * 22},${36 + r * 10}%,${36 + r * 8}%)`,
@@ -124,269 +275,579 @@ for (let y = 0; y < N; y++) for (let x = 0; x < N; x++) {
     `hsl(${44 + r * 6},45%,${66 + r * 6}%)`,
   ][terrain[i]];
 }
-
-// Skupy na 4 brzegach mapy: każdy ma drogę i tor prowadzące w głąb lądu.
-// Są częścią świata (nie zapisują się w bazie) i płacą najwięcej za surowce i towary.
+// Skupy na 4 brzegach mapy (część świata, nie zapisują się w bazie): przyjmują każdy ładunek towarowy ×1.5
 const BUYERS = [
-  { x: 3,     y: N / 2, dx: 1,  dy: 0,  name: "Skup Zachód" },
-  { x: N - 4, y: N / 2, dx: -1, dy: 0,  name: "Skup Wschód" },
-  { x: N / 2, y: 3,     dx: 0,  dy: 1,  name: "Skup Północ" },
-  { x: N / 2, y: N - 4, dx: 0,  dy: -1, name: "Skup Południe" },
+  { x: 3, y: N / 2, dx: 1, dy: 0, name: "Skup Zachód" }, { x: N - 4, y: N / 2, dx: -1, dy: 0, name: "Skup Wschód" },
+  { x: N / 2, y: 3, dx: 0, dy: 1, name: "Skup Północ" }, { x: N / 2, y: N - 4, dx: 0, dy: -1, name: "Skup Południe" },
 ];
+const SYS_TILES = {};
 for (const b of BUYERS) {
-  const px = b.dy, py = b.dx;                                   // kierunek poprzeczny (tor biegnie obok drogi)
-  for (let i = 0; i < 9; i++) for (let j = -3; j <= 4; j++) {   // wymuszamy ląd wokół skupu
+  const px = b.dy, py = b.dx;
+  for (let i = 0; i < 9; i++) for (let j = -3; j <= 4; j++) {
     const k = (b.y + b.dy * i + py * j) * N + (b.x + b.dx * i + px * j);
     terrain[k] = 1; groundCol[k] = "hsl(95,38%,38%)";
   }
-  tiles[b.x + "_" + b.y] = { t: "buyer", o: "sys", n: b.name };
-  tiles[(b.x + px) + "_" + (b.y + py)] = { t: "rail", o: "sys" };
+  SYS_TILES[K(b.x, b.y)] = { t: "buyer", o: "sys", n: b.name, sn: b.name };
+  SYS_TILES[K(b.x + px, b.y + py)] = { t: "rail", o: "sys" };
   for (let i = 1; i <= 6; i++) {
-    tiles[(b.x + b.dx * i) + "_" + (b.y + b.dy * i)] = { t: "road", o: "sys" };
-    tiles[(b.x + b.dx * i + px) + "_" + (b.y + b.dy * i + py)] = { t: "rail", o: "sys" };
+    SYS_TILES[K(b.x + b.dx * i, b.y + b.dy * i)] = { t: "road", o: "sys" };
+    SYS_TILES[K(b.x + b.dx * i + px, b.y + b.dy * i + py)] = { t: "rail", o: "sys" };
   }
+}
+Object.assign(tiles, SYS_TILES);
+
+// ============================================================
+// 5. CZAS GRY (wspólny zegar: znacznik startu świata + czas serwera)
+// ============================================================
+const epoch = () => (typeof stock._seed === "number" ? stock._seed : EPOCH0);
+let EPOCH0 = Date.now();
+function gdate(t = now()) {
+  const d = Math.max(0, Math.floor((t - epoch()) / DAY_MS));
+  return { d, y: 1950 + Math.floor(d / 360), m: Math.floor(d / 30) % 12, dd: (d % 30) + 1, mi: Math.floor(d / 30) };
 }
 
 // ============================================================
-// 5. FIREBASE: synchronizacja mapy i graczy
+// 6. INDEKS ŚWIATA (miasta, przemysł, stacje) – przeliczany po zmianie mapy
 // ============================================================
+let idx = null, idxVer = -1;
+function getIdx() {
+  if (idxVer === ver && idx) return idx;
+  idxVer = ver;
+  const towns = {}, list = [];
+  for (const k in tiles) if (tiles[k].t === "townhall") {
+    const [x, y] = xy(k), t = tiles[k];
+    list.push(towns[k] = { k, x, y, n: t.n || "Miasto", pop: 0, houses: 0, roads: [], own: t.o });
+  }
+  const near = (x, y, r) => { let best = null, bd = r * r + 1; for (const T of list) { const d = (T.x - x) ** 2 + (T.y - y) ** 2; if (d < bd) { bd = d; best = T; } } return best; };
+  const houseTown = {}, inds = [], stations = [];
+  for (const k in tiles) {
+    const t = tiles[k], [x, y] = xy(k);
+    if (POP[t.t] !== undefined || t.t === "shop" || t.t === "hq") {
+      const T = (t.tw && towns[t.tw]) || near(x, y, 18);
+      if (T) { houseTown[k] = T.k; if (POP[t.t]) { T.pop += POP[t.t]; T.houses++; } }
+    } else if (t.t === "road" && !t.b) { const T = near(x, y, 30); if (T) T.roads.push(k); }
+    if (RECIPE[t.t]) inds.push(k);
+    if (RAD[t.t]) stations.push(k);
+  }
+  return idx = { towns, list, houseTown, inds, stations };
+}
+// Co jest w zasięgu stacji: źródła ładunku i odbiorcy
+function catchInfo(x, y, R) {
+  const I = getIdx(), src = {}, acc = {}, towns = new Set();
+  for (let j = -R; j <= R; j++) for (let i = -R; i <= R; i++) {
+    const k = K(x + i, y + j), t = tiles[k]; if (!t) continue;
+    const r = RECIPE[t.t]; if (r && r.out) (src[r.out] = src[r.out] || []).push(k);
+    if (POP[t.t] !== undefined && I.houseTown[k]) towns.add(I.houseTown[k]);
+    for (const c of ACCEPT[t.t] || []) (acc[c] = acc[c] || []).push(k);
+  }
+  for (const tw of towns) for (const c of ["pass", "mail"]) (src[c] = src[c] || []).push("T_" + tw);
+  return { src, acc, towns };
+}
+const stationName = k => { const t = tiles[k]; return t ? (t.sn || t.n && t.t === "buyer" && t.n || BUILD[t.t]?.name + " " + k.replace("_", ",")) : "(zburzona)"; };
+const tileTown = (x, y) => { let best = null, bd = 1e9; for (const T of getIdx().list) { const d = (T.x - x) ** 2 + (T.y - y) ** 2; if (d < bd) { bd = d; best = T; } } return best; };
+
+// ============================================================
+// 7. FIREBASE: synchronizacja
+// ============================================================
+function bump(a, b) {
+  ver++;
+  for (const t of [a, b]) if (t) {
+    if (ROADSET.has(t.t)) roadVer++;
+    if (RAILSET.has(t.t)) railVer++;
+    if (t.t === "dock" || t.b) shipVer++;
+  }
+}
+function setTile(key, v) { const o = tiles[key]; if (v) tiles[key] = v; else if (SYS_TILES[key]) tiles[key] = SYS_TILES[key]; else delete tiles[key]; bump(o, v); }
+
 async function init() {
   const cred = await signInAnonymously(getAuth(app));
   uid = cred.user.uid;
+  myName = localStorage.getItem("cityName") || prompt("Nazwa Twojej firmy przewozowej:") || "Gracz " + uid.slice(0, 4);
+  localStorage.setItem("cityName", myName.slice(0, 24));
+  myName = myName.slice(0, 24);
+  $("name").textContent = myName; $("sw").style.background = ownerHex(uid);
+  onValue(ref(db, ".info/serverTimeOffset"), s => off = s.val() || 0);
 
-  myName = localStorage.getItem("cityName") || prompt("Twoja nazwa firmy:") || "Gracz " + uid.slice(0, 4);
-  localStorage.setItem("cityName", myName);
-  $("name").textContent = myName;
-
-  // wczytaj zapisaną gotówkę
   const snap = await get(ref(db, "players/" + uid));
-  cash = snap.exists() ? snap.val().cash : START_CASH;
-  savePlayer();
+  const pv = snap.exists() ? snap.val() : null;
+  cash = pv && typeof pv.cash === "number" ? pv.cash : START_CASH;
+  loan = (pv && pv.loan) || 0;
+  if (pv && pv.fin) fin = { ...newFin(), ...pv.fin };
+  lastFin = (pv && pv.lfin) || null;
+  savePlayer(true);
 
-  // mapa na żywo: każda zmiana trafia do wszystkich
   const tilesRef = ref(db, "tiles");
-  onChildAdded(tilesRef,   s => { tiles[s.key] = s.val(); ver++; });
-  onChildChanged(tilesRef, s => { tiles[s.key] = s.val(); ver++; });
-  onChildRemoved(tilesRef, s => { delete tiles[s.key]; ver++; });
+  onChildAdded(tilesRef, s => setTile(s.key, s.val()));
+  onChildChanged(tilesRef, s => setTile(s.key, s.val()));
+  onChildRemoved(tilesRef, s => setTile(s.key, null));
 
-  // ranking
-  onValue(ref(db, "players"), s => {
-    const list = Object.values(s.val() || {}).sort((a, b) => b.cash - a.cash).slice(0, 8);
-    $("board").innerHTML = "<b>Ranking</b><br>" + list.map(p => `${p.name}: ${Math.floor(p.cash)} $`).join("<br>");
-  });
-
-  // reset mapy zrobiony przez admina — wszyscy dostają gotówkę startową
+  onValue(ref(db, "players"), s => { players = s.val() || {}; refreshHost(); if (win === "rank") renderWin(); });
   let first = true;
   onValue(ref(db, "resetAt"), () => {
     if (first) { first = false; return; }
-    cash = START_CASH; savePlayer(); say("Mapa została zresetowana!");
+    cash = START_CASH; loan = 0; fin = newFin(); lastFin = null; savePlayer(true); news("Mapa została zresetowana! Nowy świat, nowe szanse.", "bad");
   });
+  onValue(ref(db, "stock"), s => { stock = s.val() || {}; stockLoaded = true; });
+  onValue(ref(db, "vehicles"), s => { vehicles = s.val() || {}; if (win === "veh") renderWin(); });
 
-  onValue(ref(db, "stock"), s => stock = s.val() || {});
-  onValue(ref(db, "vehicles"), s => { vehicles = s.val() || {}; ver++; });
-  setInterval(economyTick, 5000);
+  setInterval(myTick, TICK);
+  setInterval(hostTick, TICK);
+  setInterval(() => savePlayer(true), 20000);
+  setInterval(monthTick, 1000);
+  setInterval(vehLoop, 250);
+  setTimeout(() => { $("load").style.opacity = 0; setTimeout(() => $("load").remove(), 600); jumpHome(); }, 1200);
 }
 
-function savePlayer() {
-  set(ref(db, "players/" + uid), { name: myName, cash: Math.floor(cash) });
+let saveT = null;
+function savePlayer(now_) {
+  if (!uid) return;
+  if (!now_) { if (saveT) return; saveT = setTimeout(() => { saveT = null; savePlayer(true); }, 400); return; }
+  set(ref(db, "players/" + uid), { name: myName, cash: Math.floor(cash), loan, hb: now(), fin, lfin: lastFin, val: Math.floor(companyValue()) }).catch(() => {});
+}
+function hostId() { const t = now(); return Object.entries(players).filter(([, p]) => p && p.hb && t - p.hb < 75000).map(([k]) => k).sort()[0]; }
+const amHost = () => !!uid && hostId() === uid;
+function refreshHost() {
+  const t = now();
+  $("online").textContent = Object.values(players).filter(p => p && p.hb && t - p.hb < 75000).length;
+  $("hostb").style.display = amHost() ? "inline-block" : "none";
 }
 
-// ============================================================
-// 6. EKONOMIA: towary, przetwórstwo, stacje i pojazdy
-// ============================================================
-// Łańcuch dostaw:
-//   Kopalnia -> ruda -> Huta -> stal ─┐
-//   Tartak   -> drewno ───────────────┴-> Fabryka -> towary -> Sklep (sprzedaż klientom)
-// Każdy surowiec / towar można też sprzedać w Skupie na brzegu mapy (x1.8 ceny).
-// Stacja zbiera i oddaje towary budynkom w promieniu 2 pól.
-// Ciężarówka jeździ po drogach, pociąg po torach, między dwiema stacjami (lub skupem).
-const NEIGH = [[1, 0], [-1, 0], [0, 1], [0, -1]];
-const RECIPE = {                           // in = czego potrzebuje, out = co produkuje, rate = ilość na 5 s
-  mine:    { out: "ore",  rate: 3 },
-  sawmill: { out: "wood", rate: 3 },
-  steel:   { in: ["ore"], out: "steel", rate: 2 },
-  factory: { in: ["wood", "steel"], out: "goods", rate: 2 },
-  shop:    { in: ["goods"], rate: 2 },
-};
-const PRICE = { ore: 4, wood: 4, steel: 9, goods: 14 };          // cena za sztukę za transport
-const CARGO_PL = { ore: "ruda", wood: "drewno", steel: "stal", goods: "towary" };
-const SELL = 12;                                                  // sklep: cena sprzedaży towaru klientom
-const BUILDING = ["mine", "sawmill", "steel", "factory", "shop", "buyer"];
-const DEFAULT_TIP = $("tip").textContent;
-
-let stock = {}, vehicles = {}, ver = 0;    // stock[klucz][towar] = ilość; ver rośnie przy każdej zmianie mapy
-const carry = {}, legs = {}, paths = {};
-
-const typeAt = (x, y) => (tiles[x + "_" + y] || {}).t;
-const nearRoad = (x, y) => NEIGH.some(([dx, dy]) => typeAt(x + dx, y + dy) === "road");
-function countNear(x, y, r, type) {
-  let n = 0;
-  for (let j = -r; j <= r; j++) for (let i = -r; i <= r; i++) if (typeAt(x + i, y + j) === type) n++;
-  return n;
-}
-function inRange(x, y, r) {                // budynki produkcyjne w promieniu r
-  const out = [];
-  for (let j = -r; j <= r; j++) for (let i = -r; i <= r; i++) {
-    const k = (x + i) + "_" + (y + j), t = tiles[k];
-    if (t && BUILDING.includes(t.t)) out.push(k);
-  }
-  return out;
-}
-
-// Bezpieczna zmiana magazynu (transakcja — kilku graczy może ruszać ten sam budynek)
-async function adjust(key, cargo, delta, cap = 60) {
+// Bezpieczna zmiana magazynu (transakcja – kilku graczy może ruszać ten sam budynek)
+async function adjust(key, cargo, delta, cap = CAP) {
   let applied = 0;
-  await runTransaction(ref(db, `stock/${key}/${cargo}`), v => {
-    v = v || 0; const nv = Math.max(0, Math.min(cap, v + delta)); applied = nv - v; return nv;
-  });
+  try {
+    await runTransaction(ref(db, `stock/${key}/${cargo}`), v => {
+      v = v || 0; const nv = Math.max(0, Math.min(cap, v + delta)); applied = nv - v; return nv;
+    });
+  } catch (e) { applied = 0; }
   return applied;
 }
 
-// Domy płacą podatek, jeśli stoją przy drodze (+2 $ / 5 s)
-function income() {
+// ============================================================
+// 8. EKONOMIA FIRMY (co 5 s): czynsze, produkcja własnych zakładów
+// ============================================================
+const nearType = (x, y, r, types) => { let n = 0; for (let j = -r; j <= r; j++) for (let i = -r; i <= r; i++) if (types.includes((tiles[K(x + i, y + j)] || {}).t)) n++; return n; };
+const nearRoad = (x, y) => DIRS.some(([dx, dy]) => ROADSET.has((tiles[K(x + dx, y + dy)] || {}).t));
+function rentIncome() {
   let sum = 0;
-  for (const key in tiles) {
-    const b = tiles[key]; if (b.o !== uid || b.t !== "house") continue;
-    const [x, y] = key.split("_").map(Number);
-    if (nearRoad(x, y)) sum += 2;
+  for (const k in tiles) {
+    const b = tiles[k]; if (b.o !== uid || !RENT[b.t]) continue;
+    const [x, y] = k.split("_").map(Number);
+    if (nearRoad(x, y)) sum += RENT[b.t] * (1 + Math.min(3, nearType(x, y, 2, ["park"])) * 0.15);
   }
-  return sum;
+  return Math.round(sum);
 }
-
-// Co 5 s: właściciel produkuje i przetwarza w swoich budynkach
+async function runBuilding(key, t) {      // produkcja/przetwórstwo jednego zakładu; zwraca przychód właściciela
+  const r = RECIPE[t.t]; if (!r) return 0;
+  const st = stock[key] || {};
+  if (!r.in) { const n = await adjust(key, r.out, r.rate); return n * 1.5; }
+  if (r.consume) {
+    let inc = 0;
+    for (const c of r.in) { const m = Math.min(st[c] || 0, r.rate); if (m > 0) { const got = -(await adjust(key, c, -m, 400)); inc += got * (r.sell[c] || 0); } }
+    return inc;
+  }
+  if ((st[r.out] || 0) >= CAP - 5) return 0;
+  let n = 0;
+  for (const c of r.in) { const m = Math.min(st[c] || 0, r.rate - n); if (m > 0) { n += -(await adjust(key, c, -m, 400)); } }
+  if (n > 0) await adjust(key, r.out, n);
+  return n * 3;
+}
 let busy = false;
-async function economyTick() {
-  if (busy) return; busy = true;
-  let gain = income();
+async function myTick() {
+  if (!uid || busy) return; busy = true;
   try {
+    const rent = rentIncome(); cash += rent; fin.rent += rent;
     for (const key in tiles) {
-      const b = tiles[key], r = RECIPE[b.t]; if (b.o !== uid || !r) continue;
-      const [x, y] = key.split("_").map(Number), st = stock[key] || {};
-      if (!r.in) { await adjust(key, r.out, r.rate); continue; }                 // kopalnia, tartak
-      if (r.out && (st[r.out] || 0) > 55) continue;                              // magazyn pełny
-      let n = r.rate; for (const c of r.in) n = Math.min(n, st[c] || 0);
-      if (n <= 0) continue;
-      for (const c of r.in) await adjust(key, c, -n);
-      if (r.out) await adjust(key, r.out, n);
-      else gain += n * SELL * (1 + Math.min(6, countNear(x, y, 3, "house")) / 3); // sklep sprzedaje klientom
+      const b = tiles[key]; if (b.o !== uid || !RECIPE[b.t]) continue;
+      const inc = await runBuilding(key, b);
+      if (inc) { cash += inc; if (b.t === "shop") fin.sales += inc; else fin.industry += inc; }
     }
-  } finally { cash += gain; savePlayer(); busy = false; }
+  } finally { busy = false; savePlayer(); }
 }
-
-// --- trasy pojazdów (BFS po drogach lub torach) ---
-const PASS = { truck: ["road", "station", "buyer"], train: ["rail", "station", "buyer"] };
-function findPath(v) {
-  if (!tiles[v.a] || !tiles[v.b]) return null;
-  const ok = PASS[v.k], prev = { [v.a]: null }, q = [v.a];
-  for (let i = 0; i < q.length && q[i] !== v.b; i++) {
-    const [x, y] = q[i].split("_").map(Number);
-    for (const [dx, dy] of NEIGH) {
-      const k = (x + dx) + "_" + (y + dy), t = tiles[k];
-      if (t && ok.includes(t.t) && !(k in prev)) { prev[k] = q[i]; q.push(k); }
-    }
-  }
-  if (!(v.b in prev)) return null;
-  const path = []; for (let k = v.b; k; k = prev[k]) path.unshift(k.split("_").map(Number));
-  return path;
-}
-function getPath(id, v) {                  // trasa z cache (przeliczana po zmianie mapy)
-  const c = paths[id]; if (c && c.ver === ver) return c.p;
-  const p = findPath(v); paths[id] = { ver, p }; return p;
-}
-// Pozycja pojazdu wynika z zegara, więc każdy gracz widzi go w tym samym miejscu
-const travelS = (id, v) => (Date.now() / 1000 + [...id].reduce((a, c) => a + c.charCodeAt(0), 0) * 7) * VEH[v.k].speed;
-function posAt(path, s) {
-  const L = path.length - 1, m = ((s % (2 * L)) + 2 * L) % (2 * L), u = m < L ? m : 2 * L - m;
-  const i = Math.min(L - 1, Math.floor(u)), f = u - i;
-  return toScreen(path[i][0] + (path[i + 1][0] - path[i][0]) * f, path[i][1] + (path[i + 1][1] - path[i][1]) * f);
-}
-
-// Dojazd do końca trasy: tylko klient właściciela rozlicza ładunek
-setInterval(() => {
+function monthTick() {
   if (!uid) return;
+  refreshHost();
+  const g = gdate();
+  if (monthTick.last === undefined) { monthTick.last = g.mi; monthTick.year = g.y; return; }
+  if (g.mi <= monthTick.last) return;
+  monthTick.last = g.mi;
+  // koszty utrzymania pojazdów + odsetki
+  let run = 0; const upd = {};
   for (const [id, v] of Object.entries(vehicles)) {
     if (v.o !== uid) continue;
-    const p = getPath(id, v); if (!p || p.length < 2) continue;
-    const leg = Math.floor(travelS(id, v) / (p.length - 1));
-    if (legs[id] === undefined) { legs[id] = leg; continue; }
-    if (leg === legs[id]) continue;
-    const atB = (leg - 1) % 2 === 0; legs[id] = leg;                         // parzyste odcinki: A -> B
-    arrive(id, v, atB ? v.b : v.a, atB ? v.a : v.b, p.length);
+    const c = runCost(v) / 12; run += c;
+    let py = (v.py || 0) - c, pl = v.pl || 0;
+    if (g.y !== (v.yr || g.y)) { pl = py + c; py = -c; }
+    upd[`vehicles/${id}/py`] = Math.round(py); upd[`vehicles/${id}/pl`] = Math.round(pl); upd[`vehicles/${id}/yr`] = g.y;
   }
-}, 500);
+  if (Object.keys(upd).length) update(ref(db), upd).catch(() => {});
+  const interest = loan * RATE / 12;
+  cash -= run + interest; fin.run += run; fin.interest += interest;
+  if (g.y !== monthTick.year) { monthTick.year = g.y; lastFin = { ...fin, y: g.y - 1 }; fin = newFin(); news(`Nowy rok ${g.y}! Podsumowanie roku ${g.y - 1} w oknie Finanse.`, "good"); }
+  if (run + interest > 0) news(`${MON[g.m]} ${g.y}: utrzymanie pojazdów ${money(run)}, odsetki ${money(interest)}.`);
+  savePlayer(true);
+}
+function companyValue() {
+  let v = cash - loan;
+  for (const veh of Object.values(vehicles)) if (veh.o === uid) v += vehValue(veh);
+  for (const k in tiles) { const t = tiles[k]; if (t.o === uid && BUILD[t.t]) v += BUILD[t.t].cost * 0.5; }
+  return v;
+}
 
-async function arrive(id, v, here, dest, plen) {
-  const [hx, hy] = here.split("_").map(Number), [dx, dy] = dest.split("_").map(Number), c = carry[id];
-  if (c) {                                                                   // 1. rozładunek
-    const buyer = (tiles[here] || {}).t === "buyer";
-    const target = buyer ? null : inRange(hx, hy, 2).filter(k => (RECIPE[tiles[k].t]?.in || []).includes(c.cargo))
-      .sort((a, b) => ((stock[a] || {})[c.cargo] || 0) - ((stock[b] || {})[c.cargo] || 0))[0];
-    const n = target ? await adjust(target, c.cargo, c.n) : buyer ? c.n : 0;
-    if (n > 0) {
-      const pay = n * PRICE[c.cargo] * (1 + plen / 15) * (buyer ? 1.8 : 1);  // dłuższa trasa = więcej
-      cash += pay; savePlayer(); say(`+${Math.floor(pay)} $ za dostawę (${n} × ${CARGO_PL[c.cargo]})`);
+// ============================================================
+// 9. HOST ŚWIATA: jeden klient (najniższe uid spośród aktywnych) symuluje
+//    miasta i przemysł systemowy oraz zaludnia nowy świat.
+// ============================================================
+function mulberry(a) { return () => { a |= 0; a = a + 0x6D2B79F5 | 0; let t = Math.imul(a ^ a >>> 15, 1 | a); t = t + Math.imul(t ^ t >>> 7, 61 | t) ^ t; return ((t ^ t >>> 14) >>> 0) / 4294967296; }; }
+let seeding = false;
+async function trySeed() {
+  if (seeding || !stockLoaded || stock._seed || !amHost()) return;
+  seeding = true;
+  try {
+    const seed = Date.now();
+    const r = await runTransaction(ref(db, "stock/_seed"), v => v ? undefined : seed);
+    if (!r.committed) return;
+    await update(ref(db, "tiles"), genWorld(seed));
+    news("Powstał nowy świat: miasta i zakłady czekają na transport!", "good");
+  } catch (e) { console.warn(e); } finally { seeding = false; }
+}
+function genWorld(seed) {
+  const R = mulberry(seed % 2147483647), obj = {}, occ = k => tiles[k] || obj[k];
+  const land = (x, y) => inMap(x, y) && terrain[y * N + x] !== 0;
+  const names = TOWN_NAMES.slice(); for (let i = names.length - 1; i > 0; i--) { const j = R() * (i + 1) | 0; [names[i], names[j]] = [names[j], names[i]]; }
+  const used = new Set(getIdx().list.map(T => T.n));
+  const towns = getIdx().list.map(T => ({ x: T.x, y: T.y, n: T.n }));
+  let made = 0;
+  for (let tries = 0; tries < 600 && made < 7; tries++) {
+    const x = 10 + Math.floor(R() * (N - 20)), y = 10 + Math.floor(R() * (N - 20));
+    if (!land(x, y) || occ(K(x, y))) continue;
+    let l = 0; for (let j = -5; j <= 5; j++) for (let i = -5; i <= 5; i++) if (land(x + i, y + j)) l++;
+    if (l < 95) continue;
+    if (towns.some(T => Math.hypot(T.x - x, T.y - y) < 24) || BUYERS.some(b => Math.hypot(b.x - x, b.y - y) < 14)) continue;
+    const n = names.find(q => !used.has(q)) || "Miasto " + (towns.length + 1); used.add(n);
+    towns.push({ x, y, n }); made++;
+    const tk = K(x, y), ox = x - 1, oy = y - 1;
+    obj[tk] = { t: "townhall", o: "town", n };
+    const road = (rx, ry) => { if (land(rx, ry) && !occ(K(rx, ry))) obj[K(rx, ry)] = { t: "road", o: "town", tw: tk }; };
+    for (let i = -5; i <= 9; i++) { road(ox + i, oy); road(ox, oy + i); }
+    for (let i = 0; i <= 4; i++) { road(ox + 4, oy + i); road(ox + i, oy + 4); }
+    for (let dy = -4; dy <= 8; dy++) for (let dx = -4; dx <= 8; dx++) {
+      const hx = ox + dx, hy = oy + dy;
+      if (mod(dx, 4) === 0 || mod(dy, 4) === 0 || Math.hypot(hx - x, hy - y) > 6) continue;
+      if (land(hx, hy) && !occ(K(hx, hy)) && R() < .6) obj[K(hx, hy)] = { t: R() < .18 ? "flat" : "house", o: "town", tw: tk };
     }
-    carry[id] = null;
   }
-  const accepts = new Set();                                                 // 2. załadunek tego, co przyjmie cel
-  if ((tiles[dest] || {}).t === "buyer") Object.keys(PRICE).forEach(x => accepts.add(x));
-  else inRange(dx, dy, 2).forEach(k => (RECIPE[tiles[k].t]?.in || []).forEach(x => accepts.add(x)));
-  let best = null;
-  for (const k of inRange(hx, hy, 2)) {
-    const o = RECIPE[tiles[k].t]?.out, n = o ? (stock[k] || {})[o] || 0 : 0;
-    if (n > 0 && accepts.has(o) && (!best || n > best.n)) best = { k, o, n };
+  const PLAN = [["coal", 4], ["mine", 3], ["sawmill", 3], ["farm", 4], ["steel", 2], ["factory", 2], ["foodplant", 2], ["power", 2]];
+  const inds = [];
+  for (const [type, count] of PLAN) {
+    let placed = 0;
+    for (let tries = 0; tries < 500 && placed < count; tries++) {
+      const x = 5 + Math.floor(R() * (N - 10)), y = 5 + Math.floor(R() * (N - 10)), ter = terrain[y * N + x];
+      if (ter === 0 || occ(K(x, y)) || (type === "sawmill" && ter !== 2) || (type === "farm" && ter !== 1)) continue;
+      if (towns.some(T => Math.hypot(T.x - x, T.y - y) < 9) || inds.some(p => Math.hypot(p[0] - x, p[1] - y) < 7)) continue;
+      if (BUYERS.some(b => Math.hypot(b.x - x, b.y - y) < 8)) continue;
+      let tn = towns[0]; for (const T of towns) if (Math.hypot(T.x - x, T.y - y) < Math.hypot(tn.x - x, tn.y - y)) tn = T;
+      obj[K(x, y)] = { t: type, o: "sys", n: BUILD[type].name + " " + (tn ? tn.n : "") };
+      inds.push([x, y]); placed++;
+    }
   }
-  if (best) { const n = -(await adjust(best.k, best.o, -Math.min(VEH[v.k].cap, best.n))); if (n > 0) carry[id] = { cargo: best.o, n }; }
+  return obj;
 }
-
-// Kupno pojazdu: kliknij stację startową, potem docelową
-let pending = null;
-function routeClick(x, y) {
-  const key = x + "_" + y, t = (tiles[key] || {}).t;
-  if (t !== "station" && t !== "buyer") return say("Kliknij stację lub skup.");
-  if (!pending) { pending = key; return say("Teraz kliknij stację docelową."); }
-  if (pending === key) { pending = null; return say("Anulowano."); }
-  const veh = { k: tool, a: pending, b: key, o: uid }; pending = null;
-  if (!findPath(veh)) return say(tool === "truck" ? "Brak drogi między stacjami." : "Brak toru między stacjami.");
-  if (cash < VEH[tool].cost) return say("Za mało gotówki.");
-  cash -= VEH[tool].cost;
-  set(ref(db, "vehicles/" + Date.now().toString(36) + uid.slice(0, 3)), veh);
-  savePlayer(); say(VEH[tool].name + " wyjeżdża na trasę.");
+let hostN = 0, hostBusy = false;
+async function hostTick() {
+  if (!uid || !stockLoaded || hostBusy) return;
+  if (!amHost()) return;
+  if (!stock._seed) return trySeed();
+  hostBusy = true; hostN++;
+  try {
+    const I = getIdx();
+    for (const T of I.list) {                                   // miasta: pasażerowie, poczta, rozwój
+      const tk = "T_" + T.k;
+      if (T.pop > 0) {
+        await adjust(tk, "pass", Math.ceil(T.pop / 10), Math.max(80, T.pop * 2));
+        await adjust(tk, "mail", Math.ceil(T.pop / 40), Math.max(30, T.pop));
+      }
+      await growTown(T);
+      if (T.pop > 300) await growTown(T);
+      if (hostN % 6 === 0) { const st = stock[tk] || {}; for (const c of ["g", "f", "sv"]) if (st[c] > 0) await adjust(tk, c, -Math.ceil(st[c] * .15), 5000); }
+    }
+    for (const k of I.inds) { const t = tiles[k]; if (t && t.o === "sys") await runBuilding(k, t); }   // przemysł systemowy
+  } finally { hostBusy = false; }
 }
-
-// ============================================================
-// 7. BUDOWANIE I BURZENIE
-// ============================================================
-function act(x, y) {
-  if (x < 0 || y < 0 || x >= N || y >= N) return;
-  const key = x + "_" + y, existing = tiles[key];
-  if (VEH[tool]) return routeClick(x, y);
-
-  if (tool === "bulldoze") {
-    if (!existing || existing.o === "sys") return;
-    if (existing.o !== uid && !isAdmin) return say("To nie Twój budynek.");
-    cash += BUILD[existing.t].cost * 0.5;                 // zwrot 50%
-    remove(ref(db, "tiles/" + key)); remove(ref(db, "stock/" + key));
-    savePlayer();
+async function growTown(T) {
+  const st = stock["T_" + T.k] || {};
+  const chance = .18 + Math.min(.35, (st.sv || 0) / 150) + Math.min(.25, (st.g || 0) / 60) + Math.min(.25, (st.f || 0) / 60);
+  if (Math.random() > chance || !T.roads.length) return;
+  const Rr = Math.min(26, 4 + Math.sqrt(T.pop) * .55), ox = T.x - 1, oy = T.y - 1;
+  const [rx, ry] = xy(T.roads[Math.random() * T.roads.length | 0]);
+  const [dx, dy] = DIRS[Math.random() * 4 | 0], nx = rx + dx, ny = ry + dy;
+  if (!inMap(nx, ny) || terrain[ny * N + nx] === 0 || Math.hypot(nx - T.x, ny - T.y) > Rr) return;
+  const k = K(nx, ny), t = tiles[k], gx = mod(nx - ox, 4) === 0, gy = mod(ny - oy, 4) === 0;
+  if (!t) {
+    if ((dy === 0 && gy) || (dx === 0 && gx)) await set(ref(db, "tiles/" + k), { t: "road", o: "town", tw: T.k });
+    else if (!gx && !gy) await set(ref(db, "tiles/" + k), { t: "house", o: "town", tw: T.k });
     return;
   }
-  const ter = terrain[y * N + x];
-  if (ter === 0) return say("Nie można budować na wodzie.");
-  if (existing) return say("Pole jest zajęte.");
-  if (tool === "sawmill" && ter !== 2) return say("Tartak stawia się w lesie.");
-  const b = BUILD[tool];
-  if (cash < b.cost) return say("Za mało gotówki.");
-
-  cash -= b.cost;
-  set(ref(db, "tiles/" + key), { t: tool, o: uid, n: myName });
-  savePlayer();
+  if (t.o !== "town") return;
+  const dist = Math.hypot(nx - T.x, ny - T.y);
+  if (t.t === "house" && T.pop > 120 && dist < Rr * .65 && Math.random() < .35) await set(ref(db, "tiles/" + k), { ...t, t: "flat" });
+  else if (t.t === "flat" && T.pop > 450 && dist < Rr * .4 && Math.random() < .25) await set(ref(db, "tiles/" + k), { ...t, t: "tower" });
 }
-
-let msgTimer;
-function say(t) { $("msg").textContent = t; clearTimeout(msgTimer); msgTimer = setTimeout(() => $("msg").textContent = "", 4000); }
+// wiadomości o rozwoju miast (każdy klient liczy to sam z mapy)
+const popSeen = {};
+setInterval(() => {
+  for (const T of getIdx().list) {
+    const lv = [100, 250, 500, 1000, 2000, 4000].filter(v => T.pop >= v).pop() || 0;
+    if (popSeen[T.k] !== undefined && lv > popSeen[T.k]) news(`🏘️ ${T.n} ma już ${fmt(T.pop)} mieszkańców!`, "good");
+    popSeen[T.k] = lv;
+  }
+}, 3000);
 
 // ============================================================
-// 8. RYSOWANIE (widok izometryczny, cienie, cykl dnia i nocy)
+// 10. POJAZDY: trasy (BFS), wspólny zegar ruchu, załadunek i rozładunek
+// ============================================================
+function railOpen(x, y, d) {
+  const t = tiles[K(x, y)]; if (!t) return false;
+  if (t.t === "station" || t.t === "buyer") return true;
+  if (t.t !== "rail" && t.t !== "xing") return false;
+  if (t.m == null) { const n = tiles[K(x + DIRS[d][0], y + DIRS[d][1])]; return !!n && RAILSET.has(n.t); }
+  return !!(t.m & BIT[d]);
+}
+function canStep(kind, x, y, nx, ny, d) {
+  const t = tiles[K(nx, ny)];
+  if (kind === "road") return !!t && ROADSET.has(t.t) && !(t.t === "rail");
+  if (kind === "rail") return !!t && RAILSET.has(t.t) && railOpen(x, y, d) && railOpen(nx, ny, OPP[d]);
+  if (t && t.t === "dock") return true;
+  return terrain[ny * N + nx] === 0 && (!t || !!t.b);
+}
+function bfs(kind, a, b) {
+  if (!tiles[a] || !tiles[b] || a === b) return null;
+  const prev = new Map([[a, null]]), q = [a];
+  for (let qi = 0; qi < q.length; qi++) {
+    const cur = q[qi]; if (cur === b) break;
+    const [x, y] = xy(cur);
+    for (let d = 0; d < 4; d++) {
+      const nx = x + DIRS[d][0], ny = y + DIRS[d][1]; if (!inMap(nx, ny)) continue;
+      const nk = K(nx, ny); if (prev.has(nk) || !canStep(kind, x, y, nx, ny, d)) continue;
+      prev.set(nk, cur); q.push(nk);
+    }
+  }
+  if (!prev.has(b)) return null;
+  const path = []; for (let k = b; k; k = prev.get(k)) path.unshift(xy(k));
+  return path;
+}
+const stopsOf = v => v.st || [v.a, v.b].filter(Boolean);
+const wagonsOf = v => VEH[v.k] && VEH[v.k].kind === "rail" ? (v.w || "ff") : "";
+function capOf(v) {
+  const m = VEH[v.k]; if (!m) return { p: 0, m: 0, f: 0 };
+  if (m.kind !== "rail") return { p: 0, m: 0, f: 0, ...m.cap };
+  const c = { p: 0, m: 0, f: 0 }; for (const w of wagonsOf(v)) c[w] += WAGON[w].cap; return c;
+}
+const runCost = v => (VEH[v.k] ? VEH[v.k].run : 0) + [...wagonsOf(v)].reduce((a, w) => a + WAGON[w].run, 0);
+const vehCost = v => v.cost || ((VEH[v.k] ? VEH[v.k].cost : 0) + [...wagonsOf(v)].reduce((a, w) => a + WAGON[w].cost, 0));
+const vehValue = v => vehCost(v) * Math.max(.15, 1 - ((now() - (v.t0 || now())) / (DAY_MS * 360)) * .08);
+const routeCache = {};
+function route(id, v) {
+  const m = VEH[v.k]; if (!m) return null;
+  const st = stopsOf(v); if (st.length < 2) return null;
+  const vv = m.kind === "road" ? roadVer : m.kind === "rail" ? railVer : shipVer, sig = st.join("|") + "#" + vv;
+  const c = routeCache[id]; if (c && c.sig === sig) return c.r;
+  let r = { legs: [], cycle: 0 };
+  for (let i = 0; i < st.length; i++) {
+    const p = bfs(m.kind, st[i], st[(i + 1) % st.length]);
+    if (!p || p.length < 2) { r = null; break; }
+    const len = p.length - 1, t = DWELL + len / m.speed;
+    r.legs.push({ p, len, t }); r.cycle += t;
+  }
+  routeCache[id] = { sig, r }; return r;
+}
+// Pozycja wynika z zegara serwera, więc każdy gracz widzi pojazd w tym samym miejscu
+function vstate(id, v, ts) {
+  const r = route(id, v); if (!r) return null;
+  const el = Math.max(0, ts - (v.t0 || 0) / 1000), cyc = Math.floor(el / r.cycle);
+  let ph = el - cyc * r.cycle;
+  for (let i = 0; i < r.legs.length; i++) {
+    const L = r.legs[i];
+    if (ph < L.t || i === r.legs.length - 1) {
+      const dw = ph < DWELL;
+      return { r, i, cyc, dw, d: dw ? 0 : Math.min(L.len, (ph - DWELL) * VEH[v.k].speed) };
+    }
+    ph -= L.t;
+  }
+}
+function legPoint(L, d) {
+  d = Math.max(0, Math.min(L.len, d));
+  const i = Math.min(L.len - 1, Math.floor(d)), f = d - i, a = L.p[i], b = L.p[i + 1];
+  return { x: a[0] + (b[0] - a[0]) * f, y: a[1] + (b[1] - a[1]) * f, ux: b[0] - a[0], uy: b[1] - a[1] };
+}
+function carPos(s, back) {
+  let i = s.i, d = s.d - back, L = s.r.legs[i], g = 0;
+  while (d < 0 && g++ < 4) { i = (i - 1 + s.r.legs.length) % s.r.legs.length; L = s.r.legs[i]; d += L.len; }
+  return legPoint(L, d);
+}
+// akceptacja na pozostałych przystankach trasy (cache)
+let accCache = {}, accVer = -1;
+function routeAccepts(v, except) {
+  if (accVer !== ver) { accCache = {}; accVer = ver; }
+  const st = stopsOf(v), sig = st.join("|") + "#" + except;
+  if (accCache[sig]) return accCache[sig];
+  const s = new Set();
+  st.forEach((k, j) => { if (j === except || k === st[except]) return; const t = tiles[k]; if (!t) return; if (t.t === "buyer") FREIGHT.forEach(c => s.add(c)); else { const [x, y] = xy(k); Object.keys(catchInfo(x, y, RAD[t.t] || 3).acc).forEach(c => s.add(c)); } });
+  return accCache[sig] = s;
+}
+const lastK = {}, vBusy = {}, visited = new Set();
+function vehLoop() {
+  if (!uid) return;
+  const ts = now() / 1000;
+  for (const [id, v] of Object.entries(vehicles)) {
+    if (v.o !== uid) continue;
+    const s = vstate(id, v, ts); if (!s) continue;
+    const Kc = s.cyc * stopsOf(v).length + s.i;
+    if (lastK[id] === undefined && s.dw && !vBusy[id]) { lastK[id] = Kc; vBusy[id] = true; arrive(id, v, s.i).finally(() => vBusy[id] = false); continue; }   // stoi na stacji przy starcie – obsłuż postój
+    if (lastK[id] === undefined || Kc < lastK[id]) { lastK[id] = Kc; continue; }
+    if (Kc > lastK[id] && !vBusy[id]) { lastK[id] = Kc; vBusy[id] = true; arrive(id, v, s.i).finally(() => vBusy[id] = false); }
+  }
+}
+async function arrive(id, v, i) {
+  const key = stopsOf(v)[i], t = tiles[key]; if (!t) return;
+  const [x, y] = xy(key), info = t.t === "buyer" ? { src: {}, acc: {} } : catchInfo(x, y, RAD[t.t] || 3);
+  const ld = { ...(v.ld || {}) }, I = getIdx(), hq = Object.values(tiles).some(b => b.t === "hq" && b.o === uid);
+  let earned = 0; const got = [];
+  if (!visited.has(key) && t.o === uid) { visited.add(key); }
+  // 1. rozładunek tego, co tu przyjmują
+  for (const c of Object.keys(ld)) {
+    const L = ld[c]; if (!L || !(L.n > 0)) { delete ld[c]; continue; }
+    if (L.s === key) continue;
+    const accs = t.t === "buyer" ? (CARGO[c].cl === "f" ? ["buyer"] : []) : (info.acc[c] || []);
+    if (!accs.length) continue;
+    const ind = accs.find(k => (RECIPE[(tiles[k] || {}).t] || {}).in?.includes(c));
+    if (ind) await adjust(ind, c, L.n, 400);
+    else if (c === "goods" || c === "food") { const tw = I.houseTown[accs[0]] || (tiles[accs[0]] && tiles[accs[0]].t === "townhall" && accs[0]); if (tw) await adjust("T_" + tw, c === "goods" ? "g" : "f", L.n, 5000); }
+    const [sx, sy] = L.s && tiles[L.s] ? xy(L.s) : [x, y];
+    const dist = Math.max(2, Math.abs(sx - x) + Math.abs(sy - y)), days = (now() - (L.t || now())) / DAY_MS, cd = CARGO[c];
+    const tf = days <= cd.days ? 1 : Math.max(.25, 1 - (days - cd.days) / (cd.days * 4));
+    const pay = Math.round(cd.price * L.n * dist / 20 * tf * (t.t === "buyer" ? 1.5 : 1) * (hq ? 1.1 : 1));
+    earned += pay; got.push(`${L.n} ${cd.n}`); delete ld[c];
+  }
+  // 2. załadunek tego, co przyjmie któryś z kolejnych przystanków
+  const caps = capOf(v), used = { p: 0, m: 0, f: 0 };
+  for (const c in ld) used[CARGO[c].cl] += ld[c].n;
+  const later = routeAccepts(v, i);
+  const cands = Object.keys(info.src).filter(c => later.has(c))
+    .sort((a, b) => info.src[b].reduce((s, k) => s + ((stock[k] || {})[b] || 0), 0) - info.src[a].reduce((s, k) => s + ((stock[k] || {})[a] || 0), 0));
+  for (const c of cands) {
+    const cl = CARGO[c].cl; let free = caps[cl] - used[cl]; if (free <= 0) continue;
+    for (const sk of info.src[c].slice().sort((a, b) => ((stock[b] || {})[c] || 0) - ((stock[a] || {})[c] || 0))) {
+      if (free <= 0) break;
+      const avail = (stock[sk] || {})[c] || 0, take = Math.min(free, avail); if (take <= 0) continue;
+      const n = -(await adjust(sk, c, -take, 1e6)); if (n <= 0) continue;
+      if (sk.startsWith("T_")) adjust(sk, "sv", n, 5000);
+      ld[c] = ld[c] ? { ...ld[c], n: ld[c].n + n } : { n, s: key, t: now() };
+      used[cl] += n; free -= n;
+    }
+  }
+  const upd = { ld };
+  if (earned) { upd.py = Math.round((v.py || 0) + earned); cash += earned; fin.transport += earned; savePlayer(); }
+  update(ref(db, "vehicles/" + id), upd).catch(() => {});
+  if (earned) news(`${VEH[v.k].ic} ${vehName(id, v)} → ${esc(stationName(key))}: <b class="pos">+${money(earned)}</b> <span class="mut">(${got.join(", ")})</span>`, "good", true);
+}
+const vehName = (id, v) => `${(VEH[v.k] || {}).name || v.k} #${v.nm || id.slice(-3)}`;
+
+// ============================================================
+// 11. BUDOWANIE I BURZENIE
+// ============================================================
+let flipL = false;
+function lpath(a, b) {
+  const pts = [[a.x, a.y]]; let x = a.x, y = a.y; const sx = Math.sign(b.x - x), sy = Math.sign(b.y - y);
+  if ((Math.abs(b.x - a.x) >= Math.abs(b.y - a.y)) !== flipL) { while (x !== b.x) { x += sx; pts.push([x, y]); } while (y !== b.y) { y += sy; pts.push([x, y]); } }
+  else { while (y !== b.y) { y += sy; pts.push([x, y]); } while (x !== b.x) { x += sx; pts.push([x, y]); } }
+  return pts;
+}
+const dirTo = (a, b) => b[0] > a[0] ? 0 : b[0] < a[0] ? 1 : b[1] > a[1] ? 2 : 3;
+function autoMask(x, y) { let m = 0; for (let d = 0; d < 4; d++) if (railOpen(x, y, d)) m |= BIT[d]; return m; }
+const issuedNames = new Set();
+const canEdit = t => t && (t.o === uid || isAdmin);
+function nameStation(x, y, type) {
+  const T = tileTown(x, y), base = (T ? T.n : "Pustkowie") + (type === "station" ? " Dworzec" : type === "dock" ? " Port" : " Przystanek");
+  const used = new Set(Object.values(tiles).map(t => t.sn).concat([...issuedNames]));
+  let n = base; for (let i = 2; used.has(n); i++) n = base + " " + i;
+  issuedNames.add(n); return n;
+}
+// Plan budowy linii drogi/toru (z mostami i przejazdami)
+function planLine(kind, a, b) {
+  const pts = lpath(a, b), plan = [];
+  plan.blocked = [];
+  pts.forEach((pt, i) => {
+    const [x, y] = pt; if (!inMap(x, y)) return;
+    let bits = 0; if (pts[i - 1]) bits |= BIT[dirTo(pt, pts[i - 1])]; if (pts[i + 1]) bits |= BIT[dirTo(pt, pts[i + 1])];
+    const k = K(x, y), t = tiles[k], water = terrain[y * N + x] === 0, base = BUILD[kind].cost;
+    if (kind === "road") {
+      if (!t) plan.push({ k, v: water ? { t: "road", o: uid, b: 1 } : { t: "road", o: uid }, cost: water ? base * 6 : base });
+      else if (t.t === "rail" && !t.b && canEdit(t) && [3, 12].includes(t.m ?? autoMask(x, y))) plan.push({ k, v: { ...t, t: "xing", m: t.m ?? autoMask(x, y) }, cost: 150 });
+      else if (!ROADSET.has(t.t)) plan.blocked.push(k);
+    } else {
+      if (!t) plan.push({ k, v: water ? { t: "rail", o: uid, m: bits, b: 1 } : { t: "rail", o: uid, m: bits }, cost: water ? base * 6 : base });
+      else if ((t.t === "rail" || t.t === "xing") && canEdit(t)) { const m0 = t.m ?? autoMask(x, y), m = m0 | bits; if (m !== m0) { if (t.t === "xing") plan.blocked.push(k); else plan.push({ k, v: { ...t, m }, cost: Math.round(base / 2) }); } }
+      else if (t.t === "road" && !t.b && t.o !== "sys" && (bits === 3 || bits === 12)) plan.push({ k, v: { t: "xing", o: uid, m: bits }, cost: 150 });
+      else if (!((t.t === "station" || t.t === "buyer") && (i === 0 || i === pts.length - 1)) && !(t.t === "station" && (bits === 3 || bits === 12))) plan.blocked.push(k);
+    }
+  });
+  return plan;
+}
+function planArea(a, b) {
+  const plan = [];
+  for (let y = Math.min(a.y, b.y); y <= Math.max(a.y, b.y); y++) for (let x = Math.min(a.x, b.x); x <= Math.max(a.x, b.x); x++) {
+    const k = K(x, y), t = tiles[k]; if (!t || SYS_TILES[k] && !isAdmin) continue;
+    if (t.o === "sys" && !isAdmin) continue;
+    if (t.t === "townhall" && !isAdmin) continue;
+    if (t.o === uid || isAdmin) plan.push({ k, v: null, cost: -Math.round((BUILD[t.t]?.cost || 0) * (t.b ? 3 : .4)) });
+    else if (t.o === "town") plan.push({ k, v: null, cost: (BUILD[t.t]?.cost || 100) * 2 });
+  }
+  return plan;
+}
+function planSingle(tl, x, y) {
+  if (!inMap(x, y)) return { err: "Poza mapą." };
+  const k = K(x, y), t = tiles[k], ter = terrain[y * N + x], b = BUILD[tl];
+  if (tl === "station") {
+    if (t && t.t === "rail" && canEdit(t) && !t.b) { const m = t.m ?? autoMask(x, y); if (m && m !== 3 && m !== 12 && m !== 1 && m !== 2 && m !== 4 && m !== 8) return { err: "Dworzec stawiaj na prostym torze." }; return { plan: [{ k, v: { t: "station", o: uid, sn: nameStation(x, y, tl) }, cost: b.cost }] }; }
+  }
+  if (tl === "stop" && t && t.t === "road" && !t.b && t.o !== "sys") return { plan: [{ k, v: { t: "stop", o: uid, sn: nameStation(x, y, tl) }, cost: b.cost }] };
+  if (t) return { err: "Pole jest zajęte." };
+  if (ter === 0) return { err: "Nie można budować na wodzie." };
+  if (tl === "sawmill" && ter !== 2) return { err: "Tartak stawia się w lesie." };
+  if (tl === "farm" && ter !== 1) return { err: "Farma potrzebuje łąki." };
+  if (tl === "dock" && !DIRS.some(([dx, dy]) => inMap(x + dx, y + dy) && terrain[(y + dy) * N + x + dx] === 0)) return { err: "Port musi stać na brzegu wody." };
+  if (tl === "hq" && Object.values(tiles).some(q => q.t === "hq" && q.o === uid)) return { err: "Masz już siedzibę firmy." };
+  const v = { t: tl, o: uid, n: myName };
+  if (RAD[tl]) v.sn = nameStation(x, y, tl);
+  if (POP[tl] !== undefined) { const T = tileTown(x, y); if (T && Math.hypot(T.x - x, T.y - y) < 18) v.tw = T.k; }
+  if (tl === "townhall") {
+    if (getIdx().list.some(T => Math.hypot(T.x - x, T.y - y) < 16)) return { err: "Za blisko innego miasta (min. 16 pól)." };
+    const used = new Set(getIdx().list.map(T => T.n));
+    v.n = TOWN_NAMES.find(n => !used.has(n)) || "Miasto " + (used.size + 1); v.o = "town"; v.f = myName;
+    const plan = [{ k, v, cost: b.cost }];
+    for (let i = -4; i <= 4; i++) for (const [rx, ry] of [[x - 1 + i, y - 1], [x - 1, y - 1 + i]]) {
+      const rk = K(rx, ry); if (inMap(rx, ry) && terrain[ry * N + rx] !== 0 && !tiles[rk] && !plan.some(p => p.k === rk)) plan.push({ k: rk, v: { t: "road", o: "town", tw: k }, cost: 0 });
+    }
+    return { plan };
+  }
+  return { plan: [{ k, v, cost: b.cost }] };
+}
+function execPlan(plan, label) {
+  if (plan && plan.blocked && plan.blocked.length) return say(`Trasa zablokowana przez ${plan.blocked.length} pól (czerwone). Omiń przeszkodę – Shift zmienia kierunek załamania.`, "bad");
+  if (!plan || !plan.length) return say("Nic do zrobienia.");
+  const cost = plan.reduce((a, p) => a + p.cost, 0);
+  if (cost > 0 && cash < cost) return say(`Za mało gotówki (potrzeba ${money(cost)}). Weź kredyt w oknie Finanse.`, "bad");
+  const upd = {};
+  for (const p of plan) { upd["tiles/" + p.k] = p.v; if (!p.v) upd["stock/" + p.k] = null; }
+  cash -= cost; if (cost > 0) fin.build += cost; else fin.build += cost;
+  update(ref(db), upd).catch(e => say("Błąd zapisu: " + e.message, "bad"));
+  savePlayer();
+  if (label) say(label + (cost ? ` (${cost > 0 ? "−" : "+"}${fmt(Math.abs(cost))} $)` : ""));
+}
+
+// ============================================================
+// 12. RYSOWANIE (izometria, cienie, dzień i noc)
 // ============================================================
 const hw = TW / 2, hh = TH / 2;
 const toScreen = (x, y) => ({ x: (x - y) * hw, y: (x + y) * hh });
@@ -395,212 +856,315 @@ function toTile(px, py) {
   return { x: Math.round((wy / hh + wx / hw) / 2), y: Math.round((wy / hh - wx / hw) / 2) };
 }
 const terAt = (x, y) => (x < 0 || y < 0 || x >= N || y >= N) ? 0 : terrain[y * N + x];
-const EDGE = [[1, 0, 1, 2], [0, 1, 2, 3], [-1, 0, 3, 0], [0, -1, 0, 1]];   // sąsiad -> krawędzie rombu
-
-const HOUSE_COL = ["#e8c9a0", "#e0a368", "#c9d6a3", "#d98f8f"];
-const ROOF_COL = ["#a8402f", "#6b4a3a", "#3f5a78"];
-const CAR_COL = ["#d24b4b", "#3f7fd2", "#e8c84a", "#f0f0f0", "#4aa86a"];
+const EDGE = [[1, 0, 1, 2], [0, 1, 2, 3], [-1, 0, 3, 0], [0, -1, 0, 1]];
+const HOUSE_COL = ["#e8c9a0", "#e0a368", "#c9d6a3", "#d98f8f"], ROOF_COL = ["#a8402f", "#6b4a3a", "#3f5a78"], CAR_COL = ["#d24b4b", "#3f7fd2", "#e8c84a", "#f0f0f0", "#4aa86a"];
 const ownerCache = {};
-const ownerColor = id => ownerCache[id] || (ownerCache[id] = `hsl(${[...String(id)].reduce((a, c) => (a * 31 + c.charCodeAt(0)) % 360, 7)},80%,55%)`);
-
+function ownerHex(id) {
+  if (ownerCache[id]) return ownerCache[id];
+  if (id === "town") return "#c9b08a"; if (id === "sys") return "#8a8f94";
+  const h = [...String(id)].reduce((a, c) => (a * 31 + c.charCodeAt(0)) % 360, 7) / 360, s = .8, l = .55;
+  const f = n => { const k = (n + h * 12) % 12, a = s * Math.min(l, 1 - l); return Math.round(255 * (l - a * Math.max(-1, Math.min(k - 3, 9 - k, 1)))).toString(16).padStart(2, "0"); };
+  return ownerCache[id] = "#" + f(0) + f(8) + f(4);
+}
 const shCache = {};
-function shade(hex, f) {                      // przyciemnianie koloru (z cache)
+function shade(hex, f) {
   const k = hex + f; if (shCache[k]) return shCache[k];
   const n = parseInt(hex.slice(1), 16), c = s => Math.max(0, Math.min(255, ((n >> s) & 255) * f)) | 0;
   return (shCache[k] = `rgb(${c(16)},${c(8)},${c(0)})`);
 }
 function poly(points, fill, stroke) {
-  ctx.beginPath();
-  points.forEach((p, i) => i ? ctx.lineTo(p[0], p[1]) : ctx.moveTo(p[0], p[1]));
-  ctx.closePath();
-  ctx.fillStyle = fill; ctx.fill();
-  if (stroke) { ctx.strokeStyle = stroke; ctx.lineWidth = 1; ctx.stroke(); }
+  ctx.beginPath(); points.forEach((p, i) => i ? ctx.lineTo(p[0], p[1]) : ctx.moveTo(p[0], p[1])); ctx.closePath();
+  ctx.fillStyle = fill; ctx.fill(); if (stroke) { ctx.strokeStyle = stroke; ctx.lineWidth = 1; ctx.stroke(); }
 }
-
-let T = 0, night = 0, lod = false;            // czas, ciemność (0-1), tryb uproszczony przy oddaleniu
-const lights = [];                            // światła rysowane po nałożeniu nocy
-
-// --- pomocnicze: bryła z cieniem i okna ---
+let T = 0, night = 0, lod = false;
+const lights = [];
 function box(p, m, h, col) {
   const b = [[p.x, p.y - hh + m / 2], [p.x + hw - m, p.y], [p.x, p.y + hh - m / 2], [p.x - hw + m, p.y]];
   const t = b.map(q => [q[0], q[1] - h]);
-  poly(b.map(q => [q[0] + h * .3, q[1] + h * .1]), "rgba(0,0,0,.22)");       // cień
-  poly([b[3], b[2], t[2], t[3]], shade(col, .75), "#0004");                   // lewa ściana
-  poly([b[2], b[1], t[1], t[2]], shade(col, .55), "#0004");                   // prawa ściana
-  poly(t, shade(col, 1.1), "#0004");                                          // dach
+  poly(b.map(q => [q[0] + h * .3, q[1] + h * .1]), "rgba(0,0,0,.22)");
+  poly([b[3], b[2], t[2], t[3]], shade(col, .75), "#0004");
+  poly([b[2], b[1], t[1], t[2]], shade(col, .55), "#0004");
+  poly(t, shade(col, 1.1), "#0004");
   return { b, t };
 }
-const fp = (a, b, h, u, v) => [a[0] + (b[0] - a[0]) * u, a[1] + (b[1] - a[1]) * u + h * v];  // punkt na ścianie
-function windows(a, b, h, rows, cols, seed) {
+const fp = (a, b, h, u, v) => [a[0] + (b[0] - a[0]) * u, a[1] + (b[1] - a[1]) * u + h * v];
+function windows(a, b, h, rows, cols, seed, litCol) {
   for (let r = 0; r < rows; r++) for (let c = 0; c < cols; c++) {
-    const u0 = (c + .25) / cols, u1 = (c + .75) / cols;
-    const v0 = .12 + (r + .2) / rows * .76, v1 = .12 + (r + .65) / rows * .76;
-    const lit = night > .25 && hash(seed + r * 5, c + seed * 3) > .4;         // nocą część okien świeci
-    poly([fp(a, b, h, u0, v0), fp(a, b, h, u1, v0), fp(a, b, h, u1, v1), fp(a, b, h, u0, v1)], lit ? "#ffd86b" : "#a9cfe0");
+    const u0 = (c + .25) / cols, u1 = (c + .75) / cols, v0 = .1 + (r + .2) / rows * .8, v1 = .1 + (r + .65) / rows * .8;
+    const lit = night > .25 && hash(seed + r * 5, c + seed * 3) > .4;
+    poly([fp(a, b, h, u0, v0), fp(a, b, h, u1, v0), fp(a, b, h, u1, v1), fp(a, b, h, u0, v1)], lit ? "#ffd86b" : (litCol || "#a9cfe0"));
   }
 }
-function flag(px, topY, owner) {              // flaga w kolorze właściciela
+function flag(px, topY, owner) {
   ctx.strokeStyle = "#ddd"; ctx.lineWidth = 1; ctx.beginPath(); ctx.moveTo(px, topY); ctx.lineTo(px, topY - 12); ctx.stroke();
-  poly([[px, topY - 12], [px + 8, topY - 9], [px, topY - 6]], ownerColor(owner));
+  poly([[px, topY - 12], [px + 8, topY - 9], [px, topY - 6]], ownerHex(owner));
 }
-
-// --- budynki ---
-function house(p, x, y) {
-  const r = hash(x, y), h = 16 + (r > .6 ? 10 : 0);
-  const { t } = box(p, 10, h, HOUSE_COL[(r * 4) | 0]);
-  const rc = ROOF_COL[(hash(y, x) * 3) | 0];
-  const A = [(t[0][0] + t[2][0]) / 2, (t[0][1] + t[2][1]) / 2 - 12];            // szczyt dachu
-  poly([t[0], t[3], A], shade(rc, .95)); poly([t[1], t[0], A], shade(rc, .75));  // tył dachu
-  poly([t[3], t[2], A], shade(rc, .85)); poly([t[2], t[1], A], shade(rc, .6));   // przód dachu
-  if (!lod) { const rows = h > 20 ? 2 : 1; windows(t[3], t[2], h, rows, 2, x + y); windows(t[2], t[1], h, rows, 2, x * y); }
+function roofHip(t, rc, peak) {
+  const A = [(t[0][0] + t[2][0]) / 2, (t[0][1] + t[2][1]) / 2 - peak];
+  poly([t[0], t[3], A], shade(rc, .95)); poly([t[1], t[0], A], shade(rc, .75));
+  poly([t[3], t[2], A], shade(rc, .85)); poly([t[2], t[1], A], shade(rc, .6));
   return A[1];
 }
-function shop(p, x, y) {
-  const h = 22, { t } = box(p, 5, h, "#6aa9cf");
-  const cx = (t[0][0] + t[2][0]) / 2, cy = (t[0][1] + t[2][1]) / 2;
-  for (let k = 0; k < 6; k++)                                                    // markiza w paski
-    poly([fp(t[2], t[1], h, k / 6, .5), fp(t[2], t[1], h, (k + 1) / 6, .5), fp(t[2], t[1], h, (k + 1) / 6, .68), fp(t[2], t[1], h, k / 6, .68)], k % 2 ? "#f4efe2" : "#c94c4c");
-  poly([fp(t[2], t[1], h, .4, .72), fp(t[2], t[1], h, .6, .72), fp(t[2], t[1], h, .6, 1), fp(t[2], t[1], h, .4, 1)], "#3b2b20");  // drzwi
-  if (!lod) {
-    windows(t[3], t[2], h, 2, 3, x + y);
-    poly([[cx - 6, cy], [cx + 6, cy], [cx + 6, cy - 5], [cx - 6, cy - 5]], "#8a8f94");   // klimatyzator
+function cyl(cx, cy, r, h, col) {
+  ctx.fillStyle = shade(col, .7); ctx.fillRect(cx - r, cy - h, r * 2, h);
+  ctx.beginPath(); ctx.ellipse(cx, cy, r, r * .5, 0, 0, Math.PI); ctx.fill();
+  ctx.fillStyle = shade(col, .9); ctx.fillRect(cx - r, cy - h, r * .8, h);
+  ctx.fillStyle = shade(col, 1.1); ctx.beginPath(); ctx.ellipse(cx, cy - h, r, r * .5, 0, 0, 6.3); ctx.fill();
+}
+function smoke(cx, cy, k0, dark) {
+  if (lod) return;
+  for (let k = 0; k < 4; k++) {
+    const a = (T * .35 + k / 4 + k0) % 1;
+    ctx.fillStyle = dark ? `rgba(90,90,90,${(1 - a) * .5})` : `rgba(225,225,225,${(1 - a) * .55})`;
+    ctx.beginPath(); ctx.arc(cx + a * 14, cy - a * 30, 3 + a * 7, 0, 6.3); ctx.fill();
   }
+}
+function chimney(cx, cy, dark, glow) {
+  ctx.fillStyle = "#6d6a68"; ctx.fillRect(cx - 3, cy - 22, 6, 22); ctx.fillStyle = "#4a4846"; ctx.fillRect(cx - 3, cy - 22, 6, 3);
+  if (glow && night > .2) lights.push([cx, cy - 22, 16]);
+  smoke(cx, cy - 24, (cx * .07) % 1, dark);
+}
+// --- budynki mieszkalne ---
+function house(p, x, y) {
+  const r = hash(x, y), h = 16 + (r > .6 ? 10 : 0), { t } = box(p, 10, h, HOUSE_COL[(r * 4) | 0]);
+  const top = roofHip(t, ROOF_COL[(hash(y, x) * 3) | 0], 12);
+  if (!lod) { const rows = h > 20 ? 2 : 1; windows(t[3], t[2], h, rows, 2, x + y); windows(t[2], t[1], h, rows, 2, x * y); }
+  return top;
+}
+function flatB(p, x, y) {
+  const r = hash(x + 3, y), h = 38 + (r * 10 | 0), col = ["#c98b6b", "#b5a48a", "#d9c6a5", "#a3b5bd"][(r * 4) | 0], { t } = box(p, 7, h, col);
+  poly(t.map(q => [p.x + (q[0] - p.x) * .82, q[1] + (((t[0][1] + t[2][1]) / 2) - q[1]) * .18]), shade(col, .8));
+  if (!lod) { windows(t[3], t[2], h, 4, 3, x + y); windows(t[2], t[1], h, 4, 3, x * y + 7); }
+  return t[0][1];
+}
+function tower(p, x, y) {
+  const r = hash(x, y + 9), h = 74 + (r * 30 | 0), col = ["#5f86a8", "#7d8fa3", "#4f6f7f"][(r * 3) | 0], { t } = box(p, 9, h, col);
+  if (!lod) { windows(t[3], t[2], h, 9, 3, x + y, "#9cc6dc"); windows(t[2], t[1], h, 9, 3, x * y + 3, "#86b2c8"); }
+  const cx = (t[0][0] + t[2][0]) / 2, cy = (t[0][1] + t[2][1]) / 2;
+  ctx.strokeStyle = "#ccc"; ctx.lineWidth = 1; ctx.beginPath(); ctx.moveTo(cx, cy); ctx.lineTo(cx, cy - 16); ctx.stroke();
+  if ((T * 2 | 0) % 2) { ctx.fillStyle = "#ff4040"; ctx.fillRect(cx - 1, cy - 18, 2, 2); }
+  return cy - 18;
+}
+function townhall(p, x, y) {
+  const { t } = box(p, 6, 26, "#e6dcc3");
+  if (!lod) windows(t[3], t[2], 26, 2, 4, x + y);
+  poly([fp(t[2], t[1], 26, .38, .55), fp(t[2], t[1], 26, .62, .55), fp(t[2], t[1], 26, .62, 1), fp(t[2], t[1], 26, .38, 1)], "#5b3b2a");
+  const cx = (t[0][0] + t[2][0]) / 2, cy = (t[0][1] + t[2][1]) / 2;
+  const tb = box({ x: cx, y: cy + 2 }, 22, 22, "#d8ccb0").t;
+  const top = roofHip(tb, "#3f6e5a", 14);
+  ctx.fillStyle = "#fff"; ctx.beginPath(); ctx.arc(cx - 3, cy - 12, 3, 0, 6.3); ctx.fill();
+  ctx.strokeStyle = "#333"; ctx.beginPath(); ctx.moveTo(cx - 3, cy - 12); ctx.lineTo(cx - 3, cy - 14); ctx.stroke();
+  return top;
+}
+function hqB(p, x, y, o) {
+  const col = ownerHex(o), h = 58, { t } = box(p, 6, h, "#d8d4cc");
+  if (!lod) { windows(t[3], t[2], h, 6, 3, x + y, "#8fb6c9"); windows(t[2], t[1], h, 6, 3, x * y, "#7aa0b3"); }
+  poly(t, col);
+  const cx = (t[0][0] + t[2][0]) / 2, cy = (t[0][1] + t[2][1]) / 2;
+  poly([fp(t[3], t[2], h, .2, .02), fp(t[3], t[2], h, .8, .02), fp(t[3], t[2], h, .8, .14), fp(t[3], t[2], h, .2, .14)], col);
   return cy - 4;
 }
+function shop(p, x, y) {
+  const h = 22, { t } = box(p, 5, h, "#6aa9cf"), cx = (t[0][0] + t[2][0]) / 2, cy = (t[0][1] + t[2][1]) / 2;
+  for (let k = 0; k < 6; k++)
+    poly([fp(t[2], t[1], h, k / 6, .5), fp(t[2], t[1], h, (k + 1) / 6, .5), fp(t[2], t[1], h, (k + 1) / 6, .68), fp(t[2], t[1], h, k / 6, .68)], k % 2 ? "#f4efe2" : "#c94c4c");
+  poly([fp(t[2], t[1], h, .4, .72), fp(t[2], t[1], h, .6, .72), fp(t[2], t[1], h, .6, 1), fp(t[2], t[1], h, .4, 1)], "#3b2b20");
+  if (!lod) { windows(t[3], t[2], h, 2, 3, x + y); poly([[cx - 6, cy], [cx + 6, cy], [cx + 6, cy - 5], [cx - 6, cy - 5]], "#8a8f94"); }
+  if (night > .3) lights.push([p.x + 8, p.y - 4, 14]);
+  return cy - 4;
+}
+function park(p, x, y) {
+  poly([[p.x, p.y - hh + 3], [p.x + hw - 5, p.y], [p.x, p.y + hh - 3], [p.x - hw + 5, p.y]], "#5aa65a");
+  ctx.strokeStyle = "#d8c9a0"; ctx.lineWidth = 3; ctx.beginPath(); ctx.moveTo(p.x - hw / 2, p.y - hh / 2); ctx.lineTo(p.x + hw / 2, p.y + hh / 2); ctx.moveTo(p.x + hw / 2, p.y - hh / 2); ctx.lineTo(p.x - hw / 2, p.y + hh / 2); ctx.stroke();
+  ctx.fillStyle = "#8aa"; ctx.beginPath(); ctx.ellipse(p.x, p.y, 7, 3.5, 0, 0, 6.3); ctx.fill();
+  ctx.fillStyle = "#6cc3e8"; ctx.beginPath(); ctx.ellipse(p.x, p.y, 5, 2.5, 0, 0, 6.3); ctx.fill();
+  if (!lod) { ctx.fillStyle = "#cdefff"; ctx.fillRect(p.x - .5, p.y - 5 - Math.abs(Math.sin(T * 4)) * 3, 1, 5); }
+  tree(p.x - 16, p.y - 2, .9, false); tree(p.x + 14, p.y - 3, .8, true); tree(p.x - 2, p.y - 10, .8, false); tree(p.x + 4, p.y + 9, .7, false);
+  return p.y - 20;
+}
+// --- przemysł ---
 function factory(p, x, y) {
-  const h = 26, col = "#b8555c", { t } = box(p, 3, h, col);
-  const cx = (t[0][0] + t[2][0]) / 2, cy = (t[0][1] + t[2][1]) / 2;
-  poly(t.map(q => [cx + (q[0] - cx) * .7, cy + (q[1] - cy) * .7]), shade(col, .9));   // świetlik dachu
+  const h = 26, col = "#b8555c", { t } = box(p, 3, h, col), cx = (t[0][0] + t[2][0]) / 2, cy = (t[0][1] + t[2][1]) / 2;
+  poly(t.map(q => [cx + (q[0] - cx) * .7, cy + (q[1] - cy) * .7]), shade(col, .9));
   if (!lod) windows(t[3], t[2], h, 1, 4, x + y);
-  poly([fp(t[2], t[1], h, .15, .55), fp(t[2], t[1], h, .85, .55), fp(t[2], t[1], h, .85, 1), fp(t[2], t[1], h, .15, 1)], "#5a3a3a");  // brama
-  for (const [dx, dy] of [[-9, -5], [3, -9]]) {                                   // kominy z dymem
-    ctx.fillStyle = "#6d6a68"; ctx.fillRect(cx + dx - 3, cy + dy - 22, 6, 22);
-    ctx.fillStyle = "#4a4846"; ctx.fillRect(cx + dx - 3, cy + dy - 22, 6, 3);
-    if (!lod) for (let k = 0; k < 4; k++) {
-      const a = (T * .35 + k / 4 + (dx + 10) * .07) % 1;
-      ctx.fillStyle = `rgba(210,210,210,${(1 - a) * .55})`;
-      ctx.beginPath(); ctx.arc(cx + dx + a * 14, cy + dy - 24 - a * 30, 3 + a * 7, 0, 6.3); ctx.fill();
-    }
-  }
-  return cy - 6;
+  poly([fp(t[2], t[1], h, .15, .55), fp(t[2], t[1], h, .85, .55), fp(t[2], t[1], h, .85, 1), fp(t[2], t[1], h, .15, 1)], "#5a3a3a");
+  chimney(cx - 9, cy - 5); chimney(cx + 3, cy - 9);
+  return cy - 30;
 }
-
-// --- drogi z jeżdżącymi samochodami i latarniami ---
-function road(p, x, y) {
-  poly([[p.x, p.y - hh], [p.x + hw, p.y], [p.x, p.y + hh], [p.x - hw, p.y]], "#9a9a92");   // chodnik
-  const links = NEIGH.filter(([dx, dy]) => ["road", "station", "buyer"].includes(typeAt(x + dx, y + dy)));
-  const seg = () => { ctx.beginPath(); links.forEach(([dx, dy]) => { const q = toScreen(x + dx / 2, y + dy / 2); ctx.moveTo(p.x, p.y); ctx.lineTo(q.x, q.y); }); ctx.stroke(); };
-  ctx.lineCap = "butt"; ctx.strokeStyle = "#4b4f55"; ctx.lineWidth = 13; seg();
-  ctx.fillStyle = "#4b4f55"; ctx.beginPath(); ctx.arc(p.x, p.y, 6.5, 0, 6.3); ctx.fill();
-  if (lod) return;
-  ctx.strokeStyle = "#e9d36a"; ctx.lineWidth = 1.2; ctx.setLineDash([4, 4]); seg(); ctx.setLineDash([]);
-  const alongX = typeAt(x + 1, y) === "road" || typeAt(x - 1, y) === "road";
-  const alongY = typeAt(x, y + 1) === "road" || typeAt(x, y - 1) === "road";
-  const r = hash(x + 5, y + 5);
-  if (r > .5 && (alongX || alongY)) {                                             // samochód
-    const ax = alongX ? [1, 0] : [0, 1], dir = r > .75 ? 1 : -1, u = (T * .18 * (1 + r) + r * 9) % 1;
-    const q = toScreen(x + ax[0] * (u - .5) * dir + ax[1] * .12 * dir, y + ax[1] * (u - .5) * dir + ax[0] * .12 * dir);
-    ctx.fillStyle = "rgba(0,0,0,.3)"; ctx.fillRect(q.x - 4, q.y - 1, 9, 3);
-    ctx.fillStyle = CAR_COL[(r * 50 | 0) % 5]; ctx.fillRect(q.x - 4, q.y - 5, 8, 4);
-    ctx.fillStyle = "#cfe6f0"; ctx.fillRect(q.x - 2, q.y - 7, 4, 2);
-    if (night > .2) lights.push([q.x, q.y - 3, 9]);
-  }
-  if (hash(x, y + 77) > .8) {                                                     // latarnia
-    ctx.strokeStyle = "#333"; ctx.lineWidth = 1.5; ctx.beginPath(); ctx.moveTo(p.x - 12, p.y + 2); ctx.lineTo(p.x - 12, p.y - 16); ctx.stroke();
-    ctx.fillStyle = "#ffe9a0"; ctx.fillRect(p.x - 14, p.y - 18, 4, 3);
-    if (night > .2) lights.push([p.x - 12, p.y - 16, 22]);
-  }
-}
-
-// --- tory, stacje, przemysł, skupy ---
-function rail(p, x, y) {
-  poly([[p.x, p.y - hh], [p.x + hw, p.y], [p.x, p.y + hh], [p.x - hw, p.y]], "#8d8470");     // podsypka
-  const links = NEIGH.filter(([dx, dy]) => ["rail", "station", "buyer"].includes(typeAt(x + dx, y + dy)));
-  const seg = () => { ctx.beginPath(); links.forEach(([dx, dy]) => { const q = toScreen(x + dx / 2, y + dy / 2); ctx.moveTo(p.x, p.y); ctx.lineTo(q.x, q.y); }); ctx.stroke(); };
-  ctx.lineCap = "butt"; ctx.lineWidth = 9; ctx.strokeStyle = "#5a4630"; ctx.setLineDash([2, 4]); seg(); ctx.setLineDash([]);   // podkłady
-  ctx.lineWidth = 3; ctx.strokeStyle = "#555"; seg(); ctx.lineWidth = 1; ctx.strokeStyle = "#d0d0d0"; seg();               // szyny
-}
-function station(p, x, y) {
-  box(p, 12, 4, "#c9c2b0");
-  const cx = p.x, cy = p.y - 4;
-  ctx.strokeStyle = "#555"; ctx.lineWidth = 1.5;
-  for (const [dx, dy] of [[-14, 0], [14, 0], [0, -7], [0, 7]]) { ctx.beginPath(); ctx.moveTo(cx + dx, cy + dy); ctx.lineTo(cx + dx, cy + dy - 14); ctx.stroke(); }
-  poly([[cx, cy - 21], [cx + 16, cy - 14], [cx, cy - 7], [cx - 16, cy - 14]], "#c94c4c", "#0004");   // zadaszenie
-  return cy - 21;
-}
-function stacks(cx, cy, list, glow) {                    // kominy z dymem
-  for (const [dx, dy] of list) {
-    ctx.fillStyle = "#6d6a68"; ctx.fillRect(cx + dx - 3, cy + dy - 22, 6, 22);
-    ctx.fillStyle = "#4a4846"; ctx.fillRect(cx + dx - 3, cy + dy - 22, 6, 3);
-    if (glow && night > .2) lights.push([cx + dx, cy + dy - 22, 16]);
-    if (!lod) for (let k = 0; k < 4; k++) {
-      const a = (T * .35 + k / 4 + (dx + 10) * .07) % 1;
-      ctx.fillStyle = `rgba(190,190,190,${(1 - a) * .55})`;
-      ctx.beginPath(); ctx.arc(cx + dx + a * 14, cy + dy - 24 - a * 30, 3 + a * 7, 0, 6.3); ctx.fill();
-    }
-  }
-}
-function mine(p, x, y) {
-  const { t } = box(p, 8, 10, "#6e5a48"), cx = p.x, cy = p.y - 10;
-  ctx.strokeStyle = "#3b2f25"; ctx.lineWidth = 2; ctx.beginPath();                              // wieża szybowa
+function mine(p, x, y, coal) {
+  box(p, 8, 10, coal ? "#4a4a4a" : "#6e5a48"); const cx = p.x, cy = p.y - 10;
+  ctx.strokeStyle = "#3b2f25"; ctx.lineWidth = 2; ctx.beginPath();
   ctx.moveTo(cx - 8, cy + 2); ctx.lineTo(cx, cy - 24); ctx.lineTo(cx + 8, cy + 2); ctx.moveTo(cx - 4, cy - 8); ctx.lineTo(cx + 4, cy - 8); ctx.stroke();
   ctx.beginPath(); ctx.arc(cx, cy - 26, 5, 0, 6.3); ctx.stroke();
   const a = T * 2; ctx.beginPath(); ctx.moveTo(cx - Math.cos(a) * 5, cy - 26 - Math.sin(a) * 5); ctx.lineTo(cx + Math.cos(a) * 5, cy - 26 + Math.sin(a) * 5); ctx.stroke();
-  poly([[cx + 8, cy + 8], [cx + 22, cy + 8], [cx + 15, cy - 4]], "#4a4a52");                       // hałda rudy
+  poly([[cx + 6, cy + 10], [cx + 24, cy + 10], [cx + 15, cy - 4]], coal ? "#1d1d22" : "#8a4e33");
+  poly([[cx - 22, cy + 8], [cx - 8, cy + 10], [cx - 15, cy]], coal ? "#26262b" : "#6e4a3a");
   return cy - 32;
 }
 function sawmill(p, x, y) {
-  const { t } = box(p, 8, 14, "#a67c52");
-  poly([t[3], t[2], t[1], t[0]], "#7a5638");
-  for (let k = 0; k < 6; k++) {                                                                    // stos kłód
+  const { t } = box(p, 8, 14, "#a67c52"); poly([t[3], t[2], t[1], t[0]], "#7a5638");
+  for (let k = 0; k < 6; k++) {
     const cx = p.x + 12 + (k % 3) * 5 - (k > 2 ? 2 : 0), cy = p.y + 3 - (k > 2 ? 5 : 0);
     ctx.fillStyle = "#8b5a2b"; ctx.beginPath(); ctx.arc(cx, cy, 3, 0, 6.3); ctx.fill();
     ctx.fillStyle = "#d9b27c"; ctx.beginPath(); ctx.arc(cx, cy, 1.4, 0, 6.3); ctx.fill();
   }
   return p.y - 18;
 }
+function farm(p, x, y) {
+  const c = [[p.x, p.y - hh + 2], [p.x + hw - 3, p.y], [p.x, p.y + hh - 2], [p.x - hw + 3, p.y]];
+  poly(c, "#8a6a3a");
+  ctx.strokeStyle = "#d9c04a"; ctx.lineWidth = 2;
+  for (let i = 1; i < 7; i++) { const u = i / 7, a = fp(c[3], c[0], 0, u, 0), b = fp(c[2], c[1], 0, u, 0); ctx.beginPath(); ctx.moveTo(a[0], a[1]); ctx.lineTo(b[0], b[1]); ctx.stroke(); }
+  const bp = { x: p.x - 10, y: p.y - 2 }, { t } = box(bp, 40, 13, "#b23b2e"); roofHip(t, "#5a2a22", 7);
+  cyl(p.x + 12, p.y - 2, 5, 22, "#c8ccd0");
+  return p.y - 26;
+}
 function steel(p, x, y) {
   const h = 28, { t } = box(p, 4, h, "#7b8794"), cx = (t[0][0] + t[2][0]) / 2, cy = (t[0][1] + t[2][1]) / 2;
   if (!lod) windows(t[3], t[2], h, 1, 3, x + y);
-  poly([fp(t[2], t[1], h, .2, .6), fp(t[2], t[1], h, .8, .6), fp(t[2], t[1], h, .8, 1), fp(t[2], t[1], h, .2, 1)], "#e8742c");   // rozgrzany piec
-  stacks(cx, cy, [[-9, -4], [6, -8]], true);
-  return cy - 6;
+  poly([fp(t[2], t[1], h, .2, .6), fp(t[2], t[1], h, .8, .6), fp(t[2], t[1], h, .8, 1), fp(t[2], t[1], h, .2, 1)], "#e8742c");
+  if (night > .2) lights.push([fp(t[2], t[1], h, .5, .8)[0], fp(t[2], t[1], h, .5, .8)[1], 18]);
+  chimney(cx - 9, cy - 4, true, true); chimney(cx + 6, cy - 8, true, true);
+  return cy - 30;
+}
+function foodplant(p, x, y) {
+  const h = 18, { t } = box(p, 10, h, "#e6e1d3"), cx = (t[0][0] + t[2][0]) / 2, cy = (t[0][1] + t[2][1]) / 2;
+  if (!lod) windows(t[3], t[2], h, 1, 3, x + y);
+  poly([fp(t[3], t[2], h, .1, .1), fp(t[3], t[2], h, .9, .1), fp(t[3], t[2], h, .9, .35), fp(t[3], t[2], h, .1, .35)], "#3d8b4a");
+  cyl(cx + 4, cy - 2, 5, 18, "#d5d9de"); cyl(cx + 13, cy + 2, 5, 18, "#c8ccd0");
+  return cy - 24;
+}
+function power(p, x, y) {
+  const cx = p.x - 6, cy = p.y + 4, h = 34;
+  ctx.fillStyle = "#9aa0a6";
+  ctx.beginPath(); ctx.moveTo(cx - 14, cy); ctx.quadraticCurveTo(cx - 6, cy - h / 2, cx - 10, cy - h); ctx.lineTo(cx + 10, cy - h); ctx.quadraticCurveTo(cx + 6, cy - h / 2, cx + 14, cy); ctx.closePath(); ctx.fill();
+  ctx.fillStyle = "#c5cace"; ctx.beginPath(); ctx.moveTo(cx - 14, cy); ctx.quadraticCurveTo(cx - 6, cy - h / 2, cx - 10, cy - h); ctx.lineTo(cx - 2, cy - h); ctx.quadraticCurveTo(cx - 1, cy - h / 2, cx - 4, cy); ctx.closePath(); ctx.fill();
+  ctx.fillStyle = "#6c7176"; ctx.beginPath(); ctx.ellipse(cx, cy - h, 10, 3, 0, 0, 6.3); ctx.fill();
+  if (!lod) for (let k = 0; k < 3; k++) { const a = (T * .25 + k / 3) % 1; ctx.fillStyle = `rgba(240,240,240,${(1 - a) * .6})`; ctx.beginPath(); ctx.arc(cx + a * 10, cy - h - 4 - a * 26, 6 + a * 9, 0, 6.3); ctx.fill(); }
+  box({ x: p.x + 12, y: p.y - 2 }, 34, 14, "#7d6b5a");
+  chimney(p.x + 16, p.y - 12, true, true);
+  return cy - h - 10;
 }
 function buyer(p, x, y) {
   const h = 22, { t } = box(p, 0, h, "#d4b254");
-  poly([fp(t[3], t[2], h, .12, .2), fp(t[3], t[2], h, .88, .2), fp(t[3], t[2], h, .88, .62), fp(t[3], t[2], h, .12, .62)], "#2d6a4f");   // szyld
+  poly([fp(t[3], t[2], h, .12, .2), fp(t[3], t[2], h, .88, .2), fp(t[3], t[2], h, .88, .62), fp(t[3], t[2], h, .12, .62)], "#2d6a4f");
   const q = fp(t[3], t[2], h, .5, .45);
   ctx.fillStyle = "#fff"; ctx.font = "bold 10px sans-serif"; ctx.textAlign = "center"; ctx.fillText("SKUP", q[0], q[1]);
-  poly([fp(t[2], t[1], h, .2, .5), fp(t[2], t[1], h, .8, .5), fp(t[2], t[1], h, .8, 1), fp(t[2], t[1], h, .2, 1)], "#5b4b2a");         // brama
+  poly([fp(t[2], t[1], h, .2, .5), fp(t[2], t[1], h, .8, .5), fp(t[2], t[1], h, .8, 1), fp(t[2], t[1], h, .2, 1)], "#5b4b2a");
   return t[0][1] + 6;
 }
-function drawVehicles() {                                // ciężarówki i pociągi (pozycja z zegara)
-  for (const [id, v] of Object.entries(vehicles)) {
-    const path = getPath(id, v); if (!path || path.length < 2) continue;
-    const s = travelS(id, v), train = v.k === "train";
-    for (let k = 0; k < (train ? 3 : 1); k++) {
-      const q = posAt(path, s - k * .55), sx = q.x * cam.z + cam.x, sy = q.y * cam.z + cam.y;
-      if (sx < -40 || sx > canvas.width + 40 || sy < -40 || sy > canvas.height + 40) continue;
-      ctx.fillStyle = "rgba(0,0,0,.3)"; ctx.fillRect(q.x - 7, q.y - 1, 15, 3);
-      if (!train) { ctx.fillStyle = ownerColor(v.o); ctx.fillRect(q.x - 6, q.y - 8, 12, 6); ctx.fillStyle = "#eee"; ctx.fillRect(q.x + 2, q.y - 10, 4, 4); }
-      else {
-        ctx.fillStyle = k ? "#7a6a58" : "#2f3640"; ctx.fillRect(q.x - 7, q.y - 9, 14, 7);
-        ctx.fillStyle = ownerColor(v.o); ctx.fillRect(q.x - 7, q.y - 9, 14, 2);
-        if (!k) { ctx.fillStyle = "#f6e27a"; ctx.fillRect(q.x + 4, q.y - 7, 3, 2); if (night > .2) lights.push([q.x + 6, q.y - 6, 14]); }
-      }
-    }
+// --- sieć: drogi, tory, mosty, przejazdy, stacje ---
+const roadLinks = (x, y) => DIRS.filter(([dx, dy]) => ROADSET.has((tiles[K(x + dx, y + dy)] || {}).t));
+function roadSurface(p, x, y, links, bridge) {
+  if (!bridge) poly([[p.x, p.y - hh], [p.x + hw, p.y], [p.x, p.y + hh], [p.x - hw, p.y]], "#9a9a92");
+  const seg = () => { ctx.beginPath(); if (!links.length) { ctx.moveTo(p.x - 4, p.y); ctx.lineTo(p.x + 4, p.y); } links.forEach(([dx, dy]) => { const q = toScreen(x + dx / 2, y + dy / 2); ctx.moveTo(p.x, p.y); ctx.lineTo(q.x, q.y); }); ctx.stroke(); };
+  ctx.lineCap = "butt"; ctx.strokeStyle = "#4b4f55"; ctx.lineWidth = 13; seg();
+  ctx.fillStyle = "#4b4f55"; ctx.beginPath(); ctx.arc(p.x, p.y, 6.5, 0, 6.3); ctx.fill();
+  if (lod) return;
+  ctx.strokeStyle = "#e9d36a"; ctx.lineWidth = 1.2; ctx.setLineDash([4, 4]); seg(); ctx.setLineDash([]);
+}
+function road(p, x, y, b) {
+  const links = roadLinks(x, y);
+  roadSurface(p, x, y, links, false);
+  if (lod || b.o !== "town") return;
+  if (hash(x, y + 77) > .82) {
+    ctx.strokeStyle = "#333"; ctx.lineWidth = 1.5; ctx.beginPath(); ctx.moveTo(p.x - 12, p.y + 2); ctx.lineTo(p.x - 12, p.y - 16); ctx.stroke();
+    ctx.fillStyle = "#ffe9a0"; ctx.fillRect(p.x - 14, p.y - 18, 4, 3);
+    if (night > .2) lights.push([p.x - 12, p.y - 16, 22]);
+  }
+  const r = hash(x + 5, y + 5), ax = links.length === 2 && links[0][0] === -links[1][0] && links[0][1] === -links[1][1] ? links[0] : null;
+  if (r > .55 && ax) {                                                      // ruch uliczny w miastach
+    const u = (T * .18 * (1 + r) + r * 9) % 1, dir = r > .77 ? 1 : -1, ux = Math.abs(ax[0]), uy = Math.abs(ax[1]);
+    drawCarBox(x + ux * (u - .5) * dir - uy * .14 * dir, y + uy * (u - .5) * dir + ux * .14 * dir, ux, uy, .38, .2, 5, CAR_COL[(r * 50 | 0) % 5], 0, "#cfe6f0");
   }
 }
-
+function railDirs(x, y) {
+  const t = tiles[K(x, y)], out = [];
+  for (let d = 0; d < 4; d++) {
+    const nx = x + DIRS[d][0], ny = y + DIRS[d][1], n = tiles[K(nx, ny)];
+    if (t.t === "station" || t.t === "buyer") { if (n && RAILSET.has(n.t) && railOpen(nx, ny, OPP[d])) out.push(d); }
+    else if (railOpen(x, y, d)) out.push(d);
+  }
+  return out;
+}
+function railTrack(p, x, y, dirs) {
+  const segs = dirs.map(d => [toScreen(x + DIRS[d][0] / 2, y + DIRS[d][1] / 2), d]);
+  ctx.lineCap = "butt";
+  ctx.strokeStyle = "#7f7563"; ctx.lineWidth = 14; ctx.beginPath(); segs.forEach(([q]) => { ctx.moveTo(p.x, p.y); ctx.lineTo(q.x, q.y); }); ctx.stroke();
+  ctx.fillStyle = "#7f7563"; ctx.beginPath(); ctx.arc(p.x, p.y, 7, 0, 6.3); ctx.fill();
+  ctx.strokeStyle = "#5a4630"; ctx.lineWidth = 10; ctx.setLineDash([2, 4]); ctx.beginPath(); segs.forEach(([q]) => { ctx.moveTo(p.x, p.y); ctx.lineTo(q.x, q.y); }); ctx.stroke(); ctx.setLineDash([]);
+  for (const s of [-1, 1]) {
+    ctx.beginPath();
+    for (const [q, d] of segs) { const px = -DIRS[d][1] * .1 * s, py = DIRS[d][0] * .1 * s, a = toScreen(x + px, y + py), b = toScreen(x + DIRS[d][0] / 2 + px, y + DIRS[d][1] / 2 + py); ctx.moveTo(a.x, a.y); ctx.lineTo(b.x, b.y); }
+    ctx.lineWidth = 2.4; ctx.strokeStyle = "#4a4a4a"; ctx.stroke(); ctx.lineWidth = 1; ctx.strokeStyle = "#dcdcdc"; ctx.stroke();
+  }
+}
+function rail(p, x, y) {
+  poly([[p.x, p.y - hh], [p.x + hw, p.y], [p.x, p.y + hh], [p.x - hw, p.y]], "#8f8a72");
+  railTrack(p, x, y, railDirs(x, y));
+}
+function bridge(p, x, y, b) {
+  const L = 7;
+  ctx.fillStyle = "#6b6258"; ctx.fillRect(p.x - 3, p.y - L, 6, L + 6); ctx.fillStyle = "#4f4840"; ctx.fillRect(p.x, p.y - L, 3, L + 6);
+  ctx.save(); ctx.translate(0, -L);
+  poly([[p.x, p.y - hh + 6], [p.x + hw - 12, p.y], [p.x, p.y + hh - 6], [p.x - hw + 12, p.y]], "#8a7f72");
+  if (b.t === "road") roadSurface(p, x, y, roadLinks(x, y), true); else railTrack(p, x, y, railDirs(x, y));
+  ctx.strokeStyle = "#c9c0b0"; ctx.lineWidth = 1.5;
+  const axX = b.t === "road" ? roadLinks(x, y).some(([dx]) => dx) : railDirs(x, y).some(d => d < 2);
+  for (const s of [-1, 1]) { const a = axX ? toScreen(x - .5, y + .3 * s) : toScreen(x + .3 * s, y - .5), c = axX ? toScreen(x + .5, y + .3 * s) : toScreen(x + .3 * s, y + .5); ctx.beginPath(); ctx.moveTo(a.x, a.y - 4); ctx.lineTo(c.x, c.y - 4); ctx.stroke(); }
+  ctx.restore();
+}
+function xing(p, x, y) {
+  roadSurface(p, x, y, roadLinks(x, y), false);
+  railTrack(p, x, y, railDirs(x, y));
+  if (lod) return;
+  const closed = Object.keys(vehicles).length && (T * .5 + x * .3) % 4 < 1;
+  for (const s of [-1, 1]) {
+    const q = toScreen(x + .42 * s, y - .42 * s);
+    ctx.fillStyle = "#eee"; ctx.fillRect(q.x - 1, q.y - 12, 2, 12);
+    if (closed) { ctx.fillStyle = (T * 4 | 0) % 2 ? "#f33" : "#600"; ctx.fillRect(q.x - 2, q.y - 14, 4, 3); if (night > .2) lights.push([q.x, q.y - 13, 8]); }
+  }
+}
+function station(p, x, y, b) {
+  poly([[p.x, p.y - hh], [p.x + hw, p.y], [p.x, p.y + hh], [p.x - hw, p.y]], "#b9b2a0");
+  const dirs = railDirs(x, y), axX = dirs.length ? dirs.some(d => d < 2) : !roadLinks(x, y).some(([, dy]) => dy);
+  railTrack(p, x, y, axX ? [0, 1] : [2, 3]);
+  for (const s of [-1, 1]) {
+    const c = axX ? [[x - .5, y + .28 * s], [x + .5, y + .28 * s], [x + .5, y + .46 * s], [x - .5, y + .46 * s]] : [[x + .28 * s, y - .5], [x + .28 * s, y + .5], [x + .46 * s, y + .5], [x + .46 * s, y - .5]];
+    const g = c.map(([a, q]) => toScreen(a, q)), tp = g.map(q => [q.x, q.y - 5]);
+    poly(g.map(q => [q.x, q.y]).concat([]), "#ddd5c0"); poly(tp, "#e8e0cc", "#0003");
+  }
+  const roof = (axX ? [[x - .45, y - .42], [x + .45, y - .42], [x + .45, y + .42], [x - .45, y + .42]] : [[x - .42, y - .45], [x + .42, y - .45], [x + .42, y + .45], [x - .42, y + .45]]).map(([a, q]) => { const s = toScreen(a, q); return [s.x, s.y - 22]; });
+  ctx.strokeStyle = "#555"; ctx.lineWidth = 1.5;
+  for (const r of roof) { ctx.beginPath(); ctx.moveTo(r[0], r[1]); ctx.lineTo(r[0], r[1] + 17); ctx.stroke(); }
+  poly(roof, ownerHex(b.o) === "#8a8f94" ? "#c94c4c" : shade(ownerHex(b.o), .85), "#0005");
+  if (night > .2) lights.push([p.x, p.y - 18, 20]);
+  return p.y - 24;
+}
+function stop(p, x, y, b) {
+  roadSurface(p, x, y, roadLinks(x, y), false);
+  const q = toScreen(x - .3, y + .3);
+  const sh = box({ x: q.x, y: q.y }, 46, 11, "#9fc5d8").t;
+  poly(sh, shade(ownerHex(b.o), 1));
+  ctx.fillStyle = "#555"; ctx.fillRect(p.x + 14, p.y - 18, 1.5, 18); ctx.fillStyle = "#2c6fbf"; ctx.fillRect(p.x + 11, p.y - 22, 8, 6); ctx.fillStyle = "#fff"; ctx.fillRect(p.x + 14, p.y - 21, 2, 4);
+  return p.y - 24;
+}
+function dock(p, x, y, b) {
+  poly([[p.x, p.y - hh], [p.x + hw, p.y], [p.x, p.y + hh], [p.x - hw, p.y]], "#8b6a43");
+  ctx.strokeStyle = "#6a4f30"; ctx.lineWidth = 1;
+  for (let i = 1; i < 6; i++) { const a = toScreen(x - .5 + i / 6, y - .5), c = toScreen(x - .5 + i / 6, y + .5); ctx.beginPath(); ctx.moveTo(a.x, a.y); ctx.lineTo(c.x, c.y); ctx.stroke(); }
+  const cx = p.x - 8, cy = p.y - 2;
+  ctx.strokeStyle = "#e0a12a"; ctx.lineWidth = 2.5; ctx.beginPath(); ctx.moveTo(cx, cy); ctx.lineTo(cx, cy - 30); ctx.lineTo(cx + 22, cy - 26); ctx.stroke();
+  ctx.strokeStyle = "#333"; ctx.lineWidth = 1; ctx.beginPath(); ctx.moveTo(cx + 20, cy - 26); ctx.lineTo(cx + 20, cy - 14 + Math.sin(T) * 4); ctx.stroke();
+  for (let i = 0; i < 2; i++) box({ x: p.x + 10 - i * 6, y: p.y + 4 - i * 3 }, 44, 8, ["#c0392b", "#2c6fbf"][i]);
+  return cy - 32;
+}
 // --- natura ---
 function tree(x, y, s, pine) {
   ctx.fillStyle = "rgba(0,0,0,.2)"; ctx.beginPath(); ctx.ellipse(x + 3, y + 1, 9 * s, 3.5 * s, 0, 0, 6.3); ctx.fill();
   ctx.fillStyle = "#6b4a2f"; ctx.fillRect(x - 1.5 * s, y - 6 * s, 3 * s, 6 * s);
   if (pine) for (let k = 0; k < 3; k++) { const w = (9 - k * 2) * s, by = y - (5 + k * 7) * s; poly([[x - w, by], [x + w, by], [x, by - 10 * s]], k % 2 ? "#2f6b3a" : "#3b7d45"); }
-  else {
-    ctx.fillStyle = "#3f8a3f"; ctx.beginPath(); ctx.arc(x, y - 12 * s, 8 * s, 0, 6.3); ctx.fill();
-    ctx.fillStyle = "#58a652"; ctx.beginPath(); ctx.arc(x - 2 * s, y - 15 * s, 5 * s, 0, 6.3); ctx.fill();
-  }
+  else { ctx.fillStyle = "#3f8a3f"; ctx.beginPath(); ctx.arc(x, y - 12 * s, 8 * s, 0, 6.3); ctx.fill(); ctx.fillStyle = "#58a652"; ctx.beginPath(); ctx.arc(x - 2 * s, y - 15 * s, 5 * s, 0, 6.3); ctx.fill(); }
 }
 function decor(p, x, y, ter) {
   const r = hash(x + 11, y + 3);
@@ -611,54 +1175,110 @@ function decor(p, x, y, ter) {
     else if (r < .03) { ctx.fillStyle = "#8d8f94"; ctx.beginPath(); ctx.ellipse(p.x, p.y, 6, 3.5, 0, 0, 6.3); ctx.fill(); }
   }
 }
-
-// --- jeden kafelek ---
+const DRAW = { house, flat: flatB, tower, townhall, shop, park, factory, mine: (p, x, y) => mine(p, x, y, false), coal: (p, x, y) => mine(p, x, y, true), sawmill, farm, steel, foodplant, power, buyer };
 function drawTile(x, y) {
   const i = y * N + x, p = toScreen(x, y), sx = p.x * cam.z + cam.x, sy = p.y * cam.z + cam.y;
-  if (sx < -90 || sx > canvas.width + 90 || sy < -70 * cam.z || sy > canvas.height + 110 * cam.z) return;   // poza ekranem
+  if (sx < -90 * cam.z || sx > canvas.width + 90 * cam.z || sy < -40 * cam.z || sy > canvas.height + 140 * cam.z) return;
   const c = [[p.x, p.y - hh], [p.x + hw, p.y], [p.x, p.y + hh], [p.x - hw, p.y]], ter = terrain[i];
   poly(c, groundCol[i]);
   if (ter === 0 && !lod) {
     if (Math.sin(T * 1.6 + x * .9 + y * .6) > .75) { ctx.strokeStyle = "#ffffff55"; ctx.lineWidth = 1; ctx.beginPath(); ctx.moveTo(p.x - 6, p.y - 1); ctx.lineTo(p.x + 6, p.y - 1); ctx.stroke(); }
-    for (const [dx, dy, a, b] of EDGE) if (terAt(x + dx, y + dy) !== 0) {          // piana przy brzegu
-      ctx.strokeStyle = "rgba(255,255,255,.55)"; ctx.lineWidth = 2; ctx.beginPath(); ctx.moveTo(c[a][0], c[a][1]); ctx.lineTo(c[b][0], c[b][1]); ctx.stroke();
+    for (const [dx, dy, a, b] of EDGE) if (terAt(x + dx, y + dy) !== 0) { ctx.strokeStyle = "rgba(255,255,255,.55)"; ctx.lineWidth = 2; ctx.beginPath(); ctx.moveTo(c[a][0], c[a][1]); ctx.lineTo(c[b][0], c[b][1]); ctx.stroke(); }
+  }
+  const key = K(x, y), b = tiles[key];
+  if (!b) { if (!lod) decor(p, x, y, ter); return; }
+  if (b.b) return bridge(p, x, y, b);
+  let top;
+  switch (b.t) {
+    case "road": return road(p, x, y, b);
+    case "rail": return rail(p, x, y);
+    case "xing": return xing(p, x, y);
+    case "station": top = station(p, x, y, b); break;
+    case "stop": top = stop(p, x, y, b); break;
+    case "dock": top = dock(p, x, y, b); break;
+    case "hq": top = hqB(p, x, y, b.o); break;
+    default: top = DRAW[b.t] ? DRAW[b.t](p, x, y) : box(p, 8, 10, "#888").t[0][1];
+  }
+  if (lod) return;
+  if (b.o !== "sys" && b.o !== "town" && !POP[b.t] && b.t !== "park") flag(p.x, top, b.o);
+  const st = stock[key], r = RECIPE[b.t];
+  if (st && r && r.out) { const n = st[r.out] || 0; ctx.fillStyle = "#0009"; ctx.fillRect(p.x - 13, top - 20, 26, 5); ctx.fillStyle = CARGO[r.out].c === "#2b2b2b" ? "#888" : CARGO[r.out].c; ctx.fillRect(p.x - 12, top - 19, 24 * Math.min(1, n / CAP), 3); }
+}
+// --- pojazdy ---
+function drawCarBox(fx, fy, ux, uy, L, Wd, h, col, lift, glass) {
+  const vx = -uy, vy = ux, hl = L / 2, hw2 = Wd / 2;
+  const c = [[fx + ux * hl + vx * hw2, fy + uy * hl + vy * hw2], [fx + ux * hl - vx * hw2, fy + uy * hl - vy * hw2], [fx - ux * hl - vx * hw2, fy - uy * hl - vy * hw2], [fx - ux * hl + vx * hw2, fy - uy * hl + vy * hw2]];
+  const s = c.map(q => { const p = toScreen(q[0], q[1]); return [p.x, p.y - lift]; }), top = s.map(q => [q[0], q[1] - h]);
+  if (!lift) poly(s.map(q => [q[0] + 2, q[1] + 1]), "rgba(0,0,0,.25)");
+  for (let i = 0; i < 4; i++) {
+    const a = c[i], b = c[(i + 1) % 4], mx = (a[0] + b[0]) / 2 - fx, my = (a[1] + b[1]) / 2 - fy;
+    if (mx + my > 1e-4) poly([s[i], s[(i + 1) % 4], top[(i + 1) % 4], top[i]], shade(col, mx > my ? .6 : .8));
+  }
+  poly(top, shade(col, 1.08));
+  if (glass) { const g = c.map((q, i) => i < 2 ? q : [q[0] * .45 + c[3 - i][0] * .55, q[1] * .45 + c[3 - i][1] * .55]); const gs = g.map(q => { const p = toScreen(q[0], q[1]); return [p.x, p.y - lift - h - .5]; }); poly(gs, glass); }
+  return top;
+}
+function drawCar(c) {
+  const t = tiles[K(Math.round(c.x), Math.round(c.y))], lift = t && t.b ? 7 : 0;
+  const L = Math.hypot(c.ux, c.uy) || 1, ux = c.ux / L, uy = c.uy / L;
+  const fx = c.x + (c.kind === "road" ? -uy * .15 : 0), fy = c.y + (c.kind === "road" ? ux * .15 : 0);
+  const oc = ownerHex(c.o);
+  switch (c.type) {
+    case "bus": drawCarBox(fx, fy, ux, uy, .62, .25, 8, oc, lift); drawCarBox(fx, fy, ux, uy, .58, .22, 3, "#bfe3f0", lift + 8); break;
+    case "mailv": drawCarBox(fx, fy, ux, uy, .42, .22, 7, "#d23b2b", lift, "#f2d34a"); break;
+    case "truck": drawCarBox(fx + ux * .17, fy + uy * .17, ux, uy, .16, .24, 8, oc, lift, "#bfe3f0"); drawCarBox(fx - ux * .07, fy - uy * .07, ux, uy, .34, .26, 4, "#6c5f50", lift); if (c.cargo) drawCarBox(fx - ux * .07, fy - uy * .07, ux, uy, .28, .2, 3, c.cargo, lift + 4); break;
+    case "loco": drawCarBox(fx, fy, ux, uy, .62, .3, 10, c.model === "express" ? "#e9e9ee" : c.model === "diesel" ? "#c8a028" : "#2f3640", lift); drawCarBox(fx, fy, ux, uy, .62, .31, 2, oc, lift + 10); if (c.model === "train") { const q = toScreen(fx + ux * .2, fy + uy * .2); ctx.fillStyle = "#222"; ctx.fillRect(q.x - 2, q.y - lift - 18, 4, 7); smokePuff(q.x, q.y - lift - 19); } break;
+    case "wp": drawCarBox(fx, fy, ux, uy, .62, .28, 9, "#3f6fa0", lift, "#bfe3f0"); break;
+    case "wm": drawCarBox(fx, fy, ux, uy, .62, .28, 9, "#a8322a", lift); break;
+    case "wf": drawCarBox(fx, fy, ux, uy, .62, .28, 5, "#6c5f50", lift); if (c.cargo) drawCarBox(fx, fy, ux, uy, .52, .22, 3, c.cargo, lift + 5); break;
+    case "ship": drawCarBox(fx, fy, ux, uy, .8, .36, 5, "#55606e", 0); drawCarBox(fx - ux * .15, fy - uy * .15, ux, uy, .22, .22, 8, "#f0f0f0", 5); if (c.cargo) drawCarBox(fx + ux * .15, fy + uy * .15, ux, uy, .34, .26, 4, c.cargo, 5); drawCarBox(fx, fy, ux, uy, .8, .37, 1, oc, 4); break;
+    case "ferry": drawCarBox(fx, fy, ux, uy, .8, .36, 6, "#f0f0f0", 0); drawCarBox(fx, fy, ux, uy, .5, .28, 6, "#bfe3f0", 6); drawCarBox(fx, fy, ux, uy, .8, .37, 1.5, oc, 3); break;
+  }
+  if (night > .2 && (c.type === "loco" || c.type === "bus" || c.type === "truck" || c.type === "mailv" || c.type === "ship" || c.type === "ferry")) { const q = toScreen(fx + ux * .35, fy + uy * .35); lights.push([q.x, q.y - lift - 4, 12]); }
+}
+function smokePuff(x, y) { if (lod) return; for (let k = 0; k < 3; k++) { const a = (T * .9 + k / 3) % 1; ctx.fillStyle = `rgba(230,230,230,${(1 - a) * .6})`; ctx.beginPath(); ctx.arc(x - a * 10, y - a * 18, 2 + a * 5, 0, 6.3); ctx.fill(); } }
+function collectCars() {
+  const buckets = {}, ts = now() / 1000;
+  for (const [id, v] of Object.entries(vehicles)) {
+    const m = VEH[v.k]; if (!m) continue;
+    const s = vstate(id, v, ts); if (!s) continue;
+    const ld = v.ld || {}, cargo = Object.keys(ld).find(c => CARGO[c].cl === "f" && ld[c].n > 0);
+    const cars = [];
+    if (m.kind === "rail") { cars.push({ type: "loco", back: 0 }); [...wagonsOf(v)].forEach((w, i) => cars.push({ type: "w" + w, back: .72 * (i + 1) })); }
+    else cars.push({ type: m.kind === "water" ? (v.k === "ferry" ? "ferry" : "ship") : v.k === "truck" ? "truck" : v.k === "mailv" ? "mailv" : "bus", back: 0 });
+    for (const c of cars) {
+      const p = carPos(s, c.back);
+      const car = { ...c, ...p, o: v.o, kind: m.kind, model: v.k, cargo: cargo ? CARGO[cargo].c : null, id };
+      const d = Math.round(p.x) + Math.round(p.y); (buckets[d] = buckets[d] || []).push(car);
+      if (follow === id && c.back === 0) followPos = p;
     }
   }
-  const b = tiles[x + "_" + y];
-  if (!b) { if (!lod) decor(p, x, y, ter); return; }
-  if (b.t === "road") return road(p, x, y);
-  if (b.t === "rail") return rail(p, x, y);
-  const top = ({ house, shop, factory, station, mine, sawmill, steel, buyer }[b.t])(p, x, y);
-  if (lod || b.o === "sys") return;
-  flag(p.x, top, b.o);
-  const st = stock[x + "_" + y];                                                  // pasek zapasu nad budynkiem
-  if (st) { const sum = Object.values(st).reduce((a, c) => a + c, 0); ctx.fillStyle = "#0008"; ctx.fillRect(p.x - 12, top - 18, 24, 4); ctx.fillStyle = "#f0b24a"; ctx.fillRect(p.x - 12, top - 18, 24 * Math.min(1, sum / 60), 4); }
+  return buckets;
 }
-
+let followPos = null;
 // --- klatka ---
+let preview = null;          // podgląd budowy linii
 function draw() {
   if (canvas.width !== innerWidth || canvas.height !== innerHeight) { canvas.width = innerWidth; canvas.height = innerHeight; }
   T = performance.now() / 1000;
-  night = Math.max(0, Math.min(1, -Math.sin(Date.now() / 240000 * 6.2832) * 1.6));   // doba trwa 4 min, taka sama u wszystkich
-  lod = cam.z < .8; lights.length = 0;
-
+  night = Math.max(0, Math.min(1, -Math.sin(Date.now() / 240000 * 6.2832) * 1.6));
+  lod = cam.z < .7; lights.length = 0;
+  panKeys();
+  followPos = null;
+  const cars = collectCars();
+  if (follow && followPos) { const s = toScreen(followPos.x, followPos.y); cam.x = innerWidth / 2 - s.x * cam.z; cam.y = innerHeight / 2 - s.y * cam.z; }
   ctx.setTransform(1, 0, 0, 1, 0, 0);
   ctx.fillStyle = "#0f2a35"; ctx.fillRect(0, 0, canvas.width, canvas.height);
   ctx.setTransform(cam.z, 0, 0, cam.z, cam.x, cam.y);
-
-  const cs = [toTile(0, 0), toTile(canvas.width, 0), toTile(0, canvas.height), toTile(canvas.width, canvas.height)];   // widoczny obszar
+  const cs = [toTile(0, 0), toTile(canvas.width, 0), toTile(0, canvas.height), toTile(canvas.width, canvas.height)];
   const x0 = Math.max(0, Math.min(...cs.map(c => c.x)) - 3), x1 = Math.min(N - 1, Math.max(...cs.map(c => c.x)) + 5);
   const y0 = Math.max(0, Math.min(...cs.map(c => c.y)) - 3), y1 = Math.min(N - 1, Math.max(...cs.map(c => c.y)) + 5);
-  for (let y = y0; y <= y1; y++) for (let x = x0; x <= x1; x++) drawTile(x, y);
-  drawVehicles();
-
-  if (hover && hover.x >= 0 && hover.y >= 0 && hover.x < N && hover.y < N) {       // podgląd budowy: zielony = można
-    const p = toScreen(hover.x, hover.y), occupied = !!tiles[hover.x + "_" + hover.y];
-    const ok = tool === "bulldoze" ? occupied : VEH[tool] ? ["station", "buyer"].includes((tiles[hover.x + "_" + hover.y] || {}).t) : terrain[hover.y * N + hover.x] !== 0 && !occupied && cash >= BUILD[tool].cost;
-    poly([[p.x, p.y - hh], [p.x + hw, p.y], [p.x, p.y + hh], [p.x - hw, p.y]], ok ? "#7dffa066" : "#ff6a6a66", "#fff");
+  for (let s = x0 + y0; s <= x1 + y1; s++) {
+    for (let x = Math.max(x0, s - y1); x <= Math.min(x1, s - y0); x++) drawTile(x, s - x);
+    if (cars[s]) for (const c of cars[s]) drawCar(c);
   }
-
-  ctx.setTransform(1, 0, 0, 1, 0, 0);                                               // noc
+  drawOverlay();
+  ctx.setTransform(1, 0, 0, 1, 0, 0);
   if (night > .02) { ctx.fillStyle = `rgba(8,16,48,${night * .55})`; ctx.fillRect(0, 0, canvas.width, canvas.height); }
   ctx.setTransform(cam.z, 0, 0, cam.z, cam.x, cam.y);
   if (lights.length) {
@@ -669,72 +1289,429 @@ function draw() {
     }
     ctx.globalCompositeOperation = "source-over";
   }
-  $("cash").textContent = Math.floor(cash);
-  $("inc").textContent = income();
-  const hk = hover && hover.x + "_" + hover.y, hb = hk && tiles[hk];                // opis budynku pod kursorem
-  $("tip").textContent = hb && BUILD[hb.t] && BUILD[hb.t].h > 0
-    ? `${BUILD[hb.t].name} (${hb.n || "system"}): ` + (Object.entries(stock[hk] || {}).map(([c, n]) => `${CARGO_PL[c]} ${n}`).join(", ") || "brak towarów")
-    : DEFAULT_TIP;
+  drawLabels();
+  hud();
   requestAnimationFrame(draw);
 }
+function tileHi(x, y, fill, stroke) { const p = toScreen(x, y); poly([[p.x, p.y - hh], [p.x + hw, p.y], [p.x, p.y + hh], [p.x - hw, p.y]], fill, stroke); }
+function drawOverlay() {
+  // zasięg stacji
+  let cat = null;
+  if (RAD[tool] && hover) cat = { x: hover.x, y: hover.y, R: RAD[tool] };
+  else if (win === "tile" && winArg && RAD[(tiles[winArg] || {}).t]) { const [x, y] = xy(winArg); cat = { x, y, R: RAD[tiles[winArg].t] }; }
+  else if (hover && RAD[(tiles[K(hover.x, hover.y)] || {}).t] && tool === "info") cat = { x: hover.x, y: hover.y, R: RAD[tiles[K(hover.x, hover.y)].t] };
+  if (cat) {
+    for (let j = -cat.R; j <= cat.R; j++) for (let i = -cat.R; i <= cat.R; i++) if (inMap(cat.x + i, cat.y + j)) tileHi(cat.x + i, cat.y + j, "rgba(120,200,255,.13)");
+    const a = toScreen(cat.x - cat.R - .5, cat.y - cat.R - .5), b = toScreen(cat.x + cat.R + .5, cat.y - cat.R - .5), c = toScreen(cat.x + cat.R + .5, cat.y + cat.R + .5), d = toScreen(cat.x - cat.R - .5, cat.y + cat.R + .5);
+    ctx.strokeStyle = "#8fd3ff"; ctx.lineWidth = 2 / cam.z; ctx.setLineDash([6, 4]); ctx.beginPath(); ctx.moveTo(a.x, a.y); ctx.lineTo(b.x, b.y); ctx.lineTo(c.x, c.y); ctx.lineTo(d.x, d.y); ctx.closePath(); ctx.stroke(); ctx.setLineDash([]);
+  }
+  // trasa w trakcie zakupu pojazdu
+  if (win === "buy" && buy.st.length) {
+    ctx.lineWidth = 3 / cam.z; ctx.strokeStyle = "#f0b24a"; ctx.beginPath();
+    buy.st.forEach((k, i) => { const [x, y] = xy(k), p = toScreen(x, y); i ? ctx.lineTo(p.x, p.y - 10) : ctx.moveTo(p.x, p.y - 10); });
+    if (buy.st.length > 1) { const [x, y] = xy(buy.st[0]), p = toScreen(x, y); ctx.lineTo(p.x, p.y - 10); }
+    ctx.setLineDash([8, 6]); ctx.stroke(); ctx.setLineDash([]);
+    buy.st.forEach((k, i) => { const [x, y] = xy(k), p = toScreen(x, y); ctx.fillStyle = "#f0b24a"; ctx.beginPath(); ctx.arc(p.x, p.y - 10, 10, 0, 6.3); ctx.fill(); ctx.fillStyle = "#1b1408"; ctx.font = "bold 11px sans-serif"; ctx.textAlign = "center"; ctx.fillText(i + 1, p.x, p.y - 6); });
+  }
+  // podgląd budowy
+  if (preview) {
+    const ok = preview.cost <= cash || preview.cost <= 0;
+    const blk = preview.plan.blocked || [];
+    for (const p of preview.plan) { const [x, y] = xy(p.k); tileHi(x, y, p.v ? (ok && !blk.length ? "rgba(125,255,160,.45)" : "rgba(255,190,90,.45)") : "rgba(255,80,80,.5)", "#fff"); }
+    for (const k of blk) { const [x, y] = xy(k), q = toScreen(x, y); tileHi(x, y, "rgba(255,40,40,.6)", "#fff"); ctx.strokeStyle = "#fff"; ctx.lineWidth = 3; ctx.beginPath(); ctx.moveTo(q.x - 9, q.y - 5); ctx.lineTo(q.x + 9, q.y + 5); ctx.moveTo(q.x + 9, q.y - 5); ctx.lineTo(q.x - 9, q.y + 5); ctx.stroke(); }
+    if (preview.plan.length && preview.end) { const p = toScreen(preview.end.x, preview.end.y); label(p.x, p.y - 26, (preview.cost >= 0 ? "" : "+") + money(Math.abs(preview.cost)), ok ? "#7dffa0" : "#ff7a7a"); }
+  } else if (hover && inMap(hover.x, hover.y) && tool !== "info") {
+    const t = tiles[K(hover.x, hover.y)];
+    let ok;
+    if (tool === "route") ok = t && STOPS_FOR[VEH[buy.k].kind].includes(t.t);
+    else if (tool === "bulldoze") ok = !!t && t.o !== "sys";
+    else if (tool === "road" || tool === "rail") ok = true;
+    else { const r = planSingle(tool, hover.x, hover.y); ok = !r.err && cash >= BUILD[tool].cost; }
+    tileHi(hover.x, hover.y, ok ? "#7dffa066" : "#ff6a6a66", "#fff");
+  } else if (hover && inMap(hover.x, hover.y)) tileHi(hover.x, hover.y, "rgba(255,255,255,.12)", "#ffffff88");
+}
+function label(x, y, txt, col) {
+  ctx.font = "bold 12px sans-serif"; ctx.textAlign = "center"; const w = ctx.measureText(txt).width + 12;
+  ctx.fillStyle = "#0c2129e0"; ctx.beginPath(); ctx.roundRect ? ctx.roundRect(x - w / 2, y - 14, w, 19, 6) : ctx.rect(x - w / 2, y - 14, w, 19); ctx.fill();
+  ctx.fillStyle = col || "#fff"; ctx.fillText(txt, x, y);
+}
+function drawLabels() {
+  const I = getIdx();
+  for (const Tn of I.list) {
+    const p = toScreen(Tn.x, Tn.y); const sx = p.x * cam.z + cam.x, sy = p.y * cam.z + cam.y;
+    if (sx < -100 || sx > canvas.width + 100 || sy < -100 || sy > canvas.height + 100) continue;
+    ctx.save(); ctx.setTransform(1, 0, 0, 1, 0, 0);
+    ctx.font = "bold 14px sans-serif"; ctx.textAlign = "center";
+    const t1 = Tn.n, t2 = fmt(Tn.pop) + " mieszk.", w = Math.max(ctx.measureText(t1).width, 70) + 18;
+    ctx.fillStyle = "#0c2129d8"; ctx.beginPath(); ctx.roundRect ? ctx.roundRect(sx - w / 2, sy - 92 * Math.min(1, cam.z) - 20, w, 36, 8) : ctx.rect(sx - w / 2, sy - 112, w, 36); ctx.fill();
+    ctx.fillStyle = "#f0b24a"; ctx.fillText(t1, sx, sy - 92 * Math.min(1, cam.z) - 4);
+    ctx.font = "11px sans-serif"; ctx.fillStyle = "#cfe"; ctx.fillText(t2, sx, sy - 92 * Math.min(1, cam.z) + 10);
+    ctx.restore();
+  }
+  if (cam.z < .45) return;
+  ctx.save(); ctx.setTransform(1, 0, 0, 1, 0, 0); ctx.font = "11px sans-serif"; ctx.textAlign = "center";
+  for (const k of I.stations) {
+    const t = tiles[k]; if (!t || t.t === "buyer" && cam.z < .6) continue;
+    const [x, y] = xy(k), p = toScreen(x, y), sx = p.x * cam.z + cam.x, sy = p.y * cam.z + cam.y - 30 * cam.z;
+    if (sx < -60 || sx > canvas.width + 60 || sy < -30 || sy > canvas.height + 30) continue;
+    const txt = stationName(k), w = ctx.measureText(txt).width + 10;
+    ctx.fillStyle = ownerHex(t.o) + "dd"; ctx.fillRect(sx - w / 2, sy - 12, w, 16);
+    ctx.fillStyle = "#081418"; ctx.fillText(txt, sx, sy);
+  }
+  ctx.restore();
+}
 
-// --- minimapa (klik = skok kamery) ---
+// ============================================================
+// 13. INTERFEJS: pasek narzędzi, okna, wiadomości
+// ============================================================
+const CATS = [
+  { id: "info", ic: "🔍", n: "Informacje (Esc)", tools: ["info"] },
+  { id: "road", ic: "🛣️", n: "Drogi", tools: ["road", "stop"] },
+  { id: "rail", ic: "🛤️", n: "Kolej", tools: ["rail", "station"] },
+  { id: "water", ic: "⚓", n: "Żegluga", tools: ["dock"] },
+  { id: "city", ic: "🏘️", n: "Miasto", tools: ["house", "flat", "tower", "shop", "park", "hq", "townhall"] },
+  { id: "ind", ic: "🏭", n: "Przemysł", tools: ["coal", "mine", "sawmill", "farm", "steel", "factory", "foodplant", "power"] },
+  { id: "veh", ic: "🚆", n: "Kup pojazd", win: "buy" },
+  { id: "bull", ic: "💥", n: "Burzenie (przeciągnij obszar)", tools: ["bulldoze"] },
+];
+let catOpen = null;
+function buildTools() {
+  const el = $("tools"); el.innerHTML = "";
+  for (const c of CATS) {
+    const b = document.createElement("button"); b.textContent = c.ic; b.dataset.tip = c.n;
+    const on = c.win ? win === "buy" : c.tools.includes(tool);
+    if (on) b.classList.add("on");
+    b.onclick = () => {
+      if (c.win) { openWin("buy"); catOpen = null; buildTools(); renderPal(); return; }
+      if (c.tools.length === 1) { setTool(c.tools[0]); catOpen = null; }
+      else catOpen = catOpen === c.id ? null : c.id;
+      buildTools(); renderPal();
+    };
+    el.appendChild(b);
+  }
+}
+function renderPal() {
+  const p = $("pal"), c = CATS.find(c => c.id === catOpen);
+  if (!c) { p.style.display = "none"; return; }
+  p.style.display = "block";
+  p.innerHTML = `<h4>${esc(c.n)}</h4>` + c.tools.map(k => {
+    const b = BUILD[k];
+    return `<button class="tool ${tool === k ? "on" : ""}" data-t="${k}"><span class="ic">${b.ic}</span><span class="tt"><b>${b.name}</b><small>${b.d}</small></span><span class="pr">${fmt(b.cost)} $</span></button>`;
+  }).join("");
+  p.querySelectorAll("[data-t]").forEach(b => b.onclick = () => { setTool(b.dataset.t); renderPal(); });
+}
+function setTool(t) {
+  tool = t; preview = null;
+  if (t !== "route" && win === "buy") closeWin();
+  buildTools();
+  const b = BUILD[t]; if (b && b.d) say(`${b.ic} ${b.name}: ${b.d}`);
+  if (t === "bulldoze") say("💥 Burzenie: kliknij lub przeciągnij obszar. Własne obiekty – zwrot 40%; zabudowa miejska – odszkodowanie ×2.");
+}
+// --- okna ---
+function openWin(w, arg) {
+  win = w; winArg = arg; $("win").style.display = "flex";
+  if (w === "buy") { tool = "route"; if (!buy.st.length) say("Wybierz model, a potem klikaj kolejne stacje na mapie."); }
+  else if (tool === "route") tool = "info";
+  buildTools(); renderWin();
+}
+function closeWin() { if (win === "buy" && tool === "route") tool = "info"; win = null; winArg = null; $("win").style.display = "none"; buildTools(); }
+$("wx").onclick = closeWin;
+document.querySelectorAll("#wbtn [data-w]").forEach(b => b.onclick = () => win === b.dataset.w ? closeWin() : openWin(b.dataset.w));
+const chips = obj => Object.entries(obj).filter(([, n]) => n > 0).map(([c, n]) => CARGO[c] ? `<span class="chip"><i style="background:${CARGO[c].c}"></i>${CARGO[c].n} ${fmt(n)}</span>` : "").join("") || '<span class="mut">—</span>';
+const accChips = list => list.length ? list.map(c => `<span class="chip"><i style="background:${CARGO[c].c}"></i>${CARGO[c].n}</span>`).join("") : '<span class="mut">nic</span>';
+function supplyAt(k) {
+  const t = tiles[k]; if (!t || t.t === "buyer") return { sup: {}, acc: t && t.t === "buyer" ? FREIGHT : [] };
+  const [x, y] = xy(k), info = catchInfo(x, y, RAD[t.t] || 3), sup = {};
+  for (const c in info.src) sup[c] = info.src[c].reduce((a, s) => a + ((stock[s] || {})[c] || 0), 0);
+  return { sup, acc: Object.keys(info.acc) };
+}
+function renderWin() {
+  if (!win) return;
+  const wb = $("wb"), sc = wb.scrollTop; let title = "", h = "";
+  const g = gdate();
+  if (win === "fin") {
+    title = "💼 Finanse firmy";
+    const inc = fin.transport + fin.rent + fin.sales + fin.industry, exp = fin.build + fin.vehicles + fin.run + fin.interest;
+    const row = (n, v, cls) => `<tr><td>${n}</td><td class="r ${cls || ""}">${money(v)}</td></tr>`;
+    h += `<div class="card"><div class="hd"><b>Gotówka</b><span class="${cash < 0 ? "neg" : "pos"}">${money(cash)}</span></div>
+      <div class="hd"><b>Kredyt</b><span>${money(loan)} / ${money(MAX_LOAN)}</span></div>
+      <div class="row"><button class="btn" data-a="loan+" ${loan >= MAX_LOAN ? "disabled" : ""}>Pożycz ${fmt(LOAN_STEP)} $</button><button class="btn" data-a="loan-" ${loan <= 0 || cash < LOAN_STEP ? "disabled" : ""}>Spłać ${fmt(LOAN_STEP)} $</button></div>
+      <div class="mut">Oprocentowanie ${RATE * 100}% rocznie, płatne co miesiąc.</div></div>
+      <div class="card"><div class="hd"><b>Wartość firmy</b><span class="pos">${money(companyValue())}</span></div></div>
+      <div class="sec">Rok ${g.y}</div><table>
+      ${row("🚚 Transport", fin.transport, "pos")}${row("🏠 Czynsze", fin.rent, "pos")}${row("🏪 Sprzedaż w sklepach", fin.sales, "pos")}${row("🏭 Przemysł", fin.industry, "pos")}
+      <tr><th>Przychody</th><th class="r pos">${money(inc)}</th></tr>
+      ${row("🏗️ Budowa", -fin.build, "neg")}${row("🚆 Zakup pojazdów", -fin.vehicles, "neg")}${row("🔧 Utrzymanie pojazdów", -fin.run, "neg")}${row("🏦 Odsetki", -fin.interest, "neg")}
+      <tr><th>Wynik</th><th class="r ${inc - exp >= 0 ? "pos" : "neg"}">${money(inc - exp)}</th></tr></table>`;
+    if (lastFin) { const li = lastFin.transport + lastFin.rent + lastFin.sales + lastFin.industry, le = lastFin.build + lastFin.vehicles + lastFin.run + lastFin.interest; h += `<div class="sec">Rok ${lastFin.y || g.y - 1}</div><table>${row("Przychody", li, "pos")}${row("Wydatki", -le, "neg")}${row("Wynik", li - le, li - le >= 0 ? "pos" : "neg")}</table>`; }
+  } else if (win === "veh") {
+    const mine = Object.entries(vehicles).filter(([, v]) => v.o === uid);
+    title = `🚌 Twoje pojazdy (${mine.length})`;
+    h += `<button class="btn pri" data-a="newveh" style="width:100%;margin-bottom:8px">+ Kup nowy pojazd</button>`;
+    if (!mine.length) h += `<div class="mut">Nie masz jeszcze pojazdów. Zbuduj dwie stacje połączone drogą lub torem, a potem kup pojazd.</div>`;
+    const ts = now() / 1000;
+    for (const [id, v] of mine.sort((a, b) => (b[1].py || 0) - (a[1].py || 0))) {
+      const s = vstate(id, v, ts), st = stopsOf(v), m = VEH[v.k] || { ic: "?", name: v.k };
+      const where = !s ? '<span class="neg">⚠ Brak trasy – sprawdź tory/drogi</span>' : s.dw ? `stoi: ${esc(stationName(st[s.i]))}` : `→ ${esc(stationName(st[(s.i + 1) % st.length]))}`;
+      const ldO = {}; for (const c in v.ld || {}) ldO[c] = v.ld[c].n;
+      h += `<div class="card"><div class="hd">${m.ic} <b>${esc(vehName(id, v))}</b><button class="btn" data-a="follow:${id}" title="Śledź">📍</button><button class="btn red" data-a="sell:${id}" title="Sprzedaj">✕</button></div>
+        <div class="mut">${where}</div><div>${chips(ldO)}</div>
+        <div class="row"><span>Zysk ${g.y}: <b class="${(v.py || 0) >= 0 ? "pos" : "neg"}">${money(v.py || 0)}</b></span><span class="mut">ub. rok: ${money(v.pl || 0)}</span></div>
+        <div class="mut" style="font-size:11px">${st.map(k => esc(stationName(k))).join(" → ")} ↺ · utrzymanie ${money(runCost(v))}/rok · wartość ${money(vehValue(v))}</div></div>`;
+    }
+  } else if (win === "sta") {
+    const mine = getIdx().stations.filter(k => tiles[k].o === uid);
+    title = `🚉 Twoje stacje (${mine.length})`;
+    if (!mine.length) h += `<div class="mut">Brak stacji. Zbuduj przystanek (🛣️), dworzec (🛤️) lub port (⚓) w pobliżu miasta lub zakładu.</div>`;
+    for (const k of mine) {
+      const { sup, acc } = supplyAt(k), n = Object.values(vehicles).filter(v => stopsOf(v).includes(k)).length;
+      h += `<div class="card"><div class="hd">${BUILD[tiles[k].t].ic} <b>${esc(stationName(k))}</b><button class="btn" data-a="go:${k}">📍</button></div>
+      <div class="mut">Do zabrania:</div><div>${chips(sup)}</div><div class="mut">Przyjmuje:</div><div>${accChips(acc)}</div><div class="mut" style="font-size:11px">Obsługiwana przez ${n} pojazd(ów)</div></div>`;
+    }
+  } else if (win === "town") {
+    const list = getIdx().list.slice().sort((a, b) => b.pop - a.pop);
+    title = `🏘️ Miasta (${list.length})`;
+    if (!list.length) h += `<div class="mut">Świat jeszcze się zaludnia… (miasta tworzy host świata).</div>`;
+    for (const Tn of list) {
+      const st = stock["T_" + Tn.k] || {}, served = (st.sv || 0) > 5;
+      h += `<div class="card"><div class="hd">🏘️ <b>${esc(Tn.n)}</b><span>${fmt(Tn.pop)} mieszk.</span><button class="btn" data-a="go:${Tn.k}">📍</button></div>
+        <div class="row"><span class="chip">${Tn.houses} budynków</span><span class="chip" style="${served ? "background:#2d6a4f" : ""}">${served ? "✓" : "✗"} komunikacja</span><span class="chip" style="${st.g > 3 ? "background:#2d6a4f" : ""}">${st.g > 3 ? "✓" : "✗"} towary</span><span class="chip" style="${st.f > 3 ? "background:#2d6a4f" : ""}">${st.f > 3 ? "✓" : "✗"} żywność</span></div>
+        <div class="mut">Czeka: ${chips({ pass: st.pass || 0, mail: st.mail || 0 })}</div></div>`;
+    }
+    h += `<div class="mut" style="font-size:12px">Miasta rosną szybciej, gdy wozisz z nich pasażerów i dostarczasz towary oraz żywność.</div>`;
+  } else if (win === "rank") {
+    title = "🏆 Ranking firm";
+    const t = now(), list = Object.entries(players).filter(([, p]) => p && p.name).map(([k, p]) => ({ k, ...p, v: p.val ?? p.cash })).sort((a, b) => b.v - a.v);
+    h += `<table><tr><th>#</th><th>Firma</th><th class="r">Wartość</th></tr>` + list.slice(0, 30).map((p, i) => `<tr><td>${i + 1}</td><td><span class="chip"><i style="background:${ownerHex(p.k)}"></i>${esc(p.name)}</span>${p.hb && t - p.hb < 75000 ? " 🟢" : ""}${p.k === uid ? " <b>(Ty)</b>" : ""}</td><td class="r">${money(p.v)}</td></tr>`).join("") + "</table>";
+  } else if (win === "help") {
+    title = "❓ Jak grać";
+    h += `<p><b>Jedna mapa dla wszystkich.</b> Każdy gracz to firma przewozowa i deweloper. Miasta rosną same, a zakłady produkują – Ty zarabiasz na transporcie.</p>
+    <div class="sec">Pierwsze kroki</div><ol style="padding-left:18px;line-height:1.5">
+    <li>Znajdź dwa miasta (okno 🏘️ Miasta) albo kopalnię i elektrownię.</li>
+    <li>Połącz je drogą 🛣️ lub torem 🛤️ – <b>przeciągnij</b> myszą, żeby budować linię.</li>
+    <li>Postaw przystanek 🚏 / dworzec 🚉 tak, by niebieski obszar zasięgu obejmował domy lub zakład.</li>
+    <li>Kup pojazd 🚆, wybierz model i klikaj kolejne stacje trasy.</li>
+    <li>Pojazdy zabierają ładunek, który przyjmie któryś z kolejnych przystanków. Im dalej i szybciej, tym więcej płacą.</li></ol>
+    <div class="sec">Łańcuchy dostaw</div>
+    <div>⛏️ węgiel → ⚡ elektrownia<br>⛰️ ruda → 🔥 huta → stal → 🏭 fabryka → towary → 🏙️ miasta / 🏪 sklepy<br>🪵 drewno → 🏭 fabryka<br>🌾 zboże → 🥫 przetwórnia → żywność → miasta / sklepy<br>🏘️ miasta ⇄ pasażerowie i poczta<br>SKUP na brzegach mapy kupuje każdy towar ×1.5</div>
+    <div class="sec">Sterowanie</div>
+    <div>Lewy przycisk – akcja / przeciąganie linii (Shift – zmiana załamania) · prawy przycisk lub 🔍 + przeciągnij – przesuwanie · kółko / +− – zoom · WASD/strzałki – kamera · Esc – anuluj · \` – konsola.</div>
+    <div class="sec">Ekonomia</div><div>Rok trwa 18 minut. Pojazdy kosztują utrzymanie co miesiąc, kredyt – odsetki. Zarabiasz tylko gdy jesteś online (Twoje pojazdy rozlicza Twoja przeglądarka).</div>`;
+  } else if (win === "buy") {
+    title = "🚆 Nowy pojazd";
+    const m = VEH[buy.k];
+    h += `<div class="sec">Model</div>`;
+    for (const kind of ["road", "rail", "water"]) {
+      h += `<div class="mut" style="margin:6px 0 3px">${{ road: "Drogowe", rail: "Kolejowe", water: "Wodne" }[kind]}</div>`;
+      for (const [k, v] of Object.entries(VEH).filter(([, v]) => v.kind === kind)) {
+        const capS = v.cap ? Object.entries(v.cap).map(([c, n]) => `${n} ${{ p: "pas.", m: "poczty", f: "t ładunku" }[c]}`).join(", ") : `do ${v.maxw} wagonów`;
+        h += `<button class="mbtn ${buy.k === k ? "on" : ""}" data-a="model:${k}">${v.ic} <b>${v.name}</b> — ${fmt(v.cost)} $<br><small>prędkość ${v.speed} pól/s · ${capS} · utrzymanie ${fmt(v.run)} $/rok</small></button>`;
+      }
+    }
+    if (m.kind === "rail") {
+      h += `<div class="sec">Wagony (maks. ${m.maxw})</div>`;
+      for (const w of ["p", "m", "f"]) h += `<div class="row"><button class="btn" data-a="w-:${w}">−</button><b style="width:22px;text-align:center">${buy.w[w]}</b><button class="btn" data-a="w+:${w}">+</button><span>${WAGON[w].name} <span class="mut">(${WAGON[w].cap}, ${fmt(WAGON[w].cost)} $)</span></span></div>`;
+    }
+    const wagons = m.kind === "rail" ? "p".repeat(buy.w.p) + "m".repeat(buy.w.m) + "f".repeat(buy.w.f) : "";
+    const cost = m.cost + [...wagons].reduce((a, w) => a + WAGON[w].cost, 0);
+    h += `<div class="sec">Trasa (klikaj ${m.kind === "road" ? "przystanki / dworce" : m.kind === "rail" ? "dworce" : "porty"} na mapie)</div>`;
+    h += buy.st.length ? `<ol style="padding-left:20px;margin:4px 0">${buy.st.map(k => `<li>${esc(stationName(k))}</li>`).join("")}</ol><div class="mut">↺ potem wraca na początek</div>` : `<div class="mut">Brak przystanków.</div>`;
+    let err = "";
+    if (buy.st.length >= 2) for (let i = 0; i < buy.st.length; i++) if (!bfs(m.kind, buy.st[i], buy.st[(i + 1) % buy.st.length])) { err = `Brak połączenia: ${stationName(buy.st[i])} → ${stationName(buy.st[(i + 1) % buy.st.length])}`; break; }
+    if (m.kind === "rail" && !wagons.length) err = err || "Dodaj przynajmniej jeden wagon.";
+    if (err) h += `<div class="neg" style="margin:6px 0">⚠ ${esc(err)}</div>`;
+    h += `<div class="row"><button class="btn" data-a="undo">↶ Cofnij</button><button class="btn" data-a="clear">Wyczyść</button></div>
+      <button class="btn pri" data-a="buy" style="width:100%" ${buy.st.length < 2 || err || cash < cost ? "disabled" : ""}>Kup za ${fmt(cost)} $</button>`;
+  } else if (win === "tile") {
+    const k = winArg, t = tiles[k];
+    if (!t) { title = "Puste pole"; const [x, y] = xy(k); h += `<div>${["Woda", "Łąka", "Las", "Piasek"][terrain[y * N + x]]} (${x}, ${y})</div>`; }
+    else {
+      const b = BUILD[t.t] || { name: t.t, ic: "" }, owner = t.o === "sys" ? "świat" : t.o === "town" ? "miasto" : (players[t.o] || {}).name || t.n || "?";
+      title = `${b.ic || ""} ${RAD[t.t] ? stationName(k) : t.t === "townhall" ? t.n : b.name}`;
+      h += `<div class="card"><div class="hd"><b>${b.name}${t.b ? " (most)" : ""}</b><span class="chip"><i style="background:${ownerHex(t.o)}"></i>${esc(owner)}</span></div>`;
+      if (t.t === "townhall") { const Tn = getIdx().towns[k]; h += `<div>Mieszkańców: <b>${fmt(Tn ? Tn.pop : 0)}</b>, budynków: ${Tn ? Tn.houses : 0}</div>${t.f ? `<div class="mut">Założone przez: ${esc(t.f)}</div>` : ""}<div class="mut">Czeka: ${chips({ pass: (stock["T_" + k] || {}).pass || 0, mail: (stock["T_" + k] || {}).mail || 0 })}</div>`; }
+      const r = RECIPE[t.t];
+      if (r) h += `<div class="mut">${r.in ? "Przyjmuje: " + r.in.map(c => CARGO[c].n).join(", ") : ""}${r.out ? " · Produkuje: " + CARGO[r.out].n : ""}</div><div>Magazyn: ${chips(stock[k] || {})}</div>`;
+      if (ACCEPT[t.t] && !r) h += `<div class="mut">Przyjmuje: ${ACCEPT[t.t].map(c => CARGO[c].n).join(", ")}</div>`;
+      if (getIdx().houseTown[k] && t.t !== "townhall") h += `<div class="mut">Należy do miasta ${esc((getIdx().towns[getIdx().houseTown[k]] || {}).n)}</div>`;
+      if (RENT[t.t] && t.o === uid) h += `<div class="mut">Czynsz: ${RENT[t.t]} $ / takt${nearRoad(...xy(k)) ? "" : ' <span class="neg">(brak drogi!)</span>'}</div>`;
+      h += `</div>`;
+      if (RAD[t.t]) {
+        const { sup, acc } = supplyAt(k);
+        h += `<div class="sec">Zasięg ${RAD[t.t]} pól</div><div class="mut">Do zabrania:</div><div>${chips(sup)}</div><div class="mut">Przyjmuje:</div><div>${accChips(acc)}</div>`;
+        const vs = Object.entries(vehicles).filter(([, v]) => stopsOf(v).includes(k));
+        if (vs.length) h += `<div class="sec">Pojazdy (${vs.length})</div>` + vs.map(([id, v]) => `<div>${(VEH[v.k] || {}).ic || ""} ${esc(vehName(id, v))} <span class="mut">– ${esc((players[v.o] || {}).name || "")}</span></div>`).join("");
+        if (t.o === uid || t.t === "buyer") h += `<button class="btn pri" data-a="newfrom:${k}" style="width:100%;margin-top:8px">Kup pojazd z tej stacji</button>`;
+      }
+    }
+  }
+  $("wt").textContent = title; wb.innerHTML = h; wb.scrollTop = sc;
+}
+setInterval(() => { if (win && win !== "buy") renderWin(); }, 1500);
+$("wb").addEventListener("click", e => {
+  const b = e.target.closest("[data-a]"); if (!b || b.disabled) return;
+  const [a, arg] = b.dataset.a.split(":");
+  if (a === "loan+") { const n = Math.min(LOAN_STEP, MAX_LOAN - loan); loan += n; cash += n; savePlayer(); }
+  if (a === "loan-") { const n = Math.min(LOAN_STEP, loan); if (cash >= n) { loan -= n; cash -= n; savePlayer(); } }
+  if (a === "newveh") { buy.st = []; openWin("buy"); return; }
+  if (a === "newfrom") { buy.st = [arg]; const t = tiles[arg].t; buy.k = t === "dock" ? "barge" : t === "stop" ? "bus" : "train"; openWin("buy"); return; }
+  if (a === "follow") { follow = arg; say("Śledzenie pojazdu – przesuń mapę, by przestać."); }
+  if (a === "go") { const [x, y] = xy(arg); jumpTo(x, y); }
+  if (a === "sell") {
+    const v = vehicles[arg]; if (!v || v.o !== uid) return;
+    const val = Math.round(vehValue(v));
+    if (!confirm(`Sprzedać ${vehName(arg, v)} za ${money(val)}?`)) return;
+    remove(ref(db, "vehicles/" + arg)); cash += val; fin.vehicles -= val; savePlayer(); news(`Sprzedano ${vehName(arg, v)} za ${money(val)}.`);
+  }
+  if (a === "model") { buy.k = arg; const kind = VEH[arg].kind; buy.st = buy.st.filter(k => STOPS_FOR[kind].includes((tiles[k] || {}).t)); }
+  if (a === "w+" || a === "w-") { const m = VEH[buy.k], tot = buy.w.p + buy.w.m + buy.w.f; if (a === "w+" && tot < m.maxw) buy.w[arg]++; if (a === "w-" && buy.w[arg] > 0) buy.w[arg]--; }
+  if (a === "undo") buy.st.pop();
+  if (a === "clear") buy.st = [];
+  if (a === "buy") doBuy();
+  renderWin();
+});
+function doBuy() {
+  const m = VEH[buy.k], wagons = m.kind === "rail" ? "p".repeat(buy.w.p) + "m".repeat(buy.w.m) + "f".repeat(buy.w.f) : "";
+  const cost = m.cost + [...wagons].reduce((a, w) => a + WAGON[w].cost, 0);
+  if (cash < cost) return say("Za mało gotówki.", "bad");
+  const nm = Object.values(vehicles).filter(v => v.o === uid && v.k === buy.k).length + 1;
+  const v = { k: buy.k, o: uid, st: buy.st.slice(), t0: now(), nm, py: 0, pl: 0, yr: gdate().y, cost };
+  if (wagons) v.w = wagons;
+  const id = Date.now().toString(36) + uid.slice(0, 3);
+  cash -= cost; fin.vehicles += cost; savePlayer();
+  set(ref(db, "vehicles/" + id), v);
+  news(`${m.ic} Nowy pojazd: ${m.name} #${nm} wyrusza na trasę ${buy.st.map(stationName).join(" → ")}!`, "good");
+  buy.st = []; renderWin();
+}
+// --- wiadomości ---
+let msgUntil = 0;
+const DEFAULT_TIP = "Lewy przycisk – akcja / przeciąganie linii · prawy – przesuwanie · kółko – zoom · Esc – anuluj · ` – konsola";
+function say(t, cls) { const s = $("status"); s.textContent = t; s.style.borderColor = cls === "bad" ? "#ff7a7a" : ""; msgUntil = performance.now() + 5000; }
+function news(html, cls, raw) {
+  const d = document.createElement("div"); d.className = cls || ""; d.innerHTML = raw ? html : esc(html);
+  const el = $("news"); el.prepend(d); while (el.children.length > 4) el.lastChild.remove();
+  setTimeout(() => { d.style.transition = "opacity .5s"; d.style.opacity = 0; setTimeout(() => d.remove(), 600); }, 6000);
+}
+function hud() {
+  const g = gdate();
+  $("date").textContent = `${g.dd} ${MON[g.m]} ${g.y}`;
+  $("cash").textContent = money(cash); $("cash").classList.toggle("neg", cash < 0);
+  $("loan").textContent = money(loan);
+  if (performance.now() > msgUntil) {
+    let txt = DEFAULT_TIP;
+    const t = hover && inMap(hover.x, hover.y) && tiles[K(hover.x, hover.y)];
+    if (t) {
+      const hk = K(hover.x, hover.y), b = BUILD[t.t] || { name: t.t }, own = t.o === "sys" ? "świat" : t.o === "town" ? "miasto" : (players[t.o] || {}).name || t.n || "";
+      txt = `${b.ic || ""} ${RAD[t.t] ? stationName(hk) : t.t === "townhall" ? t.n + " – ratusz" : b.name}${own ? " · " + own : ""}` + (stock[hk] ? " · " + Object.entries(stock[hk]).filter(([c, n]) => CARGO[c] && n > 0).map(([c, n]) => `${CARGO[c].n} ${n}`).join(", ") : "");
+    } else if (preview) txt = `${preview.plan.length} pól · ${money(Math.abs(preview.cost))}`;
+    const s = $("status"); if (s.textContent !== txt) { s.textContent = txt; s.style.borderColor = ""; }
+  }
+}
+
+// --- minimapa ---
 const mini = $("mini"), mctx = mini.getContext("2d"), miniBase = document.createElement("canvas");
 mini.width = mini.height = miniBase.width = miniBase.height = N;
-{
-  const m = miniBase.getContext("2d"), MC = ["#2f6f8f", "#6fa65a", "#3f7f45", "#d9c58a"];
-  for (let i = 0; i < N * N; i++) { m.fillStyle = MC[terrain[i]]; m.fillRect(i % N, (i / N) | 0, 1, 1); }
-}
+{ const m = miniBase.getContext("2d"), MC = ["#2f6f8f", "#6fa65a", "#3f7f45", "#d9c58a"]; for (let i = 0; i < N * N; i++) { m.fillStyle = MC[terrain[i]]; m.fillRect(i % N, (i / N) | 0, 1, 1); } }
+const MINI_COL = { road: "#555", rail: "#8a7a62", xing: "#666", house: "#e0a368", flat: "#d08a5a", tower: "#c0c8d0", townhall: "#fff", shop: "#5fa8d3", park: "#9fd36a" };
 setInterval(() => {
   mctx.drawImage(miniBase, 0, 0);
-  for (const k in tiles) { const [x, y] = k.split("_"); mctx.fillStyle = ownerColor(tiles[k].o); mctx.fillRect(x, y, 1, 1); }
-  const c = toTile(innerWidth / 2, innerHeight / 2);
-  mctx.strokeStyle = "#fff"; mctx.strokeRect(c.x - 5, c.y - 5, 10, 10);
-}, 700);
-mini.onclick = e => {
-  const r = mini.getBoundingClientRect(), s = toScreen((e.clientX - r.left) / r.width * N, (e.clientY - r.top) / r.height * N);
-  cam.x = innerWidth / 2 - s.x * cam.z; cam.y = innerHeight / 2 - s.y * cam.z;
-};
+  for (const k in tiles) { const [x, y] = xy(k), t = tiles[k]; mctx.fillStyle = MINI_COL[t.t] || (t.o === "sys" ? "#e04848" : ownerHex(t.o)); mctx.fillRect(x, y, 1, 1); }
+  const ts = now() / 1000; mctx.fillStyle = "#ff0";
+  for (const [id, v] of Object.entries(vehicles)) { const s = vstate(id, v, ts); if (s) { const p = carPos(s, 0); mctx.fillRect(p.x | 0, p.y | 0, 1, 1); } }
+  const a = toTile(0, 0), b = toTile(innerWidth, 0), c = toTile(innerWidth, innerHeight), d = toTile(0, innerHeight);
+  mctx.strokeStyle = "#fff"; mctx.lineWidth = .8; mctx.beginPath(); mctx.moveTo(a.x, a.y); mctx.lineTo(b.x, b.y); mctx.lineTo(c.x, c.y); mctx.lineTo(d.x, d.y); mctx.closePath(); mctx.stroke();
+}, 600);
+mini.onclick = e => { const r = mini.getBoundingClientRect(); jumpTo((e.clientX - r.left) / r.width * N, (e.clientY - r.top) / r.height * N); };
+function jumpTo(x, y) { follow = null; const s = toScreen(x, y); cam.x = innerWidth / 2 - s.x * cam.z; cam.y = innerHeight / 2 - s.y * cam.z; }
+function jumpHome() {
+  const mineT = Object.keys(tiles).find(k => tiles[k].o === uid && RAD[tiles[k].t]);
+  const T0 = getIdx().list.slice().sort((a, b) => b.pop - a.pop)[0];
+  if (mineT) { const [x, y] = xy(mineT); jumpTo(x, y); } else if (T0) jumpTo(T0.x, T0.y);
+}
 
 // ============================================================
-// 9. STEROWANIE (mysz / dotyk)
+// 14. STEROWANIE (mysz / dotyk / klawiatura)
 // ============================================================
-let drag = null;
-canvas.addEventListener("pointerdown", e => { drag = { x: e.clientX, y: e.clientY, cx: cam.x, cy: cam.y, moved: false }; });
+let drag = null; const pts = new Map(); let pinch = null;
+canvas.addEventListener("contextmenu", e => e.preventDefault());
+canvas.addEventListener("pointerdown", e => {
+  canvas.setPointerCapture(e.pointerId); pts.set(e.pointerId, { x: e.clientX, y: e.clientY });
+  if (pts.size === 2) { const [a, b] = [...pts.values()]; pinch = { d: Math.hypot(a.x - b.x, a.y - b.y), z: cam.z, cx: cam.x, cy: cam.y, mx: (a.x + b.x) / 2, my: (a.y + b.y) / 2 }; drag = null; preview = null; return; }
+  const t = toTile(e.clientX, e.clientY);
+  const pan = e.button === 2 || e.button === 1 || tool === "info" || tool === "route" || (!["road", "rail", "bulldoze"].includes(tool));
+  drag = { x: e.clientX, y: e.clientY, cx: cam.x, cy: cam.y, moved: false, pan, start: t };
+});
 canvas.addEventListener("pointermove", e => {
+  if (pts.has(e.pointerId)) pts.set(e.pointerId, { x: e.clientX, y: e.clientY });
+  if (pinch && pts.size === 2) {
+    const [a, b] = [...pts.values()], d = Math.hypot(a.x - b.x, a.y - b.y), mx = (a.x + b.x) / 2, my = (a.y + b.y) / 2;
+    const z = Math.max(.25, Math.min(2.5, pinch.z * d / pinch.d));
+    cam.z = z; cam.x = mx - (pinch.mx - pinch.cx) * z / pinch.z; cam.y = my - (pinch.my - pinch.cy) * z / pinch.z; return;
+  }
   hover = toTile(e.clientX, e.clientY);
   if (!drag) return;
   const dx = e.clientX - drag.x, dy = e.clientY - drag.y;
-  if (Math.abs(dx) + Math.abs(dy) > 5) drag.moved = true;
-  if (drag.moved) { cam.x = drag.cx + dx; cam.y = drag.cy + dy; }
+  if (Math.abs(dx) + Math.abs(dy) > 6) drag.moved = true;
+  if (!drag.moved) return;
+  if (drag.pan) { follow = null; cam.x = drag.cx + dx; cam.y = drag.cy + dy; }
+  else {
+    const plan = tool === "bulldoze" ? planArea(drag.start, hover) : planLine(tool, drag.start, hover);
+    preview = { plan, cost: plan.reduce((a, p) => a + p.cost, 0), end: hover };
+  }
 });
 canvas.addEventListener("pointerup", e => {
-  if (drag && !drag.moved) { const t = toTile(e.clientX, e.clientY); act(t.x, t.y); }
-  drag = null;
+  pts.delete(e.pointerId);
+  if (pinch) { if (pts.size < 2) pinch = null; drag = null; return; }
+  if (!drag) return;
+  const t = toTile(e.clientX, e.clientY);
+  if (!drag.moved && e.button === 0) act(t.x, t.y);
+  else if (drag.moved && !drag.pan && preview) execPlan(preview.plan, tool === "bulldoze" ? "Wyburzono" : `Zbudowano ${BUILD[tool].name.toLowerCase()}`);
+  drag = null; preview = null;
 });
-canvas.addEventListener("wheel", e => {
-  const old = cam.z;
-  cam.z = Math.max(0.25, Math.min(2.5, cam.z * (e.deltaY < 0 ? 1.1 : 0.9)));
-  cam.x = e.clientX - (e.clientX - cam.x) * cam.z / old;     // zoom w stronę kursora
-  cam.y = e.clientY - (e.clientY - cam.y) * cam.z / old;
+canvas.addEventListener("pointerleave", () => { hover = null; });
+canvas.addEventListener("wheel", e => { e.preventDefault(); zoomAt(e.clientX, e.clientY, e.deltaY < 0 ? 1.12 : 1 / 1.12); }, { passive: false });
+function zoomAt(px, py, f) { const old = cam.z; cam.z = Math.max(0.25, Math.min(2.5, cam.z * f)); cam.x = px - (px - cam.x) * cam.z / old; cam.y = py - (py - cam.y) * cam.z / old; }
+function act(x, y) {
+  if (!inMap(x, y)) return;
+  const k = K(x, y), t = tiles[k];
+  if (tool === "info") { openWin("tile", k); return; }
+  if (tool === "route") {
+    const kind = VEH[buy.k].kind;
+    if (!t || !STOPS_FOR[kind].includes(t.t)) return say(`Kliknij ${kind === "road" ? "przystanek, dworzec lub skup" : kind === "rail" ? "dworzec lub skup" : "port"}.`, "bad");
+    if (t.o !== uid && t.o !== "sys") return say("To stacja innej firmy – możesz korzystać tylko ze swoich (i skupów).", "bad");
+    if (buy.st[buy.st.length - 1] === k) return;
+    buy.st.push(k); renderWin(); return;
+  }
+  if (tool === "bulldoze") return execPlan(planArea({ x, y }, { x, y }), "Wyburzono");
+  if (tool === "road" || tool === "rail") return execPlan(planLine(tool, { x, y }, { x, y }), `Zbudowano ${BUILD[tool].name.toLowerCase()}`);
+  const r = planSingle(tool, x, y);
+  if (r.err) return say(r.err, "bad");
+  execPlan(r.plan, `Zbudowano: ${BUILD[tool].name}`);
+  if (tool === "townhall") { news(`🏰 ${myName} założył(a) nowe miasto: ${r.plan[0].v.n}!`, "good"); setTool("info"); }
+}
+const keys = {};
+addEventListener("keydown", e => {
+  if (e.target.tagName === "INPUT") return;
+  if (e.key === "`") return;
+  keys[e.key.toLowerCase()] = true;
+  if (e.key === "Shift") { flipL = !flipL; if (drag && !drag.pan && preview && hover) { const plan = tool === "bulldoze" ? planArea(drag.start, hover) : planLine(tool, drag.start, hover); preview = { plan, cost: plan.reduce((a, p) => a + p.cost, 0), end: hover }; } }
+  if (e.key === "Escape") { if (win === "buy") closeWin(); setTool("info"); catOpen = null; renderPal(); preview = null; drag = null; }
+  if (e.key === "+" || e.key === "=") zoomAt(innerWidth / 2, innerHeight / 2, 1.15);
+  if (e.key === "-") zoomAt(innerWidth / 2, innerHeight / 2, 1 / 1.15);
 });
-
-// pasek narzędzi
-const bar = $("bar");
-[...Object.keys(BUILD).filter(k => k !== "buyer"), ...Object.keys(VEH), "bulldoze"].forEach(k => {
-  const btn = document.createElement("button");
-  btn.textContent = k === "bulldoze" ? "Burz" : `${(BUILD[k] || VEH[k]).name} (${(BUILD[k] || VEH[k]).cost} $)`;
-  btn.onclick = () => { tool = k; [...bar.children].forEach(b => b.classList.remove("on")); btn.classList.add("on"); };
-  if (k === tool) btn.classList.add("on");
-  bar.appendChild(btn);
-});
+addEventListener("keyup", e => keys[e.key.toLowerCase()] = false);
+addEventListener("blur", () => { for (const k in keys) keys[k] = false; });
+function panKeys() {
+  const s = 14; let dx = 0, dy = 0;
+  if (keys.a || keys.arrowleft) dx += s; if (keys.d || keys.arrowright) dx -= s; if (keys.w || keys.arrowup) dy += s; if (keys.s || keys.arrowdown) dy -= s;
+  if (dx || dy) { follow = null; cam.x += dx; cam.y += dy; }
+}
 
 // ============================================================
-// 10. KONSOLA (klawisz `)
+// 15. KONSOLA (klawisz `)
 // ============================================================
 const con = $("con"), out = $("out"), inp = $("in");
 const log = t => { out.textContent += t + "\n"; out.scrollTop = out.scrollHeight; };
-
 addEventListener("keydown", e => {
   if (e.key === "`") {
     e.preventDefault();
@@ -743,34 +1720,25 @@ addEventListener("keydown", e => {
     if (!open) { inp.focus(); if (!out.textContent) log("Konsola. Wpisz 'help'."); }
   }
 });
-
 inp.addEventListener("keydown", async e => {
   if (e.key !== "Enter") return;
   const line = inp.value.trim(); inp.value = "";
   if (!line) return;
   log("> " + line.replace(/^(login \S+ ).*/, "$1***"));
   const [cmd, ...args] = line.split(/\s+/);
-
   switch (cmd) {
-    case "help":
-      log("login <użytkownik> <hasło>  – logowanie admina\nlogout\nreset   – (admin) czyści całą mapę\ngive <ile>  – (admin) dodaje gotówkę\nwho     – status");
-      break;
-    case "login":
-      // UWAGA: to zabezpieczenie jest tylko po stronie klienta (patrz instrukcja)
-      if (args[0] === "admin" && args[1] === "admin") { isAdmin = true; log("Zalogowano jako admin."); }
-      else log("Błędne dane.");
-      break;
+    case "help": log("login <użytkownik> <hasło>  – logowanie admina\nlogout\nreset   – (admin) czyści całą mapę\nseed    – (admin) ponownie zaludnia świat\ngive <ile>  – (admin) dodaje gotówkę\nname <nazwa> – zmiana nazwy firmy\nwho     – status"); break;
+    case "login": if (args[0] === "admin" && args[1] === "admin") { isAdmin = true; log("Zalogowano jako admin."); } else log("Błędne dane."); break;
     case "logout": isAdmin = false; log("Wylogowano."); break;
-    case "who": log(isAdmin ? "admin" : "gracz " + myName); break;
-    case "give":
-      if (!isAdmin) return log("Brak uprawnień. Użyj: login admin admin");
-      cash += Number(args[0]) || 0; savePlayer(); log("Dodano gotówkę.");
-      break;
+    case "who": log((isAdmin ? "admin" : "gracz ") + myName + (amHost() ? " (host świata)" : "") + " · data " + JSON.stringify(gdate())); break;
+    case "name": if (args.length) { myName = args.join(" ").slice(0, 24); localStorage.setItem("cityName", myName); $("name").textContent = myName; savePlayer(); log("Zmieniono nazwę."); } break;
+    case "give": if (!isAdmin) return log("Brak uprawnień. Użyj: login admin admin"); cash += Number(args[0]) || 0; savePlayer(); log("Dodano gotówkę."); break;
+    case "seed": if (!isAdmin) return log("Brak uprawnień."); await remove(ref(db, "stock/_seed")); log("Host zaludni świat w ciągu kilku sekund."); break;
     case "reset":
       if (!isAdmin) return log("Brak uprawnień. Użyj: login admin admin");
       await remove(ref(db, "tiles")); await remove(ref(db, "stock")); await remove(ref(db, "vehicles"));
-      await set(ref(db, "resetAt"), Date.now());     // sygnał dla wszystkich klientów
-      log("Mapa zresetowana.");
+      await set(ref(db, "resetAt"), Date.now());
+      log("Mapa zresetowana. Host za chwilę zaludni nowy świat.");
       break;
     default: log("Nieznana komenda. Wpisz 'help'.");
   }
@@ -779,18 +1747,15 @@ inp.addEventListener("keydown", async e => {
 // ============================================================
 // START
 // ============================================================
-// kamera startuje na najbliższym lądzie od środka mapy
 function findLand() {
-  for (let r = 0; r < N / 2; r++) for (let dy = -r; dy <= r; dy++) for (let dx = -r; dx <= r; dx++) {
-    const x = N / 2 + dx, y = N / 2 + dy;
-    if (terrain[y * N + x] === 1) return { x, y };
-  }
+  for (let r = 0; r < N / 2; r++) for (let dy = -r; dy <= r; dy++) for (let dx = -r; dx <= r; dx++) { const x = N / 2 + dx, y = N / 2 + dy; if (terrain[y * N + x] === 1) return { x, y }; }
   return { x: N / 2, y: N / 2 };
 }
-const start = toScreen(findLand().x, findLand().y);
-cam.x = innerWidth / 2 - start.x * cam.z; cam.y = innerHeight / 2 - start.y * cam.z;
-requestAnimationFrame(draw);     // mapa rysuje się od razu, także gdy Firebase nie odpowiada
-init().catch(err => { say("Błąd Firebase: " + err.message); console.error(err); });
+{ const l = findLand(); jumpTo(l.x, l.y); }
+buildTools();
+requestAnimationFrame(draw);
+if (location.search.includes("debug")) window.__dbg = { tiles, cam, toScreen, getIdx, act: (t, x, y) => { setTool(t); act(x, y); }, line: (t, a, b) => execPlan(planLine(t, a, b)), st: () => ({ cash, loan, uid, host: amHost(), vehicles, stock, date: gdate() }), buy, doBuy, openWin, setTool };
+init().catch(err => { say("Błąd Firebase: " + err.message, "bad"); console.error(err); $("load") && ($("load").style.opacity = 0, setTimeout(() => $("load") && $("load").remove(), 600)); });
 </script>
 </body>
 </html>
