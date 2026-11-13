@@ -1,0 +1,246 @@
+<!DOCTYPE html>
+<html lang="pl">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Bomba Słów</title>
+<style>
+:root{--bg:#14161f;--card:#1f2331;--fg:#eef0f6;--mut:#8b91a7;--acc:#ff9f1c;--bad:#ff5470;--ok:#3ddc97}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--fg);font-family:system-ui,sans-serif;min-height:100vh;display:flex;justify-content:center;padding:16px}
+#app{width:100%;max-width:560px}
+h1{text-align:center;margin:8px 0 18px}
+.card{background:var(--card);border-radius:14px;padding:18px;margin-bottom:14px}
+input,button{font:inherit;border-radius:10px;border:2px solid #343a52;background:#101320;color:var(--fg);padding:11px 14px;width:100%;margin-top:8px}
+button{background:var(--acc);color:#1a1200;border:0;font-weight:700;cursor:pointer}
+button.sec{background:#343a52;color:var(--fg)}
+button:disabled{opacity:.4;cursor:default}
+.row{display:flex;gap:8px}.row>*{flex:1}
+.hide{display:none!important}
+.code{font-size:2rem;letter-spacing:.3em;text-align:center;font-weight:800;color:var(--acc)}
+.pl{display:flex;justify-content:space-between;padding:9px 12px;border-radius:10px;margin-top:6px;background:#101320;border:2px solid transparent}
+.pl.turn{border-color:var(--acc)}.pl.dead{opacity:.35;text-decoration:line-through}
+.bomb{text-align:center}
+.syl{font-size:3.4rem;font-weight:900;text-transform:uppercase;letter-spacing:.08em;color:var(--acc)}
+.fuse{height:10px;background:#101320;border-radius:6px;overflow:hidden;margin:10px 0}
+.fuse>div{height:100%;background:var(--ok);width:100%;transition:width .1s linear,background .3s}
+.mut{color:var(--mut);font-size:.9rem;text-align:center}
+#toast{color:var(--bad);text-align:center;min-height:1.3em;margin-top:6px}
+.shake{animation:s .3s}@keyframes s{25%{transform:translateX(-6px)}75%{transform:translateX(6px)}}
+</style>
+</head>
+<body>
+<div id="app">
+<h1>💣 Bomba Słów</h1>
+
+<div id="home" class="card">
+  <input id="name" placeholder="Twój nick" maxlength="14">
+  <button id="create">Stwórz lobby</button>
+  <div class="row"><input id="codeIn" placeholder="KOD" maxlength="4" style="text-transform:uppercase"><button id="join" class="sec">Dołącz</button></div>
+  <div id="homeErr" class="mut" style="color:var(--bad)"></div>
+</div>
+
+<div id="lobby" class="card hide">
+  <div class="mut">Kod lobby — podaj znajomym</div>
+  <div class="code" id="lobbyCode"></div>
+  <div id="lobbyPlayers"></div>
+  <button id="start">Start gry</button>
+  <div class="mut" id="waitHost"></div>
+</div>
+
+<div id="game" class="hide">
+  <div class="card bomb">
+    <div class="mut">Ułóż słowo zawierające:</div>
+    <div class="syl" id="syl"></div>
+    <div class="fuse"><div id="fuse"></div></div>
+    <div class="mut" id="last"></div>
+  </div>
+  <div class="card">
+    <input id="word" placeholder="Wpisz słowo i Enter" autocomplete="off" autocapitalize="off">
+    <div id="toast"></div>
+  </div>
+  <div class="card" id="gamePlayers"></div>
+</div>
+
+<div id="end" class="card hide" style="text-align:center">
+  <h2 id="winner"></h2>
+  <button id="again">Wróć do lobby</button>
+</div>
+</div>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/firebase/10.12.2/firebase-app-compat.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/firebase/10.12.2/firebase-database-compat.min.js"></script>
+<script>
+// ====== WKLEJ SWOJĄ KONFIGURACJĘ FIREBASE (Project settings → Your apps → Web) ======
+const firebaseConfig = {
+  apiKey: "AIzaSyC5biFTSCKlpvvKjNWsp-JuYmPdahOpIo4",
+  authDomain: "bomb-party-cd84c.firebaseapp.com",
+  projectId: "bomb-party-cd84c",
+  storageBucket: "bomb-party-cd84c.firebasestorage.app",
+  messagingSenderId: "739073290765",
+  appId: "1:739073290765:web:936f68583965a7e722db44",
+  measurementId: "G-VY4R6JZ0CD",
+  databaseURL: "https://bomb-party-cd84c-default-rtdb.europe-west1.firebasedatabase.app/"
+};
+// =====================================================================================
+
+const TURN_MS = 10000, LIVES = 3;
+const SYLS = "ka ra ni wa ze pro ko le mi po za ta ro ma li do by ska nie bi du go sta ła ry cz sz prz ow ie ar or en ch pa mo sa wo ba ci".split(" ");
+
+firebase.initializeApp(firebaseConfig);
+const db = firebase.database();
+const $ = id => document.getElementById(id);
+
+const me = sessionStorage.uid || (sessionStorage.uid = Math.random().toString(36).slice(2, 10));
+$("name").value = localStorage.name || "";
+let off = 0; db.ref(".info/serverTimeOffset").on("value", s => off = s.val() || 0);
+const now = () => Date.now() + off;
+
+let code = null, ref = null, room = null;
+const pick = () => SYLS[Math.floor(Math.random() * SYLS.length)];
+const alive = r => Object.entries(r.players).filter(([, p]) => p.alive);
+
+function show(v) { for (const id of ["home", "lobby", "game", "end"]) $(id).classList.toggle("hide", id !== v); }
+function toast(t) { $("toast").textContent = t; const c = $("game"); c.classList.remove("shake"); void c.offsetWidth; c.classList.add("shake"); }
+
+function myName() {
+  const n = $("name").value.trim();
+  if (!n) { $("homeErr").textContent = "Podaj nick."; return null; }
+  localStorage.name = n; return n;
+}
+
+$("create").onclick = async () => {
+  const name = myName(); if (!name) return;
+  const c = Array.from({ length: 4 }, () => "ABCDEFGHJKLMNPRSTUWZ"[Math.floor(Math.random() * 20)]).join("");
+  await db.ref("rooms/" + c).set({ host: me, state: "lobby", players: { [me]: { name, lives: LIVES, alive: true } } });
+  enter(c);
+};
+
+$("join").onclick = async () => {
+  const name = myName(); if (!name) return;
+  const c = $("codeIn").value.trim().toUpperCase();
+  const snap = await db.ref("rooms/" + c).once("value");
+  const r = snap.val();
+  if (!r) return $("homeErr").textContent = "Nie ma takiego lobby.";
+  if (r.state !== "lobby" && !(r.players && r.players[me])) return $("homeErr").textContent = "Gra już trwa.";
+  if (!(r.players && r.players[me])) await db.ref(`rooms/${c}/players/${me}`).set({ name, lives: LIVES, alive: true });
+  enter(c);
+};
+
+function enter(c) {
+  code = c; ref = db.ref("rooms/" + c);
+  ref.on("value", s => { room = s.val(); render(); });
+}
+
+$("start").onclick = () => ref.transaction(r => {
+  if (!r || r.host !== me || Object.keys(r.players).length < 2) return;
+  r.order = Object.keys(r.players);
+  for (const id of r.order) { r.players[id].lives = LIVES; r.players[id].alive = true; }
+  r.state = "playing"; r.turn = r.order[0]; r.syl = pick(); r.turnEnd = now() + TURN_MS;
+  r.used = null; r.last = ""; r.winner = null;
+  return r;
+});
+
+$("again").onclick = () => ref.transaction(r => {
+  if (!r || r.host !== me) return;
+  r.state = "lobby"; return r;
+});
+
+function advance(r) {
+  const o = r.order, i = o.indexOf(r.turn);
+  for (let k = 1; k <= o.length; k++) {
+    const id = o[(i + k) % o.length];
+    if (r.players[id].alive) { r.turn = id; break; }
+  }
+  r.syl = pick(); r.turnEnd = now() + TURN_MS;
+}
+
+// Timeout — każdy klient próbuje, transakcja pilnuje, żeby zadziałała tylko raz
+setInterval(() => {
+  if (!room || room.state !== "playing" || now() < room.turnEnd + 300) return;
+  ref.transaction(r => {
+    if (!r || r.state !== "playing" || now() < r.turnEnd) return;
+    const p = r.players[r.turn];
+    p.lives--; if (p.lives <= 0) p.alive = false;
+    r.last = `💥 ${p.name} nie zdążył!`;
+    const a = alive(r);
+    if (a.length <= 1) { r.state = "ended"; r.winner = a[0] ? a[0][1].name : "nikt"; }
+    else advance(r);
+    return r;
+  });
+}, 400);
+
+// Walidacja słowa w polskim Wikisłowniku (zawiera też formy odmienione)
+const cache = {};
+async function isWord(w) {
+  if (w in cache) return cache[w];
+  try {
+    const u = "https://pl.wiktionary.org/w/api.php?action=query&format=json&origin=*&titles=" + encodeURIComponent(w);
+    const j = await (await fetch(u)).json();
+    return cache[w] = !("-1" in j.query.pages);
+  } catch (e) { return true; } // brak sieci do słownika — nie blokuj gry
+}
+
+let busy = false;
+$("word").addEventListener("keydown", async e => {
+  if (e.key !== "Enter" || busy || !room || room.turn !== me) return;
+  const w = $("word").value.trim().toLowerCase();
+  if (!/^[a-ząćęłńóśźż]{3,}$/.test(w)) return toast("Min. 3 litery, tylko słowa.");
+  if (!w.includes(room.syl)) return toast(`Słowo musi zawierać „${room.syl}”.`);
+  if (room.used && room.used[w]) return toast("To słowo już było.");
+  busy = true; toast("Sprawdzam…");
+  const ok = await isWord(w);
+  if (!ok) { busy = false; return toast("Nie znam takiego słowa."); }
+  ref.transaction(r => {
+    if (!r || r.state !== "playing" || r.turn !== me || now() > r.turnEnd) return;
+    if (r.used && r.used[w]) return;
+    (r.used = r.used || {})[w] = 1;
+    r.last = `${r.players[me].name}: ${w}`;
+    advance(r); return r;
+  }).then(res => {
+    busy = false;
+    if (res.committed) { $("word").value = ""; toast(""); } else toast("Za późno lub słowo zajęte.");
+  });
+});
+
+function render() {
+  if (!room) return;
+  const ids = Object.keys(room.players);
+  const list = (el, cls) => el.innerHTML = ids.map(id => {
+    const p = room.players[id];
+    return `<div class="pl ${room.state === "playing" && room.turn === id ? "turn" : ""} ${p.alive ? "" : "dead"}">
+      <span>${esc(p.name)}${id === room.host ? " 👑" : ""}${id === me ? " (ty)" : ""}</span>
+      <span>${room.state === "lobby" ? "" : "❤️".repeat(Math.max(p.lives, 0))}</span></div>`;
+  }).join("");
+
+  if (room.state === "lobby") {
+    show("lobby"); $("lobbyCode").textContent = code; list($("lobbyPlayers"));
+    const host = room.host === me;
+    $("start").classList.toggle("hide", !host);
+    $("start").disabled = ids.length < 2;
+    $("waitHost").textContent = host ? (ids.length < 2 ? "Czekam na min. 2 graczy…" : "") : "Czekamy aż host wystartuje grę…";
+  } else if (room.state === "playing") {
+    show("game"); list($("gamePlayers"));
+    $("syl").textContent = room.syl;
+    $("last").textContent = room.last || "";
+    const mine = room.turn === me;
+    $("word").disabled = !mine;
+    $("word").placeholder = mine ? "Twoja kolej! Wpisz słowo i Enter" : `Gra: ${room.players[room.turn].name}…`;
+    if (mine) $("word").focus();
+  } else {
+    show("end"); $("winner").textContent = `🏆 Wygrywa: ${room.winner}`;
+    $("again").classList.toggle("hide", room.host !== me);
+  }
+}
+
+setInterval(() => {
+  if (!room || room.state !== "playing") return;
+  const f = Math.max(0, (room.turnEnd - now()) / TURN_MS);
+  $("fuse").style.width = f * 100 + "%";
+  $("fuse").style.background = f > .5 ? "var(--ok)" : f > .25 ? "var(--acc)" : "var(--bad)";
+}, 100);
+
+const esc = s => String(s).replace(/[&<>"]/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" }[c]));
+</script>
+</body>
+</html>

@@ -1,0 +1,53 @@
+<!DOCTYPE html>
+<html lang="pl"><head><meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Gierki – menu</title>
+<style>
+:root{--bg:#f6f5fb;--fg:#1c1b29;--card:#fff;--mut:#6b6a80;--ac:#6d4aff;--bd:#e3e1f0}
+@media(prefers-color-scheme:dark){:root{--bg:#14131f;--fg:#ececf5;--card:#1e1d2e;--mut:#9a99b3;--bd:#2f2e45}}
+*{box-sizing:border-box}
+body{margin:0;min-height:100vh;background:var(--bg);color:var(--fg);font:16px/1.4 system-ui,-apple-system,Segoe UI,sans-serif}
+main{max-width:900px;margin:0 auto;padding:32px 16px}
+h1{font-size:34px;margin:0 0 4px;text-align:center}
+.sub{color:var(--mut);text-align:center;margin:0 0 28px}
+.grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(240px,1fr));gap:16px}
+.card{background:var(--card);border:1px solid var(--bd);border-radius:16px;padding:20px;display:flex;flex-direction:column;gap:10px;transition:transform .15s,box-shadow .15s}
+.card:not(.soon):hover{transform:translateY(-4px);box-shadow:0 8px 24px rgba(109,74,255,.18)}
+.ico{font-size:52px;line-height:1}
+.num{color:var(--mut);font-size:13px;font-weight:600}
+h2{margin:0;font-size:20px}
+.card p{margin:0;color:var(--mut);font-size:14px;flex:1}
+.btn{display:block;text-align:center;text-decoration:none;font-weight:600;padding:11px 16px;border-radius:10px;background:var(--ac);color:#fff}
+.btn:hover{filter:brightness(1.1)}
+.soon{opacity:.65}
+.soon .btn{background:transparent;color:var(--mut);border:1px dashed var(--bd);pointer-events:none}
+</style></head><body>
+<main>
+ <h1>🎮 Gierki</h1>
+ <p class="sub">Wybierz grę i zaczynamy</p>
+ <div class="grid" id="grid"></div>
+</main>
+<script>
+/* Aby dodać grę, dopisz wpis do listy. Gdy gra będzie gotowa: ustaw href i usuń soon:true. */
+const GAMES=[
+ {emoji:'🎲️',title:'Kasyno',desc:"To Do!",href:'gierki/kasyno3.html'},
+ {emoji:'💡',title:'1 z 10',desc:"no każdy oglądał",href:'gierki/1z10.html'},
+  {emoji:'📈',title:'Giełda',desc:'akcja-reakcja',href:'gierki/gielda.html'},
+ {emoji:'💲️',title:'Monopoly',desc:"Idź do sklepu monopolowego :D",href:'gierki/monopolowy2.html'},
+  {emoji:'🏙️',title:'City Builder',desc:'To Do!.',href:'gierki/city.html'},
+  {emoji:'💣️',title:'bomb party',desc:"Word chain",href:'gierki/bomb.html'},
+  {emoji:'🐍️',title:'snake',desc:"snake multiplayer",href:'gierki/snake.html'},
+  {emoji:'🤺️',title:'bijatyka',desc:"taki street fighter ale nie do końca",href:'gierki/brawl.html'},
+ {emoji:'🎲',title:'Minigry',desc:'Wieloosobowe minigry dla 2–4 graczy. Twórz pokoje i rywalizuj w rundach.',href:'#', soon:true},
+ {emoji:'🧩',title:'Kolejna gra',desc:'Miejsce na następny pomysł.',href:'#',soon:true}
+ 
+];
+const g=document.getElementById('grid');
+GAMES.forEach((x,i)=>{
+ const c=document.createElement('div');c.className='card'+(x.soon?' soon':'');
+ const set=(t,cls,txt)=>{const e=document.createElement(t);e.className=cls||'';e.textContent=txt;return e};
+ const b=document.createElement('a');b.className='btn';b.href=x.href;b.textContent=x.soon?'Wkrótce':'Graj';
+ c.append(set('div','ico',x.emoji),set('div','num',(i+1)+'.'),set('h2','',x.title),set('p','',x.desc),b);
+ g.append(c);
+});
+</script></body></html>

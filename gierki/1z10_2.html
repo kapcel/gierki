@@ -1,0 +1,433 @@
+<!DOCTYPE html>
+<html lang="pl">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>1 z 10 Online</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Archivo:wght@400;600;800&family=Archivo+Black&display=swap" rel="stylesheet">
+<style>
+:root{--bg:#0f2a5c;--bg2:#0a1d42;--card:#16376f;--line:#2c5190;--tx:#f3f6ff;--mut:#9db3de;--gold:#ffc83d;--ok:#3ddc97;--bad:#ff5d6c}
+*{box-sizing:border-box}
+body{margin:0;min-height:100vh;font:400 16px/1.5 Archivo,system-ui,sans-serif;color:var(--tx);background:radial-gradient(ellipse at 50% -10%,#1d4a9a 0,var(--bg) 45%,var(--bg2) 100%) fixed}
+main{max-width:880px;margin:0 auto;padding:28px 18px 60px}
+h1{font:400 clamp(44px,9vw,84px)/1 "Archivo Black",Archivo,sans-serif;margin:8px 0 4px;letter-spacing:-.02em;text-align:center}
+h1 small{color:var(--gold);font-size:.55em}
+h2{font:800 22px/1.2 Archivo,sans-serif;margin:0 0 14px}
+.sub{text-align:center;color:var(--mut);margin:0 0 28px}
+.card{background:var(--card);border:1px solid var(--line);border-radius:16px;padding:22px;margin-bottom:18px}
+input{width:100%;font:inherit;color:var(--tx);background:var(--bg2);border:2px solid var(--line);border-radius:10px;padding:12px 14px;outline:none}
+input:focus-visible,button:focus-visible{outline:3px solid var(--gold);outline-offset:2px}
+input::placeholder{color:#6f87b8}
+button{font:800 16px Archivo,sans-serif;border:0;border-radius:10px;padding:12px 20px;cursor:pointer;background:var(--gold);color:#241a00}
+button:hover{filter:brightness(1.07)}button:disabled{opacity:.45;cursor:not-allowed}
+button.alt{background:transparent;color:var(--tx);border:2px solid var(--line)}
+.row{display:flex;gap:10px;flex-wrap:wrap}.row>*{flex:1;min-width:140px}
+.hr{text-align:center;color:var(--mut);margin:16px 0}
+.code{font:400 40px "Archivo Black",sans-serif;letter-spacing:.15em;color:var(--gold);text-align:center;margin:4px 0 2px}
+.hint{color:var(--mut);text-align:center;font-size:14px}
+.players{display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:10px}
+.p{background:var(--bg2);border:2px solid var(--line);border-radius:12px;padding:12px;text-align:center;position:relative}
+.p b{display:block;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.p .hp{font-size:20px;letter-spacing:3px;color:var(--bad);min-height:30px}
+.p.turn{border-color:var(--gold);box-shadow:0 0 0 4px #ffc83d33}
+.p.out{opacity:.35}.p.out b{text-decoration:line-through}
+.p.me::after{content:"Ty";position:absolute;top:6px;right:8px;font-size:12px;color:var(--gold);font-weight:800}
+.q{text-align:center;padding:30px 20px}
+.q .cat{display:inline-block;background:var(--gold);color:#241a00;font-weight:800;border-radius:99px;padding:3px 14px;font-size:14px}
+.q p{font:800 clamp(22px,4.5vw,32px)/1.25 Archivo,sans-serif;margin:16px auto;max-width:34ch}
+.timer{height:8px;background:var(--bg2);border-radius:9px;overflow:hidden;margin:14px 0}
+.timer i{display:block;height:100%;background:var(--gold);width:100%}
+.res{font:400 28px "Archivo Black",sans-serif}.res.ok{color:var(--ok)}.res.bad{color:var(--bad)}
+.err{color:var(--bad);text-align:center;min-height:22px;margin:10px 0 0}
+.win{font:400 clamp(34px,7vw,56px) "Archivo Black",sans-serif;color:var(--gold);text-align:center;margin:10px 0}
+.hidden{display:none}
+@media(prefers-reduced-motion:no-preference){.p{transition:border-color .2s,box-shadow .2s,opacity .3s}}
+.on{background:var(--gold)!important;color:#241a00!important;border-color:var(--gold)!important}
+</style>
+</head>
+<body>
+<main>
+<h1>1 z <small>10</small></h1>
+<p class="sub">Zagraj z przyjaciółmi. Do dziesięciu graczy, trzy życia każdy.</p>
+<div id="app"></div>
+<div class="err" id="err"></div>
+</main>
+
+<script type="module">
+import {initializeApp} from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
+import {getAuth,signInAnonymously} from "https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js";
+import {getDatabase,ref,onValue,set,update,get,onDisconnect,runTransaction} from "https://www.gstatic.com/firebasejs/10.12.2/firebase-database.js";
+
+/* ===== 1. WKLEJ SWOJĄ KONFIGURACJĘ FIREBASE (Project settings → Your apps → Web) ===== */
+const firebaseConfig = {
+  apiKey: "AIzaSyAuHuhsMxjWnI_L8Um4_XvUQtg0r94IF-w",
+  authDomain: "z10-2d52b.firebaseapp.com",
+  projectId: "z10-2d52b",
+  storageBucket: "z10-2d52b.firebasestorage.app",
+  messagingSenderId: "594459285336",
+  appId: "1:594459285336:web:2f75be09d8d83faaac772d",
+  measurementId: "G-3XHDDEH03R",
+  databaseURL: "https://z10-2d52b-default-rtdb.europe-west1.firebasedatabase.app"
+};
+const BAZA_URL = "baza.json";   // plik z pytaniami obok index.html
+const LIVES = 3, MAX = 10, TIME = 25000, PAUSE = 4500;
+/* ================================================================== */
+
+const $ = s => document.querySelector(s);
+const app = $("#app"), errEl = $("#err");
+const esc = s => String(s ?? "").replace(/[&<>"']/g, c => ({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
+const showErr = m => { errEl.textContent = m || ""; };
+
+let db, uid, code = null, room = null, BAZA = null, unsub = null;
+let qTimer = null, nextTimer = null, tick = null, lastHandled = "";
+const usedNow = new Set();   // klucze pytań użytych w tym lobby (lokalne lustro room.used)
+let POOL = null;             // pytania bez duplikatów
+
+const cleanText = s => String(s).replace(/\s*\((?:Seria|seria)\s*\d+\)\s*$/,"").trim();
+function qkey(text){         // krótki klucz z treści pytania (to samo pytanie z innym id = ten sam klucz)
+  const n = String(text).toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g,"").replace(/ł/g,"l").replace(/[^a-z0-9]/g,"");
+  let h1 = 5381, h2 = 52711;
+  for (let i = 0; i < n.length; i++) { const c = n.charCodeAt(i); h1 = (h1 * 33) ^ c; h2 = (h2 * 31 + c) | 0; }
+  return (h1 >>> 0).toString(36) + (h2 >>> 0).toString(36) + "_" + n.length;
+}
+const loadSeen = () => { try { return new Set((localStorage.getItem("seen")||"").split(",").filter(Boolean)); } catch { return new Set(); } };
+const saveSeen = s => { try { localStorage.setItem("seen", [...s].join(",")); } catch {} };
+
+try {
+  const fb = initializeApp(firebaseConfig);
+  db = getDatabase(fb);
+  uid = (await signInAnonymously(getAuth(fb))).user.uid;
+} catch (e) {
+  showErr("Nie udało się połączyć z Firebase. Sprawdź konfigurację i włącz logowanie anonimowe.");
+  console.error(e);
+}
+
+/* ---------- pomocnicze ---------- */
+const norm = s => String(s).toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g,"").replace(/ł/g,"l").replace(/[^a-z0-9]/g,"");
+function lev(a,b){const d=[...Array(b.length+1).keys()];for(let i=1;i<=a.length;i++){let p=d[0];d[0]=i;for(let j=1;j<=b.length;j++){const t=d[j];d[j]=Math.min(d[j]+1,d[j-1]+1,p+(a[i-1]===b[j-1]?0:1));p=t}}return d[b.length]}
+function isCorrect(given, answer){
+  const g = norm(given), variants = String(answer).split(/\s*(?:\/|;)\s*/).map(norm).filter(Boolean);
+  if (!g) return false;
+  return variants.some(a => g === a || lev(g,a) <= (a.length > 8 ? 2 : a.length > 4 ? 1 : 0));
+}
+const rc = () => ref(db, "rooms/" + code);
+const alive = r => Object.entries(r.players || {}).map(([id,p]) => ({id,...p})).filter(p => p.lives > 0).sort((a,b) => a.order - b.order);
+
+async function loadBaza(){
+  if (BAZA) return BAZA;
+  const r = await fetch(BAZA_URL);
+  if (!r.ok) throw new Error("Brak pliku " + BAZA_URL);
+  BAZA = await r.json();
+  const seenKeys = new Set(); POOL = [];
+  for (const q of BAZA) {
+    if (!q || !q.pytanie || q.odpowiedz == null) continue;
+    const text = cleanText(q.pytanie), k = qkey(text);
+    if (seenKeys.has(k)) continue;          // duplikat treści w bazie – pomijamy
+    seenKeys.add(k);
+    POOL.push({id:q.id, kategoria:q.kategoria, text, k});
+  }
+  return BAZA;
+}
+
+/* ---------- lobby ---------- */
+function home(){
+  app.innerHTML = `
+  <div class="card">
+    <h2>Twój pseudonim</h2>
+    <input id="name" maxlength="16" placeholder="np. Kasia" value="${esc(localStorage.getItem("n")||"")}">
+    <div class="hr"></div>
+    <button id="create" style="width:100%">Utwórz nowe lobby</button>
+    <div class="hr">albo dołącz kodem</div>
+    <div class="row"><input id="jc" maxlength="5" placeholder="KOD" style="text-transform:uppercase;letter-spacing:.2em;text-align:center"><button class="alt" id="join">Dołącz</button></div>
+  </div>`;
+  const nm = () => { const v = $("#name").value.trim(); if(!v){showErr("Wpisz pseudonim."); return null} localStorage.setItem("n",v); showErr(); return v; };
+  $("#create").onclick = async () => {
+    const n = nm(); if(!n) return;
+    try{
+      await loadBaza();
+      const chars = "ABCDEFGHJKLMNPQRSTUVWXYZ23456789";
+      code = Array.from({length:5},() => chars[Math.random()*chars.length|0]).join("");
+      await set(rc(), {host:uid, mode:"endless", phase:"lobby", created:Date.now(), players:{[uid]:{name:n,lives:LIVES,order:0}}});
+      enter();
+    }catch(e){ showErr("Nie można utworzyć lobby: " + e.message); }
+  };
+  $("#join").onclick = async () => {
+    const n = nm(); if(!n) return;
+    const c = $("#jc").value.trim().toUpperCase(); if(!c){showErr("Wpisz kod lobby.");return}
+    try{
+      code = c;
+      const snap = await get(rc());
+      if(!snap.exists()){ code = null; return showErr("Nie ma lobby o takim kodzie."); }
+      const r = snap.val(), ps = r.players || {};
+      if(!ps[uid]){
+        if(r.phase !== "lobby") { code = null; return showErr("Gra już trwa."); }
+        if(Object.keys(ps).length >= MAX) { code = null; return showErr("Lobby jest pełne (10 graczy)."); }
+        const order = Math.max(-1, ...Object.values(ps).map(p => p.order)) + 1;
+        await set(ref(db, `rooms/${code}/players/${uid}`), {name:n,lives:LIVES,order});
+      }
+      enter();
+    }catch(e){ code = null; showErr("Nie można dołączyć: " + e.message); }
+  };
+}
+
+function enter(){
+  showErr();
+  if (unsub) unsub();
+  usedNow.clear();
+  unsub = onValue(rc(), s => {
+    if(!s.exists()){ leave(); return showErr("Lobby zostało zamknięte."); }
+    room = s.val(); render(); hostLogic();
+  });
+}
+function leave(){ if(unsub) unsub(); unsub=null; code=null; room=null; clearTimeout(qTimer); clearTimeout(nextTimer); clearInterval(tick); home(); }
+
+/* ---------- widoki ---------- */
+const MODES = {endless:["Endless","3 życia, jedna runda. Gra trwa, aż zostanie jeden gracz."], classic:["Klasyczny","Trzy etapy wg zasad teleturnieju: eliminacje, wskazywanie, finał (min. 3 graczy)."]};
+const plist = r => Object.entries(r.players||{}).map(([id,p])=>({id,...p})).sort((a,b)=>a.order-b.order);
+const label = () => room.mode!=="classic" ? "Endless" : room.stage===1 ? `Etap I · runda ${(room.k/room.n1|0)+1} z 2` : room.stage===2 ? "Etap II" : `Finał · część ${room.part} · pytanie ${room.fq||0}/40`;
+const nameOf = id => esc(room.players?.[id]?.name || "—");
+
+function targets(R){
+  const al = alive(R);
+  if (R.stage === 3) return al;                                   // finał: można wskazać siebie
+  const me = R.players[R.picker], h = R.half;
+  let t = al.filter(p => p.id !== R.picker);
+  if (R.fp) { const o = t.filter(p => (p.order < h) !== (me.order < h)); if (o.length) t = o; }   // pierwsze wskazanie: przeciwna „piątka”
+  return t;
+}
+
+function playersHTML(){
+  const fin = room.mode === "classic" && room.stage === 3;
+  return `<div class="players">${plist(room).map(p => {
+    const t = room.phase!=="lobby" && p.lives>0 && (room.phase==="pick" ? room.picker===p.id : room.turn===p.id);
+    return `<div class="p ${p.lives<=0?"out":""} ${t?"turn":""} ${p.id===uid?"me":""}">
+      <b>${esc(p.name)}${p.id===room.host?" ★":""}</b>
+      <div class="hp" aria-label="życia: ${Math.max(p.lives,0)}">${p.lives>0?"♥".repeat(p.lives):"✕"}</div>
+      ${fin?`<div class="hint">${p.pts||0} pkt</div>`:""}</div>`;}).join("")}</div>`;
+}
+
+function render(){
+  const isHost = room.host === uid, ph = room.phase, ps = room.players || {}, n = Object.keys(ps).length, mode = room.mode || "endless";
+  let h = `<div class="card"><div class="hint">Kod lobby</div><div class="code">${esc(code)}</div><div class="hint">Gracze: ${n}/${MAX} · ★ prowadzący${ph!=="lobby"&&ph!=="over"?` · <b style="color:var(--gold)">${label()}</b>`:""}</div></div>`;
+
+  if (ph === "lobby") {
+    const need = mode === "classic" ? 3 : 2;
+    h += `<div class="card"><h2>Tryb gry</h2>${isHost
+      ? `<div class="row">${Object.entries(MODES).map(([k,v]) => `<button class="alt ${mode===k?"on":""}" data-m="${k}">${v[0]}</button>`).join("")}</div>`
+      : `<b>${MODES[mode][0]}</b>`}<p class="hint" style="margin:10px 0 0">${MODES[mode][1]}</p></div>
+    <div class="card"><h2>Gracze w lobby</h2>${playersHTML()}</div>
+    <div class="row">${isHost ? `<button id="start" ${n<need?"disabled":""}>Rozpocznij grę${n<need?` (min. ${need})`:""}</button>` : `<div class="hint" style="align-self:center">Czekamy, aż prowadzący rozpocznie grę…</div>`}
+      <button class="alt" id="leave">Wyjdź</button></div>`;
+  } else if (ph === "over") {
+    const w = (room.winners || []).map(id => ps[id]?.name).filter(Boolean).map(esc).join(" i ");
+    h += `<div class="card"><div class="hint" style="text-align:center">${(room.winners||[]).length>1?"Remis – zwycięzcy":"Zwycięzca"}</div><div class="win">${w || "—"}</div>${playersHTML()}</div>
+    <div class="row">${isHost?`<button id="again">Zagraj ponownie</button>`:""}<button class="alt" id="leave">Wyjdź</button></div>`;
+  } else {
+    const mine = room.turn === uid && ph === "question", me = ps[uid];
+    h += `<div class="card">${playersHTML()}</div><div class="card q">`;
+    if (ph === "pick") {
+      h += `<span class="cat">Wskazanie</span><p>${room.picker===uid?"Kogo wskazujesz do pytania?":`${nameOf(room.picker)} wybiera, kogo wskazać…`}</p><div class="timer"><i id="bar"></i></div>`;
+      if (room.picker === uid) h += `<div class="row">${targets(room).map(p => `<button class="alt" data-t="${p.id}">${p.id===uid?"Ja (+20 pkt)":esc(p.name)}</button>`).join("")}</div>`;
+    } else {
+      h += `<span class="cat">${esc(room.q?.cat)}</span><p>${esc(room.q?.text)}</p>`;
+      if (ph === "buzz") {
+        h += `<div class="timer"><i id="bar"></i></div>` + (room.buzz
+          ? `<div class="hint"><b>${nameOf(room.buzz)}</b> się zgłasza…</div>`
+          : (me && me.lives > 0 ? `<button id="buzz" style="font-size:22px;padding:18px 44px">ZGŁASZAM SIĘ</button>` : `<div class="hint">Obserwujesz.</div>`));
+      } else if (ph === "question") {
+        h += `<div class="timer"><i id="bar"></i></div>` + (mine
+          ? `<div class="row"><input id="ans" placeholder="Twoja odpowiedź" autocomplete="off" autofocus><button id="send" style="flex:0 0 auto">Odpowiedz</button></div>`
+          : `<div class="hint">Odpowiada: <b>${nameOf(room.turn)}</b></div>`);
+      } else {
+        const r = room.res || {};
+        h += r.none ? `<div class="res bad">Nikt się nie zgłosił</div><div class="hint" style="margin-top:6px">Poprawna: <b style="color:var(--tx)">${esc(r.ans)}</b></div>`
+          : `<div class="res ${r.ok?"ok":"bad"}">${r.ok?"Dobrze!":(r.given?"Błąd":"Brak odpowiedzi")}</div>
+          <div class="hint" style="margin-top:6px">${r.given?`Odpowiedź gracza: ${esc(r.given)} · `:""}Poprawna: <b style="color:var(--tx)">${esc(r.ans)}</b></div>
+          ${isHost?`<button class="alt" id="flip" style="margin-top:14px">Zmień werdykt</button>`:""}`;
+      }
+    }
+    h += `</div>`;
+  }
+  app.innerHTML = h;
+
+  $("#leave")?.addEventListener("click", async () => {
+    if (isHost) await set(rc(), null); else if (room.phase==="lobby") await set(ref(db,`rooms/${code}/players/${uid}`), null);
+    leave();
+  });
+  $("#start")?.addEventListener("click", startGame);
+  $("#again")?.addEventListener("click", startGame);
+  $("#flip")?.addEventListener("click", flipVerdict);
+  document.querySelectorAll("[data-m]").forEach(b => b.onclick = () => update(rc(), {mode:b.dataset.m}));
+  document.querySelectorAll("[data-t]").forEach(b => b.onclick = () => update(rc(), {target:b.dataset.t}));
+  $("#buzz")?.addEventListener("click", () => runTransaction(ref(db,`rooms/${code}/buzz`), c => c == null ? uid : undefined));
+  const send = () => { const v = $("#ans").value.trim(); if(v) update(rc(), {sub:v}); };
+  $("#send")?.addEventListener("click", send);
+  $("#ans")?.addEventListener("keydown", e => { if(e.key==="Enter") send(); });
+  $("#ans")?.focus();
+
+  clearInterval(tick);
+  if (["question","pick","buzz"].includes(ph)) tick = setInterval(() => {
+    const b = $("#bar"); if(b) b.style.width = Math.max(0, (room.tEnd - Date.now()) / room.tDur * 100) + "%";
+  }, 150);
+}
+
+/* ---------- logika prowadzącego (tylko host) ---------- */
+const BUZZ = 3000, PICK = 3000, PICKF = 5000;
+const nextAlive = (R, id) => { const o = plist(R), s = o.findIndex(p => p.id===id); for (let k=1;k<=o.length;k++){ const c = o[(s+k)%o.length]; if (c.lives>0) return c.id; } return null; };
+const end = ids => update(rc(), {phase:"over", winner:ids[0]||null, winners:ids});
+
+async function pickQ(){
+  await loadBaza();
+  const used = {...(room.used || {})}; usedNow.forEach(k => used[k] = true);
+  let seen = loadSeen(), c = POOL.filter(q => !used[q.k] && !seen.has(q.k));
+  if (!c.length) { seen = new Set(); saveSeen(seen); c = POOL.filter(q => !used[q.k]); }
+  if (!c.length) return null;
+  const q = c[Math.random()*c.length|0]; usedNow.add(q.k); seen.add(q.k); saveSeen(seen);
+  return q;
+}
+const qf = q => ({q:{id:q.id,text:q.text,cat:q.kategoria}, [`used/${q.k}`]:true});
+
+function endByScore(){
+  const fin = room.stage === 3, sc = p => fin ? (p.pts||0) + 10*p.lives : p.lives;
+  const al = alive(room), best = Math.max(...al.map(sc));
+  return end(al.filter(p => sc(p) === best).map(p => p.id));
+}
+async function ask(turn, extra = {}, keep){            // pytanie do jednego gracza
+  const f = {phase:"question", turn, sub:null, res:null, target:null, buzz:null, tEnd:Date.now()+TIME, tDur:TIME, ...extra};
+  if (!keep) { const q = await pickQ(); if (!q) return endByScore(); Object.assign(f, qf(q)); if (room.stage===3) f.fq = (room.fq||0)+1; }
+  return update(rc(), f);
+}
+async function openBuzz(extra = {}, keep){             // pytanie do wszystkich (przycisk)
+  const f = {phase:"buzz", turn:null, sub:null, res:null, target:null, buzz:null, kind:"buzz", tEnd:Date.now()+BUZZ, tDur:BUZZ, ...extra};
+  if (!keep) { const q = await pickQ(); if (!q) return endByScore(); Object.assign(f, qf(q)); f.fq = (extra.fq ?? room.fq ?? 0) + 1; }
+  return update(rc(), f);
+}
+const openPick = (picker, extra = {}) => { const d = room.stage===3 ? PICKF : PICK; return update(rc(), {phase:"pick", picker, turn:null, target:null, res:null, tEnd:Date.now()+d, tDur:d, ...extra}); };
+
+async function startGame(){
+  try{
+    await loadBaza();
+    const ps = {...room.players}, ids = Object.keys(ps).sort((a,b)=>ps[a].order-ps[b].order); let i = 0;
+    ids.forEach(id => { ps[id] = {...ps[id], lives:LIVES, order:i++, pts:0, c:0}; });
+    lastHandled = "";
+    const base = {players:ps, winner:null, winners:null, target:null, buzz:null, picker:null, prev:null, fq:0, part:null, k:0};
+    if (room.mode === "classic") {
+      await update(rc(), {...base, stage:1, n1:ids.length, half:Math.floor(ids.length/2), fp:true});
+      await ask(ids[0], {kind:"seq", k:0});
+    } else {
+      await update(rc(), {...base, stage:null});
+      await ask(ids[0], {kind:"seq"});
+    }
+  }catch(e){ showErr("Błąd startu: " + e.message); }
+}
+
+function hostLogic(){
+  if (!room || room.host !== uid) return;
+  clearTimeout(qTimer);
+  const ph = room.phase, wait = Math.max(0, room.tEnd - Date.now()) + 300, key = ph + room.tEnd;
+  if (ph === "question") {
+    if (room.sub != null) return judge(room.sub);
+    qTimer = setTimeout(() => { if(room?.phase==="question" && room.sub==null) update(rc(), {sub:""}); }, wait);
+  } else if (ph === "result") qTimer = setTimeout(advance, PAUSE);
+  else if (ph === "pick") {
+    if (room.target) { if (lastHandled === key) return; lastHandled = key; return ask(room.target, {kind:room.target===room.picker?"self":"target", fp:false}, false); }
+    qTimer = setTimeout(pickTimeout, wait);
+  } else if (ph === "buzz") {
+    if (room.buzz) { if (lastHandled === key) return; lastHandled = key; return ask(room.buzz, {kind:"buzz"}, true); }
+    qTimer = setTimeout(buzzTimeout, wait);
+  }
+}
+
+async function judge(given){
+  const key = room.q.id + "|" + room.turn + "|" + room.tEnd;
+  if (lastHandled === key) return; lastHandled = key;
+  await loadBaza();
+  const item = BAZA.find(x => x.id === room.q.id), ans = item ? item.odpowiedz : "?";
+  const ok = isCorrect(given, ans), id = room.turn, p = room.players[id];
+  const f = {phase:"result", res:{ok, ans:String(ans), given}};
+  if (ok) { f[`players/${id}/c`] = (p.c||0) + 1; if (room.stage === 3) f[`players/${id}/pts`] = (p.pts||0) + (room.kind==="self" ? 20 : 10); }
+  else f[`players/${id}/lives`] = p.lives - 1;
+  await update(rc(), f);
+}
+
+async function buzzTimeout(){
+  if (room?.phase !== "buzz" || room.buzz) return;
+  await loadBaza();
+  const item = BAZA.find(x => x.id === room.q.id);
+  await update(rc(), {phase:"result", turn:null, res:{ok:false, none:true, ans:String(item?.odpowiedz ?? "?")}});
+}
+
+async function pickTimeout(){                           // brak wskazania w czasie
+  if (room?.phase !== "pick" || room.target) return;
+  const R = room, p = R.players[R.picker];
+  await update(rc(), {[`players/${R.picker}/lives`]: p.lives - 1});
+  const al = alive(room);
+  if (R.stage === 3) { if (al.length <= 1) return al.length ? end([al[0].id]) : end([]); return al.some(a => a.id===R.picker) ? openPick(R.picker) : openPick(al[0].id, {picker:al[0].id}); }
+  if (al.length <= 3) return startFinale(al);
+  if (R.prev && R.prev !== R.picker && room.players[R.prev].lives > 0) return openPick(R.prev, {picker:R.prev, prev:null});
+  return ask(nextAlive(room, R.picker), {kind:"seq", picker:null});
+}
+
+function startFinale(al){
+  if (al.length <= 1) return end(al.map(p => p.id));
+  const f = {stage:3, part:1, fq:0, picker:null};
+  for (const p of plist(room)) {
+    if (al.some(a => a.id === p.id)) { f[`players/${p.id}/pts`] = p.lives; f[`players/${p.id}/lives`] = LIVES; f[`players/${p.id}/c`] = 0; }
+    else f[`players/${p.id}/lives`] = 0;
+  }
+  return openBuzz(f);
+}
+
+async function advance(){
+  if (room.mode !== "classic") return endlessNext();
+  const R = room, id = R.turn, ok = R.res?.ok, al = alive(R);
+  if (R.stage === 1) {
+    const k = R.k + 1, n = R.n1, o = plist(R);
+    if (k < 2*n) return ask(o[k % n].id, {kind:"seq", k});
+    const f = {}; o.forEach(p => { if (!(p.c > 0)) f[`players/${p.id}/lives`] = 0; });   // 0 dobrych odpowiedzi = odpadnięcie
+    await update(rc(), f);
+    const a2 = alive(room);
+    if (a2.length <= 3) return startFinale(a2);
+    await update(rc(), {stage:2, picker:null, prev:null, fp:true});
+    return ask(a2[0].id, {kind:"seq"});
+  }
+  if (R.stage === 2) {
+    if (al.length <= 3) return startFinale(al);
+    if (ok) return openPick(id, {picker:id, prev:R.picker || null});
+    if (R.kind === "seq") return ask(nextAlive(R, id), {kind:"seq"});
+    return openPick(R.picker);                           // wskazany się pomylił – wskazuje dalej ten sam
+  }
+  // finał
+  if ((R.fq||0) >= 40) return endByScore();
+  if (al.length === 1) return end([al[0].id]);
+  if (al.length === 0) return end([]);
+  if (R.part === 1) {
+    if (ok && R.players[id].c >= 3) return openPick(id, {part:2, picker:id, prev:null});
+    return openBuzz();
+  }
+  const pk = R.players[R.picker]?.lives > 0 ? R.picker : al[0].id;
+  if (R.res?.none) return openPick(pk, {picker:pk});
+  if (ok) return openPick(id, {picker:id});
+  if (R.kind === "self") return openBuzz();      // wskazał siebie i się pomylił – NOWE pytanie do wszystkich
+  return openPick(pk, {picker:pk});
+}
+
+async function endlessNext(){
+  const left = alive(room);
+  if (left.length <= 1) return end(left.map(p => p.id));
+  return ask(nextAlive(room, room.turn), {kind:"seq"});
+}
+
+async function flipVerdict(){
+  if (room.phase !== "result" || !room.res || room.res.none || !room.turn) return;
+  const id = room.turn, p = room.players[id], was = room.res.ok, d = was ? -1 : 1;
+  const f = {"res/ok":!was, [`players/${id}/lives`]: Math.min(LIVES, Math.max(0, p.lives + d)), [`players/${id}/c`]: Math.max(0, (p.c||0) + d)};
+  if (room.stage === 3) f[`players/${id}/pts`] = Math.max(0, (p.pts||0) + d * (room.kind==="self" ? 20 : 10));
+  await update(rc(), f);
+}
+
+if (db) home();
+</script>
+</body>
+</html>

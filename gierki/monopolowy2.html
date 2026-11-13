@@ -1,0 +1,216 @@
+<!DOCTYPE html>
+<html lang="pl"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Monopoly Śląsk</title>
+<style>
+*{box-sizing:border-box}body{margin:0;background:#10151c;color:#e8edf3;font:14px system-ui,sans-serif}
+#app{max-width:1100px;margin:auto;padding:14px}
+button{background:#f5b301;color:#111;border:0;border-radius:8px;padding:9px 14px;font-weight:700;cursor:pointer;margin:3px 3px 3px 0}button:disabled{opacity:.4;cursor:default}button.g{background:#2a3644;color:#e8edf3}
+input,select{background:#1a222d;color:inherit;border:1px solid #33414f;border-radius:8px;padding:8px;font:inherit}
+.card{background:#1a222d;border-radius:12px;padding:14px;margin:10px 0}.mu{color:#8fa0b3}
+.row{display:flex;gap:8px;align-items:center;flex-wrap:wrap;justify-content:space-between}
+.f label{display:flex;flex-direction:column;gap:4px;margin:10px 0}.f label:has(input[type=checkbox]){flex-direction:row;align-items:center}
+.slots{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:8px}.slot{border:2px solid;border-radius:10px;padding:14px;text-align:center;background:#10151c}
+.game{display:flex;gap:14px;flex-wrap:wrap;align-items:flex-start}
+.board{--b:min(94vw,84vh,760px);width:var(--b);height:var(--b);display:grid;grid-template:1.5fr repeat(9,1fr) 1.5fr/1.5fr repeat(9,1fr) 1.5fr;gap:2px;background:#0b0f14;font-size:calc(var(--b)/85)}
+.tile{background:#e9efe3;color:#111;position:relative;display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center;overflow:hidden;line-height:1.1;padding:1px}
+.tile b{position:absolute;top:0;left:0;right:0;height:22%}.tile span{margin-top:22%;font-weight:600}.tile em{font-style:normal;opacity:.7}
+.tk{width:1.7em;height:1.7em;border-radius:50%;display:inline-block;border:1px solid #000;margin:0 -.15em}
+.ctr{grid-area:2/2/11/11;display:flex;flex-direction:column;align-items:center;justify-content:center;background:#1c6b4a;font-size:2.2em;text-align:center;gap:.6em;font-weight:800}
+.panel{flex:1;min-width:270px}.pc{background:#1a222d;border-radius:8px;padding:8px 10px;margin-bottom:6px;display:flex;justify-content:space-between;gap:6px;flex-wrap:wrap}
+.pc.on{outline:2px solid #f5b301}.pc.out{opacity:.35;text-decoration:line-through}
+.log{font-size:12px;color:#8fa0b3;max-height:220px;overflow:auto;margin-top:10px}
+body{background:radial-gradient(1200px 700px at 20% -10%,#1d2b3d,#0d1118) fixed}
+h1{letter-spacing:.06em;text-shadow:0 2px 12px #f5b30055}
+button{transition:transform .12s,filter .12s;box-shadow:0 3px 0 #0006}button:hover:not(:disabled){transform:translateY(-2px);filter:brightness(1.1)}button:active{transform:translateY(1px)}
+.card,.pc{box-shadow:0 6px 20px #0005;border:1px solid #ffffff12}
+.board{position:relative;padding:3px;border-radius:14px;box-shadow:0 18px 50px #000a,0 0 0 4px #2b394a}
+.tile{border-radius:3px;transition:background .4s,box-shadow .4s}.hs{font-size:1.1em}
+.ctr{background:radial-gradient(circle at 50% 40%,#2a9d6a,#12503a);border-radius:10px;box-shadow:inset 0 0 40px #0008}
+.logo{font-size:1.15em;letter-spacing:.12em;text-shadow:0 3px 0 #0007;animation:fl2 3s ease-in-out infinite}
+@keyframes fl2{50%{transform:translateY(-.15em) scale(1.03)}}
+.dice{display:flex;gap:.25em;font-size:2.4em}
+.die{display:inline-block;line-height:1;background:#fff;color:#111;border-radius:.2em;padding:0 .05em;box-shadow:0 .08em 0 #0006}
+.die.rl{animation:rl .9s cubic-bezier(.3,1.4,.5,1)}
+@keyframes rl{0%{transform:translateY(-3em) rotate(0)}60%{transform:translateY(0) rotate(540deg)}75%{transform:translateY(-.4em) rotate(600deg)}100%{transform:rotate(720deg)}}
+.tile.hit{animation:hit 1.2s}
+@keyframes hit{0%,100%{filter:none}30%{filter:brightness(1.4) drop-shadow(0 0 .6em var(--c));transform:scale(1.18);z-index:3}}
+.tile.chg{animation:chg 1.4s}
+@keyframes chg{0%{transform:scale(1)}20%{transform:scale(1.25) rotate(-3deg);z-index:3;box-shadow:0 0 1.5em #fff}50%{transform:scale(1.1) rotate(2deg)}100%{transform:scale(1)}}
+#fx{position:absolute;left:0;top:0;width:0;height:0;pointer-events:none;z-index:50}
+.tok{position:absolute;border-radius:50%;border:2px solid #fff;color:#fff;font-weight:800;display:flex;align-items:center;justify-content:center;transform:translate(-50%,-50%);transition:left .16s linear,top .16s linear;box-shadow:0 3px 8px #000a;z-index:5;text-shadow:0 1px 2px #000}
+.tok.act{animation:bn .9s infinite;box-shadow:0 0 0 .25em #fff8,0 0 1.2em #fff}
+@keyframes bn{50%{margin-top:-.5em}}
+.fl{position:absolute;font-weight:900;font-size:26px;animation:up 1.9s ease-out forwards;text-shadow:0 2px 6px #000}.fl.up{color:#4ade80}.fl.dn{color:#ff5c5c}
+@keyframes up{0%{opacity:0;transform:translateY(10px) scale(.6)}15%{opacity:1;transform:scale(1.3)}100%{opacity:0;transform:translateY(-60px)}}
+.pc.on{animation:glow 1.6s infinite}.pc.hurt{animation:hurt .6s}.pc.gain{animation:gain .8s}
+@keyframes glow{50%{box-shadow:0 0 0 3px #f5b30099,0 0 22px #f5b30088}}
+@keyframes hurt{20%,60%{transform:translateX(-6px);background:#5a2024}40%,80%{transform:translateX(6px)}}
+@keyframes gain{30%{transform:scale(1.04);background:#1f5a34}}
+.av{display:inline-flex;width:1.7em;height:1.7em;border-radius:50%;align-items:center;justify-content:center;font-style:normal;font-weight:800;color:#fff;margin-right:.4em;border:2px solid #fff}
+.turn{padding:10px;border-radius:10px;font-weight:800;font-size:16px;text-align:center;background:color-mix(in srgb,var(--c) 35%,#10151c);border:2px solid var(--c);margin-bottom:8px}.turn.mine{animation:glow 1s infinite;font-size:20px}
+.bn{position:absolute;transform:translate(-50%,-50%);background:#0b0f14ee;border:3px solid var(--c);border-radius:14px;padding:.7em 1em;text-align:center;font-weight:800;color:#fff;animation:pop 3.4s forwards;box-shadow:0 10px 30px #000c}
+@keyframes pop{0%{opacity:0;transform:translate(-50%,-30%) scale(.5)}8%{opacity:1;transform:translate(-50%,-50%) scale(1.08)}12%{transform:translate(-50%,-50%) scale(1)}85%{opacity:1}100%{opacity:0}}
+</style></head><body><div id="app"></div><div id="fx"></div>
+<script>
+// ====== KONFIGURACJA FIREBASE (Realtime Database) ======
+// Wklej obiekt konfiguracji z konsoli Firebase (musi zawierać databaseURL).
+// Gdy null → tryb lokalny (działa między kartami tej samej przeglądarki, do testów).
+const FIREBASE_CONFIG = {
+  apiKey: "AIzaSyAIVVpIz4m1_Y07dRlVq42m2APDSVj2DJw",
+  authDomain: "monopolowy-d9469.firebaseapp.com",
+  databaseURL: "https://monopolowy-d9469-default-rtdb.europe-west1.firebasedatabase.app",
+  projectId: "monopolowy-d9469",
+  storageBucket: "monopolowy-d9469.firebasestorage.app",
+  messagingSenderId: "292618562023",
+  appId: "1:292618562023:web:557f0bff76c619d2b9b542",
+  measurementId: "G-949GHD8NF6"
+};
+/* np.: {apiKey:"...",authDomain:"...",databaseURL:"https://TWOJ-PROJEKT-default-rtdb.europe-west1.firebasedatabase.app",projectId:"..."} */
+
+const COL=['#e74c3c','#3498db','#2ecc71','#f1c40f'];
+const GC=['#8b5a2b','#8ed1f0','#e056a0','#f39c12','#e74c3c','#f1e24a','#27ae60','#2c4fbf'];
+const IC={S:'▶ ',J:'⛓ ',F:'🅿 ',G:'👮 ',C:'❓ ',R:'🚆 ',U:'⚡ ',T:'💸 ',P:''};
+const SPEC='S Start|P Świętochłowice 60 0|C|P Piekary Śl. 60 0|T Podatek 100|R Dworzec Katowice|P Siemianowice 100 1|C|P Chorzów 100 1|P Mysłowice 120 1|J Więzienie|P Tarnowskie Góry 140 2|U Elektrownia|P Jaworzno 140 2|P Żory 160 2|R Dworzec Gliwice|P Ruda Śl. 180 3|C|P Bytom 180 3|P Racibórz 200 3|F Parking|P Rybnik 220 4|C|P Knurów 220 4|P Pszczyna 240 4|R Dworzec Bielsko|P Tychy 260 5|P Zabrze 260 5|U Wodociągi|P Dąbrowa G. 280 5|G Idź do więzienia|P Toszek 300 6|P Bielsko-Biała 300 6|C|P Częstochowa 320 6|R Dworzec Częstochowa|C|P Gliwice 350 7|T Podatek 100|P Katowice 400 7';
+const T=SPEC.split('|').map(s=>{const w=s.split(' '),t=w.shift(),o={t};if(t=='P'){o.g=+w.pop();o.pr=+w.pop()}if(t=='T')o.pr=+w.pop();if(t=='R')o.pr=200;if(t=='U')o.pr=150;o.n=w.join(' ')||'Szansa';return o});
+const pos=i=>i<=10?[11,11-i]:i<20?[21-i,1]:i<=30?[1,i-19]:[i-29,11];
+const hc=k=>50*(1+(T[k].g>>1));
+const $=s=>document.querySelector(s),A=$('#app');
+const esc=s=>String(s).replace(/[&<>"']/g,c=>'&#'+c.charCodeAt(0)+';');
+const ME={id:localStorage.mid||(localStorage.mid='u'+Math.random().toString(36).slice(2,9)),name:localStorage.mname||''};
+let DB,unsub,R,RID,S,bt,LR={},GRID,LRC,LN,TP=[],CASH=[],SIG=0,TM=[];
+const slot=(r,i)=>r.players&&r.players[i],ids=r=>[...Array(r.max).keys()];
+const cnt=r=>ids(r).filter(i=>slot(r,i)).length,mine=r=>ids(r).some(i=>slot(r,i)&&slot(r,i).id==ME.id);
+
+async function initDB(){
+ if(FIREBASE_CONFIG){
+  const V='10.12.2',B='https://www.gstatic.com/firebasejs/'+V+'/';
+  const a=await import(B+'firebase-app.js'),D=await import(B+'firebase-database.js'),db=D.getDatabase(a.initializeApp(FIREBASE_CONFIG));
+  const er=w=>e=>{alert('Firebase – błąd '+w+': '+e.message+'\nSprawdź reguły bazy (Realtime Database → Reguły → Opublikuj).');throw e};
+  DB={set:(p,v)=>D.set(D.ref(db,p),v).catch(er('zapisu')),rm:p=>D.remove(D.ref(db,p)).catch(er('zapisu')),on:(p,cb)=>D.onValue(D.ref(db,p),s=>cb(s.val()),e=>alert('Firebase – błąd odczytu: '+e.message))};return}
+ const K='mono_db',L={},get=()=>JSON.parse(localStorage.getItem(K)||'{}'),at=(o,p)=>p.split('/').reduce((a,k)=>a==null?a:a[k],o);
+ const fire=()=>{const d=get();for(const p in L)L[p].forEach(f=>f(at(d,p)??null))};
+ const put=(p,v)=>{const d=get(),ks=p.split('/'),l=ks.pop();let o=d;ks.forEach(k=>o=o[k]=o[k]||{});if(v==null)delete o[l];else o[l]=v;localStorage.setItem(K,JSON.stringify(d));fire()};
+ addEventListener('storage',e=>e.key==K&&fire());
+ DB={set:async(p,v)=>put(p,v),rm:async p=>put(p,null),on:(p,cb)=>{(L[p]=L[p]||[]).push(cb);cb(at(get(),p)??null);return()=>{L[p]=L[p].filter(f=>f!=cb)}}};
+}
+
+// ====== LOBBY ======
+function getName(){const v=($('#nm')?.value||ME.name).trim();if(!v){alert('Wpisz nick');return 0}ME.name=localStorage.mname=v.slice(0,14);return 1}
+function menu(){clearTimeout(bt);unsub&&unsub();RID=0;R=0;GRID=0;TM.forEach(clearTimeout);const f=$('#fx');f&&(f.innerHTML='');
+ A.innerHTML=`<h1>🏭 MONOPOLY · ŚLĄSK</h1><div class=card><div class=row><input id=nm maxlength=14 placeholder="Twój nick" value="${esc(ME.name)}"><button onclick="createForm()">+ Utwórz pokój</button></div></div><h3>Publiczne pokoje</h3><div id=list class=card></div>${FIREBASE_CONFIG?'':'<p class=mu>⚠ Tryb lokalny (brak konfiguracji Firebase) — pokoje widzą tylko karty tej przeglądarki.</p>'}`;
+ unsub=DB.on('rooms',rs=>{LR=rs||{};drawList()})}
+function drawList(){const l=$('#list');if(!l)return;
+ const e=Object.entries(LR).filter(([k,r])=>r&&Date.now()-r.created<216e5).sort((a,b)=>b[1].created-a[1].created);
+ l.innerHTML=e.length?e.map(([k,r])=>{const n=cnt(r),m=mine(r);return `<div class=row style="padding:6px 0;border-bottom:1px solid #2a3644"><div><b>${esc(r.name)}</b> <small class=mu>host: ${esc(r.hostName)} · ${r.cash}$ · ${n}/${r.max}${r.bots?' · 🤖':''}</small></div><button onclick="join('${k}')" ${(!m&&(r.status!='lobby'||n>=r.max))?'disabled':''}>${m?'Wróć':r.status=='lobby'?'Dołącz':'W grze'}</button></div>`}).join(''):'Brak pokoi — utwórz pierwszy!'}
+function createForm(){if(!getName())return;
+ A.innerHTML=`<h2>Nowy pokój</h2><div class="card f"><label>Nazwa pokoju<input id=rn maxlength=24 value="Pokój ${esc(ME.name)}"></label>
+ <label>Maks. graczy<select id=mx><option>4<option>3<option>2</select></label>
+ <label>Kapitał startowy ($)<select id=ca><option>1000<option selected>1500<option>2000<option>3000</select></label>
+ <label>Pensja za przejście przez Start ($)<select id=sa><option>100<option selected>200<option>300</select></label>
+ <label><input type=checkbox id=bo checked> Uzupełnij puste miejsca botami</label>
+ <label><input type=checkbox id=jp> Podatki trafiają na Parking (zgarnia je, kto tam stanie)</label></div>
+ <div class=row><button class=g onclick="menu()">← Wróć</button><button onclick="create()">Utwórz pokój</button></div>`}
+function create(){const id='r'+Math.random().toString(36).slice(2,8);
+ DB.set('rooms/'+id,{name:($('#rn').value.trim()||'Pokój').slice(0,24),host:ME.id,hostName:ME.name,max:+$('#mx').value,cash:+$('#ca').value,salary:+$('#sa').value,bots:$('#bo').checked,jp:$('#jp').checked,status:'lobby',created:Date.now(),players:{0:{id:ME.id,name:ME.name}}}).then(()=>enter(id))}
+async function join(k){if(!getName())return;const r=LR[k];let i=ids(r).find(i=>slot(r,i)&&slot(r,i).id==ME.id);
+ if(i==null){i=ids(r).find(i=>!slot(r,i));if(i==null||r.status!='lobby')return;await DB.set('rooms/'+k+'/players/'+i,{id:ME.id,name:ME.name})}enter(k)}
+function enter(id){unsub&&unsub();RID=id;unsub=DB.on('rooms/'+id,r=>{R=r;if(!r){clearTimeout(bt);alert('Pokój został zamknięty');return menu()}r.status=='play'&&r.state?game():room()})}
+function room(){const r=R,h=r.host==ME.id;
+ A.innerHTML=`<h2>${esc(r.name)}</h2><div class=card><div class=slots>${ids(r).map(i=>{const s=slot(r,i);return `<div class=slot style="border-color:${COL[i]}">${s?esc(s.name)+(s.id==r.host?' 👑':''):r.bots?'🤖 Bot (dołączy)':'— wolne —'}</div>`}).join('')}</div>
+ <p class=mu>Kapitał ${r.cash}$ · Start +${r.salary}$ · Parking ${r.jp?'z pulą':'bez puli'}</p>
+ ${h?`<label><input type=checkbox ${r.bots?'checked':''} onchange="DB.set('rooms/${RID}/bots',this.checked)"> Boty uzupełnią puste miejsca</label>`:`<p class=mu>Boty: ${r.bots?'tak':'nie'}</p>`}</div>
+ <div class=row><button class=g onclick="leave()">Wyjdź</button>${h?'<button onclick="start()">▶ Start gry</button>':'<span class=mu>Czekaj na hosta…</span>'}</div>`}
+function leave(){const r=R,id=RID;if(r){if(r.host==ME.id)DB.rm('rooms/'+id);else if(r.status=='lobby'){const i=ids(r).find(i=>slot(r,i)&&slot(r,i).id==ME.id);i!=null&&DB.rm('rooms/'+id+'/players/'+i)}}menu()}
+function start(){const r=R,BN=['Bot Zabrze','Bot Tychy','Bot Rybnik','Bot Bytom'],pl=[];
+ ids(r).forEach(i=>{const s=slot(r,i);if(s)pl.push({id:s.id,name:s.name,bot:0});else if(r.bots)pl.push({id:'bot'+i,name:BN[i],bot:1})});
+ if(pl.length<2)return alert('Potrzeba min. 2 graczy — włącz boty albo poczekaj na innych.');
+ pl.forEach(p=>Object.assign(p,{cash:r.cash,pos:0,jail:0,out:0}));
+ DB.set('rooms/'+RID+'/state',{pl,own:{},turn:0,ph:'roll',dbl:0,again:0,d:[0,0],park:0,over:0,win:-1,log:['Gra się zaczyna!'],cfg:{salary:r.salary,jp:r.jp?1:0}}).then(()=>DB.set('rooms/'+RID+'/status','play'))}
+
+// ====== LOGIKA GRY ======
+const cur=()=>S.pl[S.turn],say=m=>{S.log.push(m);S.n=(S.n||0)+1;S.ac=S.turn;if(S.log.length>40)S.log.shift()};
+const full=(g,q)=>T.every((x,j)=>x.g!==g||(S.own[j]&&S.own[j].p==q));
+function rent(k){const t=T[k],o=S.own[k],q=o.p,n=T.filter((x,j)=>x.t==t.t&&S.own[j]&&S.own[j].p==q).length;
+ if(t.t=='R')return 25*2**(n-1);if(t.t=='U')return(S.d[0]+S.d[1])*(n>1?10:4);
+ const b=Math.round(t.pr/20);return o.h?b*[0,5,15,40,60,80][o.h]:b*(full(t.g,q)?2:1)}
+function buildable(i){return T.map((t,k)=>k).filter(k=>{const t=T[k],o=S.own[k];if(t.t!='P'||!o||o.p!=i||o.h>=5||!full(t.g,i))return 0;return T.every((x,j)=>x.g!==t.g||S.own[j].h>=o.h)})}
+function pay(i,to,m){const p=S.pl[i];p.cash-=m;if(to>=0)S.pl[to].cash+=m;
+ if(p.cash<0){for(const k in S.own){const o=S.own[k];if(o.p==i)while(o.h>0&&p.cash<0){o.h--;p.cash+=hc(k)/2}}
+  if(p.cash<0){p.out=1;p.cash=0;say('💥 '+p.name+' bankrutuje!');
+   for(const k in S.own){const o=S.own[k];if(o.p==i){if(to>=0){o.p=to;o.h=0}else delete S.own[k]}}
+   const al=S.pl.map((q,j)=>j).filter(j=>!S.pl[j].out);if(al.length<2){S.over=1;S.win=al[0];say('🏆 Wygrywa '+S.pl[al[0]].name+'!')}}}}
+function mv(n){const p=cur(),np=(p.pos+n)%40;if(np<p.pos){p.cash+=S.cfg.salary;say(p.name+' mija Start: +'+S.cfg.salary+'$')}p.pos=np}
+function jail(i){const p=S.pl[i];p.pos=10;p.jail=3;S.ph='act';S.again=0;say(p.name+' idzie do więzienia')}
+function chance(){const p=cur(),i=S.turn,c=[['Wygrana w Lotto! +150$',()=>p.cash+=150],['Mandat na A4: −75$',()=>pay(i,-1,75)],['Przejazd na Start! +'+S.cfg.salary+'$',()=>{p.pos=0;p.cash+=S.cfg.salary}],['Idź do więzienia!',()=>jail(i)],['Dywidenda z kopalni +100$',()=>p.cash+=100],['Remont dachu: −100$',()=>pay(i,-1,100)]][Math.random()*6|0];say('❓ '+p.name+': '+c[0]);c[1]()}
+function land(){const p=cur(),i=S.turn,t=T[p.pos];S.ph='act';say(p.name+' staje na: '+IC[t.t]+t.n);
+ if('PRU'.includes(t.t)){const o=S.own[p.pos];if(!o)S.ph='buy';else if(o.p!=i){const r=rent(p.pos);say(`${p.name} płaci ${r}$ graczowi ${S.pl[o.p].name} (${t.n})`);pay(i,o.p,r)}}
+ else if(t.t=='T'){say(p.name+' płaci podatek '+t.pr+'$');pay(i,-1,t.pr);if(S.cfg.jp)S.park+=t.pr}
+ else if(t.t=='F'){if(S.cfg.jp&&S.park){p.cash+=S.park;say(p.name+' zgarnia pulę z Parkingu: '+S.park+'$');S.park=0}}
+ else if(t.t=='G')jail(i);else if(t.t=='C')chance()}
+function roll(){const p=cur(),i=S.turn,a=1+Math.random()*6|0,b=1+Math.random()*6|0,dbl=a==b;S.d=[a,b];S.again=0;S.rc=(S.rc||0)+1;say(`${p.name} rzuca ${a}+${b}`);
+ if(p.jail){if(dbl){p.jail=0;say('Dublet — wychodzi z więzienia')}
+  else if(--p.jail>0){S.ph='act';return say('Zostaje w więzieniu')}
+  else{p.jail=0;say('Płaci 50$ kaucji');pay(i,-1,50);if(p.out)return}
+  mv(a+b);return land()}
+ if(dbl&&++S.dbl==3){say('Trzeci dublet!');return jail(i)}
+ mv(a+b);land();if(dbl&&!p.jail&&!p.out)S.again=1}
+function next(){do{S.turn=(S.turn+1)%S.pl.length}while(S.pl[S.turn].out);S.ph='roll';S.dbl=0;S.again=0}
+function doAct(a,k,f){if(S.over)return;const i=S.turn,p=cur();if(!f&&!(p.id==ME.id||(p.bot&&R.host==ME.id)))return;
+ if(a=='roll'&&S.ph=='roll')roll();
+ else if(a=='buy'&&S.ph=='buy'){const t=T[p.pos];if(p.cash<t.pr)return;p.cash-=t.pr;S.own[p.pos]={p:i,h:0};S.ph='act';say(p.name+' kupuje '+t.n)}
+ else if(a=='skip'&&S.ph=='buy')S.ph='act';
+ else if(a=='again'&&S.ph=='act'&&S.again){S.ph='roll';S.again=0}
+ else if(a=='build'&&S.ph=='act'&&buildable(i).includes(+k)&&p.cash>=hc(k)){p.cash-=hc(k);S.own[k].h++;say(p.name+' buduje w '+T[k].n)}
+ else if(a=='end'&&(S.ph=='act'||f))next();
+ else return;
+ if(!S.over&&cur().out)next();
+ DB.set('rooms/'+RID+'/state',JSON.parse(JSON.stringify(S)))}
+function botMove(){if(!S||S.over||!cur().bot)return;const p=cur();
+ if(S.ph=='roll')doAct('roll');
+ else if(S.ph=='buy')doAct(p.cash-T[p.pos].pr>=100?'buy':'skip');
+ else{const k=buildable(S.turn).find(k=>p.cash-hc(k)>=400);k!=null?doAct('build',k):doAct(S.again?'again':'end')}}
+
+// ====== WIDOK GRY ======
+function game(){S=JSON.parse(JSON.stringify(R.state));S.own=S.own||{};S.log=S.log||[];if(GRID!=RID){GRID=RID;LRC=S.rc;LN=S.n;TP=[];CASH=[];SIG=0;$('#fx').innerHTML=''}draw();fx();clearTimeout(bt);
+ if(R.host==ME.id&&!S.over&&cur().bot)bt=setTimeout(botMove,2400)}
+function draw(){const me=S.pl.findIndex(p=>p.id==ME.id),my=me==S.turn&&!S.over,p=cur();
+ const cells=T.map((t,i)=>{const o=S.own[i],[r,c]=pos(i);
+  return `<div class=tile data-t=${i} style="grid-area:${r}/${c};${o?`background:color-mix(in srgb,${COL[o.p]} 30%,#f1f4ec);box-shadow:inset 0 -.5em 0 ${COL[o.p]}`:''}">${t.t=='P'?`<b style="background:${GC[t.g]}"></b>`:''}<span>${IC[t.t]}${t.n}</span><em>${t.pr?t.pr+'$':''}</em>${o&&o.h?`<div class=hs>${o.h>4?'🏨':'🏠'.repeat(o.h)}</div>`:''}</div>`}).join('');
+ const pls=S.pl.map((q,j)=>`<div id=pc${j} class="pc ${j==S.turn&&!S.over?'on':''} ${q.out?'out':''}" style="border-left:6px solid ${COL[j]}"><span><i class=av style="background:${COL[j]}">${esc(q.name[0])}</i><b>${esc(q.name)}</b>${q.bot?' 🤖':''}${q.id==ME.id?' (Ty)':''}</span><b>${q.cash}$</b><small class=mu>${q.jail?'⛓ ':''}posiadłości: ${Object.values(S.own).filter(o=>o.p==j).length}</small></div>`).join('');
+ let c='';
+ if(S.over)c=`<h3>🏆 Wygrywa ${esc(S.pl[S.win].name)}!</h3>`;
+ else{c=`<div class="turn ${my?'mine':''}" style="--c:${COL[S.turn]}">${my?'🎯 Twoja tura!':'Tura: '+esc(p.name)}</div>`;
+  if(my){
+   if(S.ph=='roll')c+=`<button onclick="doAct('roll')">🎲 Rzuć kostkami${p.jail?' (więzienie)':''}</button>`;
+   if(S.ph=='buy'){const t=T[p.pos];c+=`<p>Kupić <b>${t.n}</b> za ${t.pr}$?</p><button onclick="doAct('buy')" ${p.cash<t.pr?'disabled':''}>Kup</button><button class=g onclick="doAct('skip')">Pomiń</button>`}
+   if(S.ph=='act'){c+=`<button onclick="doAct('${S.again?'again':'end'}')">${S.again?'🎲 Rzuć ponownie (dublet)':'Zakończ turę'}</button><br>`+buildable(me).map(k=>`<button class=g onclick="doAct('build',${k})" ${p.cash<hc(k)?'disabled':''}>🏠 ${T[k].n} −${hc(k)}$</button>`).join('')}
+  }else c+='<p class=mu>Czekaj na ruch…</p>';
+  if(R.host==ME.id&&!my&&!p.bot)c+=`<button class=g onclick="doAct('end',0,1)">Pomiń turę gracza (host)</button>`}
+ c+=`<br><button class=g onclick="leave()">Wyjdź</button>`;
+ A.innerHTML=`<div class=game><div class=board>${cells}<div class=ctr><div class=logo>MONOPOLY<br>ŚLĄSK</div><div class=dice>${[0,1].map(k=>`<span class="die ${S.rc!=LRC?'rl':''}">${'⚀⚁⚂⚃⚄⚅'[S.d[k]-1]||'🎲'}</span>`).join('')}</div>${S.cfg.jp?`<small>Parking: ${S.park}$</small>`:''}</div></div><div class=panel>${pls}<div class=card>${c}</div><div class=log>${S.log.slice(-12).reverse().map(l=>`<div>${esc(l)}</div>`).join('')}</div></div></div>`}
+
+
+// ====== EFEKTY ======
+const wt=()=>($('.board')?.offsetWidth||700)/100;
+function tcen(i){const[r,c]=pos(i),b=$('.board').getBoundingClientRect(),f=x=>x==1?.75:x==11?11.25:x;return[b.left+scrollX+f(c)/12*b.width,b.top+scrollY+f(r)/12*b.height]}
+function plc(j,i){if(!$('.board'))return;let e=$('#tk'+j);if(!e){e=document.createElement('div');e.id='tk'+j;e.className='tok';e.style.background=COL[j];e.textContent=S.pl[j].name[0];$('#fx').appendChild(e)}
+ const w=wt(),[x,y]=tcen(i);Object.assign(e.style,{left:x+((j%2)-.5)*2.2*w+'px',top:y+((j>>1)-.5)*2.2*w+'px',width:3.8*w+'px',height:3.8*w+'px',fontSize:2.2*w+'px'});
+ e.classList.toggle('act',j==S.turn&&!S.over);e.style.display=S.pl[j].out?'none':''}
+function hit(i,j){const e=$(`[data-t="${i}"]`);if(!e)return;e.style.setProperty('--c',COL[j]);e.classList.remove('hit');void e.offsetWidth;e.classList.add('hit');setTimeout(()=>e.classList.remove('hit'),1300)}
+function flt(j,df){const c=$('#pc'+j);if(!c)return;const r=c.getBoundingClientRect(),e=document.createElement('div');e.className='fl '+(df>0?'up':'dn');e.textContent=(df>0?'+':'−')+Math.abs(df)+'$';e.style.left=r.right+scrollX-90+'px';e.style.top=r.top+scrollY-4+'px';$('#fx').appendChild(e);setTimeout(()=>e.remove(),1900);c.classList.add(df>0?'gain':'hurt');setTimeout(()=>c.classList.remove('gain','hurt'),900)}
+function bnr(m,ac){const b=$('.board');if(!b)return;const r=b.getBoundingClientRect();$('#fx .bn')?.remove();const e=document.createElement('div');e.className='bn';e.style.cssText=`--c:${COL[ac]||'#fff'};left:${r.left+scrollX+r.width/2}px;top:${r.top+scrollY+r.height*.72}px;font-size:${r.width/36}px;max-width:${r.width*.62}px`;e.innerHTML=m.map(esc).join('<br>');$('#fx').appendChild(e);setTimeout(()=>e.remove(),3400)}
+function fx(){TM.forEach(clearTimeout);TM=[];const d=S.rc!=LRC?900:0;let dl=d;
+ S.pl.forEach((p,j)=>{const a=TP[j]??p.pos,n=(p.pos-a+40)%40;plc(j,a);TP[j]=a;if(!n)return;let t;
+  if(n>14){t=d+500;TM.push(setTimeout(()=>{plc(j,p.pos);TP[j]=p.pos},d))}
+  else{t=d+n*170+250;for(let k=1;k<=n;k++)TM.push(setTimeout(()=>{TP[j]=(a+k)%40;plc(j,TP[j])},d+k*170))}
+  dl=Math.max(dl,t);setTimeout(()=>hit(p.pos,j),t)});
+ S.pl.forEach((p,j)=>{const df=p.cash-(CASH[j]??p.cash);if(df)setTimeout(()=>flt(j,df),dl);CASH[j]=p.cash});
+ const sg={};T.forEach((t,i)=>{const o=S.own[i];sg[i]=o?o.p+':'+o.h:''});
+ if(SIG)for(const i in sg)if(sg[i]&&sg[i]!==SIG[i])setTimeout(()=>{const e=$(`[data-t="${i}"]`);if(e){e.classList.add('chg');setTimeout(()=>e.classList.remove('chg'),1500)}},dl);
+ SIG=sg;
+ if(S.n&&S.n!=LN){const k=Math.min(2,S.n-(LN||0)),m=S.log.slice(-k),ac=S.ac;setTimeout(()=>bnr(m,ac),dl)}
+ LN=S.n;LRC=S.rc}
+addEventListener('resize',()=>{if(S&&RID)S.pl.forEach((p,j)=>$('#tk'+j)&&plc(j,TP[j]??p.pos))});
+
+initDB().then(menu).catch(e=>A.innerHTML='<p>Błąd Firebase: '+esc(e.message)+'</p>');
+</script></body></html>

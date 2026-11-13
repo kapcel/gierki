@@ -1,0 +1,796 @@
+<!DOCTYPE html>
+<html lang="pl">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Miasto Wspólne</title>
+<style>
+  html,body{margin:0;height:100%;overflow:hidden;background:#12303b;font:14px ui-sans-serif,system-ui,sans-serif;color:#f2efe6}
+  canvas{display:block;touch-action:none}
+  #top{position:fixed;top:0;left:0;right:0;display:flex;gap:20px;align-items:center;padding:8px 14px;background:#0c2129e6}
+  #top b{font-size:16px}
+  #board{position:fixed;top:44px;right:10px;background:#0c2129e6;padding:8px 12px;border-radius:6px;min-width:150px}
+  #bar{position:fixed;bottom:0;left:0;right:0;display:flex;flex-wrap:wrap;gap:8px;justify-content:center;padding:10px;background:#0c2129e6}
+  #bar button{background:#1d4b5c;color:#f2efe6;border:2px solid transparent;border-radius:6px;padding:6px 9px;cursor:pointer;font:inherit}
+  #bar button.on{border-color:#f0b24a}
+  #bar button:hover{background:#27627a}
+  #con{position:fixed;top:0;left:0;right:0;height:40%;background:#000d;color:#7dffa0;font:13px ui-monospace,monospace;display:none;flex-direction:column;padding:8px;box-sizing:border-box}
+  #out{flex:1;overflow:auto;white-space:pre-wrap}
+  #in{background:none;border:0;border-top:1px solid #7dffa055;color:inherit;font:inherit;outline:none;padding-top:6px}
+  #mini{position:fixed;left:10px;bottom:100px;width:160px;height:160px;border:2px solid #1d4b5c;image-rendering:pixelated;cursor:pointer}
+  #tip{position:fixed;bottom:105px;left:50%;transform:translateX(-50%);opacity:.7}
+</style>
+</head>
+<body>
+<canvas id="c"></canvas>
+
+<div id="top">
+  <b id="name">...</b>
+  <span>Gotówka: <b id="cash">0</b> $</span>
+  <span>Przychód: <b id="inc">0</b> $ / 5 s</span>
+  <span id="msg"></span>
+</div>
+<div id="board"></div>
+<div id="bar"></div>
+<canvas id="mini"></canvas>
+<div id="tip">Przeciągnij – przesuwanie · kółko – zoom · ` – konsola · pojazd: kliknij dwie stacje</div>
+
+<div id="con"><div id="out"></div><input id="in" autocomplete="off" placeholder="wpisz help"></div>
+
+<script type="module">
+// ============================================================
+// 1. KONFIGURACJA FIREBASE — wklej tu dane ze swojego projektu
+// ============================================================
+const firebaseConfig = {
+  apiKey: "AIzaSyAO1VCLQSVFdkRacQCLl6XVcTh4Es0pCIk",
+  authDomain: "city2-9355f.firebaseapp.com",
+  projectId: "city2-9355f",
+  storageBucket: "city2-9355f.firebasestorage.app",
+  messagingSenderId: "724991411064",
+  appId: "1:724991411064:web:671f63818ce2356a9ffe8d",
+  measurementId: "G-9VKEEWB5MV",
+  databaseURL: "https://city2-9355f-default-rtdb.europe-west1.firebasedatabase.app"
+};
+
+import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
+import { getAuth, signInAnonymously } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js";
+import { getDatabase, ref, set, remove, get, runTransaction, onValue, onChildAdded, onChildChanged, onChildRemoved }
+  from "https://www.gstatic.com/firebasejs/10.12.2/firebase-database.js";
+
+const app = initializeApp(firebaseConfig);
+const db = getDatabase(app);
+
+// ============================================================
+// 2. USTAWIENIA GRY
+// ============================================================
+const N = 128;              // mapa N x N kafelków (128 x 128 = 16 384 pól)
+const TW = 64, TH = 32;     // wymiary kafelka izometrycznego
+const START_CASH = 5000;
+
+// Typy budynków: koszt, wysokość bryły, kolory
+const BUILD = {
+  road:    { name: "Droga",   cost: 10,  h: 0,  color: "#4b4f55" },
+  house:   { name: "Dom",     cost: 100, h: 18, color: "#e0a368" },
+  shop:    { name: "Sklep",   cost: 300, h: 24, color: "#5fa8d3" },
+  factory: { name: "Fabryka", cost: 600, h: 34, color: "#b8555c" },
+  rail:    { name: "Tor",      cost: 20,  h: 0,  color: "#8d8470" },
+  station: { name: "Stacja",   cost: 150, h: 4,  color: "#c9c2b0" },
+  mine:    { name: "Kopalnia", cost: 500, h: 14, color: "#6e5a48" },
+  sawmill: { name: "Tartak",   cost: 400, h: 14, color: "#a67c52" },
+  steel:   { name: "Huta",     cost: 800, h: 28, color: "#7b8794" },
+  buyer:   { name: "Skup",     cost: 0,   h: 22, color: "#d4b254" },   // budowany przez system na brzegach mapy
+};
+// Pojazdy: cap = ładowność, speed = kafelki na sekundę
+const VEH = {
+  truck: { name: "Ciężarówka", cost: 200, cap: 12, speed: 1.2 },
+  train: { name: "Pociąg",     cost: 600, cap: 40, speed: 2.2 },
+};
+
+// ============================================================
+// 3. STAN
+// ============================================================
+let uid, myName, cash = START_CASH;
+let isAdmin = false;
+let tool = "road";                      // aktualne narzędzie ("bulldoze" = burzenie)
+const tiles = {};                       // "x_y" -> { t: typ, o: właściciel(uid), n: nazwa }
+const cam = { x: 0, y: 0, z: 1 };       // kamera
+let hover = null;
+
+const $ = id => document.getElementById(id);
+const canvas = $("c"), ctx = canvas.getContext("2d");
+
+// ============================================================
+// 4. TEREN (generowany z szumu — identyczny u wszystkich graczy)
+// ============================================================
+const hash = (x, y) => { const n = Math.sin(x * 127.1 + y * 311.7) * 43758.5453; return n - Math.floor(n); };
+function noise(x, y, s) {                       // szum wartościowy; s = skala (większe = gładszy teren)
+  const xi = Math.floor(x / s), yi = Math.floor(y / s), fx = x / s - xi, fy = y / s - yi;
+  const sx = fx * fx * (3 - 2 * fx), sy = fy * fy * (3 - 2 * fy);
+  const top = hash(xi, yi) * (1 - sx) + hash(xi + 1, yi) * sx;
+  const bot = hash(xi, yi + 1) * (1 - sx) + hash(xi + 1, yi + 1) * sx;
+  return top * (1 - sy) + bot * sy;
+}
+const terrain = [], depth = [], groundCol = [];  // 0 woda, 1 trawa, 2 las, 3 piasek
+for (let y = 0; y < N; y++) for (let x = 0; x < N; x++) {
+  const i = y * N + x, r = hash(x * 3, y * 7);
+  const v = 0.55 * noise(x, y, 26) + 0.3 * noise(x + 50, y + 50, 11) + 0.15 * noise(x, y, 4);
+  const forest = noise(x + 200, y + 90, 8);
+  terrain[i] = v < 0.43 ? 0 : v < 0.46 ? 3 : forest > 0.6 ? 2 : 1;
+  const d = Math.max(0, 0.43 - v);               // głębokość wody
+  groundCol[i] = [
+    `hsl(${200 + d * 40},58%,${Math.max(22, 46 - d * 80)}%)`,
+    `hsl(${88 + r * 22},${36 + r * 10}%,${36 + r * 8}%)`,
+    `hsl(${100 + r * 15},35%,${28 + r * 6}%)`,
+    `hsl(${44 + r * 6},45%,${66 + r * 6}%)`,
+  ][terrain[i]];
+}
+
+// Skupy na 4 brzegach mapy: każdy ma drogę i tor prowadzące w głąb lądu.
+// Są częścią świata (nie zapisują się w bazie) i płacą najwięcej za surowce i towary.
+const BUYERS = [
+  { x: 3,     y: N / 2, dx: 1,  dy: 0,  name: "Skup Zachód" },
+  { x: N - 4, y: N / 2, dx: -1, dy: 0,  name: "Skup Wschód" },
+  { x: N / 2, y: 3,     dx: 0,  dy: 1,  name: "Skup Północ" },
+  { x: N / 2, y: N - 4, dx: 0,  dy: -1, name: "Skup Południe" },
+];
+for (const b of BUYERS) {
+  const px = b.dy, py = b.dx;                                   // kierunek poprzeczny (tor biegnie obok drogi)
+  for (let i = 0; i < 9; i++) for (let j = -3; j <= 4; j++) {   // wymuszamy ląd wokół skupu
+    const k = (b.y + b.dy * i + py * j) * N + (b.x + b.dx * i + px * j);
+    terrain[k] = 1; groundCol[k] = "hsl(95,38%,38%)";
+  }
+  tiles[b.x + "_" + b.y] = { t: "buyer", o: "sys", n: b.name };
+  tiles[(b.x + px) + "_" + (b.y + py)] = { t: "rail", o: "sys" };
+  for (let i = 1; i <= 6; i++) {
+    tiles[(b.x + b.dx * i) + "_" + (b.y + b.dy * i)] = { t: "road", o: "sys" };
+    tiles[(b.x + b.dx * i + px) + "_" + (b.y + b.dy * i + py)] = { t: "rail", o: "sys" };
+  }
+}
+
+// ============================================================
+// 5. FIREBASE: synchronizacja mapy i graczy
+// ============================================================
+async function init() {
+  const cred = await signInAnonymously(getAuth(app));
+  uid = cred.user.uid;
+
+  myName = localStorage.getItem("cityName") || prompt("Twoja nazwa firmy:") || "Gracz " + uid.slice(0, 4);
+  localStorage.setItem("cityName", myName);
+  $("name").textContent = myName;
+
+  // wczytaj zapisaną gotówkę
+  const snap = await get(ref(db, "players/" + uid));
+  cash = snap.exists() ? snap.val().cash : START_CASH;
+  savePlayer();
+
+  // mapa na żywo: każda zmiana trafia do wszystkich
+  const tilesRef = ref(db, "tiles");
+  onChildAdded(tilesRef,   s => { tiles[s.key] = s.val(); ver++; });
+  onChildChanged(tilesRef, s => { tiles[s.key] = s.val(); ver++; });
+  onChildRemoved(tilesRef, s => { delete tiles[s.key]; ver++; });
+
+  // ranking
+  onValue(ref(db, "players"), s => {
+    const list = Object.values(s.val() || {}).sort((a, b) => b.cash - a.cash).slice(0, 8);
+    $("board").innerHTML = "<b>Ranking</b><br>" + list.map(p => `${p.name}: ${Math.floor(p.cash)} $`).join("<br>");
+  });
+
+  // reset mapy zrobiony przez admina — wszyscy dostają gotówkę startową
+  let first = true;
+  onValue(ref(db, "resetAt"), () => {
+    if (first) { first = false; return; }
+    cash = START_CASH; savePlayer(); say("Mapa została zresetowana!");
+  });
+
+  onValue(ref(db, "stock"), s => stock = s.val() || {});
+  onValue(ref(db, "vehicles"), s => { vehicles = s.val() || {}; ver++; });
+  setInterval(economyTick, 5000);
+}
+
+function savePlayer() {
+  set(ref(db, "players/" + uid), { name: myName, cash: Math.floor(cash) });
+}
+
+// ============================================================
+// 6. EKONOMIA: towary, przetwórstwo, stacje i pojazdy
+// ============================================================
+// Łańcuch dostaw:
+//   Kopalnia -> ruda -> Huta -> stal ─┐
+//   Tartak   -> drewno ───────────────┴-> Fabryka -> towary -> Sklep (sprzedaż klientom)
+// Każdy surowiec / towar można też sprzedać w Skupie na brzegu mapy (x1.8 ceny).
+// Stacja zbiera i oddaje towary budynkom w promieniu 2 pól.
+// Ciężarówka jeździ po drogach, pociąg po torach, między dwiema stacjami (lub skupem).
+const NEIGH = [[1, 0], [-1, 0], [0, 1], [0, -1]];
+const RECIPE = {                           // in = czego potrzebuje, out = co produkuje, rate = ilość na 5 s
+  mine:    { out: "ore",  rate: 3 },
+  sawmill: { out: "wood", rate: 3 },
+  steel:   { in: ["ore"], out: "steel", rate: 2 },
+  factory: { in: ["wood", "steel"], out: "goods", rate: 2 },
+  shop:    { in: ["goods"], rate: 2 },
+};
+const PRICE = { ore: 4, wood: 4, steel: 9, goods: 14 };          // cena za sztukę za transport
+const CARGO_PL = { ore: "ruda", wood: "drewno", steel: "stal", goods: "towary" };
+const SELL = 12;                                                  // sklep: cena sprzedaży towaru klientom
+const BUILDING = ["mine", "sawmill", "steel", "factory", "shop", "buyer"];
+const DEFAULT_TIP = $("tip").textContent;
+
+let stock = {}, vehicles = {}, ver = 0;    // stock[klucz][towar] = ilość; ver rośnie przy każdej zmianie mapy
+const carry = {}, legs = {}, paths = {};
+
+const typeAt = (x, y) => (tiles[x + "_" + y] || {}).t;
+const nearRoad = (x, y) => NEIGH.some(([dx, dy]) => typeAt(x + dx, y + dy) === "road");
+function countNear(x, y, r, type) {
+  let n = 0;
+  for (let j = -r; j <= r; j++) for (let i = -r; i <= r; i++) if (typeAt(x + i, y + j) === type) n++;
+  return n;
+}
+function inRange(x, y, r) {                // budynki produkcyjne w promieniu r
+  const out = [];
+  for (let j = -r; j <= r; j++) for (let i = -r; i <= r; i++) {
+    const k = (x + i) + "_" + (y + j), t = tiles[k];
+    if (t && BUILDING.includes(t.t)) out.push(k);
+  }
+  return out;
+}
+
+// Bezpieczna zmiana magazynu (transakcja — kilku graczy może ruszać ten sam budynek)
+async function adjust(key, cargo, delta, cap = 60) {
+  let applied = 0;
+  await runTransaction(ref(db, `stock/${key}/${cargo}`), v => {
+    v = v || 0; const nv = Math.max(0, Math.min(cap, v + delta)); applied = nv - v; return nv;
+  });
+  return applied;
+}
+
+// Domy płacą podatek, jeśli stoją przy drodze (+2 $ / 5 s)
+function income() {
+  let sum = 0;
+  for (const key in tiles) {
+    const b = tiles[key]; if (b.o !== uid || b.t !== "house") continue;
+    const [x, y] = key.split("_").map(Number);
+    if (nearRoad(x, y)) sum += 2;
+  }
+  return sum;
+}
+
+// Co 5 s: właściciel produkuje i przetwarza w swoich budynkach
+let busy = false;
+async function economyTick() {
+  if (busy) return; busy = true;
+  let gain = income();
+  try {
+    for (const key in tiles) {
+      const b = tiles[key], r = RECIPE[b.t]; if (b.o !== uid || !r) continue;
+      const [x, y] = key.split("_").map(Number), st = stock[key] || {};
+      if (!r.in) { await adjust(key, r.out, r.rate); continue; }                 // kopalnia, tartak
+      if (r.out && (st[r.out] || 0) > 55) continue;                              // magazyn pełny
+      let n = r.rate; for (const c of r.in) n = Math.min(n, st[c] || 0);
+      if (n <= 0) continue;
+      for (const c of r.in) await adjust(key, c, -n);
+      if (r.out) await adjust(key, r.out, n);
+      else gain += n * SELL * (1 + Math.min(6, countNear(x, y, 3, "house")) / 3); // sklep sprzedaje klientom
+    }
+  } finally { cash += gain; savePlayer(); busy = false; }
+}
+
+// --- trasy pojazdów (BFS po drogach lub torach) ---
+const PASS = { truck: ["road", "station", "buyer"], train: ["rail", "station", "buyer"] };
+function findPath(v) {
+  if (!tiles[v.a] || !tiles[v.b]) return null;
+  const ok = PASS[v.k], prev = { [v.a]: null }, q = [v.a];
+  for (let i = 0; i < q.length && q[i] !== v.b; i++) {
+    const [x, y] = q[i].split("_").map(Number);
+    for (const [dx, dy] of NEIGH) {
+      const k = (x + dx) + "_" + (y + dy), t = tiles[k];
+      if (t && ok.includes(t.t) && !(k in prev)) { prev[k] = q[i]; q.push(k); }
+    }
+  }
+  if (!(v.b in prev)) return null;
+  const path = []; for (let k = v.b; k; k = prev[k]) path.unshift(k.split("_").map(Number));
+  return path;
+}
+function getPath(id, v) {                  // trasa z cache (przeliczana po zmianie mapy)
+  const c = paths[id]; if (c && c.ver === ver) return c.p;
+  const p = findPath(v); paths[id] = { ver, p }; return p;
+}
+// Pozycja pojazdu wynika z zegara, więc każdy gracz widzi go w tym samym miejscu
+const travelS = (id, v) => (Date.now() / 1000 + [...id].reduce((a, c) => a + c.charCodeAt(0), 0) * 7) * VEH[v.k].speed;
+function posAt(path, s) {
+  const L = path.length - 1, m = ((s % (2 * L)) + 2 * L) % (2 * L), u = m < L ? m : 2 * L - m;
+  const i = Math.min(L - 1, Math.floor(u)), f = u - i;
+  return toScreen(path[i][0] + (path[i + 1][0] - path[i][0]) * f, path[i][1] + (path[i + 1][1] - path[i][1]) * f);
+}
+
+// Dojazd do końca trasy: tylko klient właściciela rozlicza ładunek
+setInterval(() => {
+  if (!uid) return;
+  for (const [id, v] of Object.entries(vehicles)) {
+    if (v.o !== uid) continue;
+    const p = getPath(id, v); if (!p || p.length < 2) continue;
+    const leg = Math.floor(travelS(id, v) / (p.length - 1));
+    if (legs[id] === undefined) { legs[id] = leg; continue; }
+    if (leg === legs[id]) continue;
+    const atB = (leg - 1) % 2 === 0; legs[id] = leg;                         // parzyste odcinki: A -> B
+    arrive(id, v, atB ? v.b : v.a, atB ? v.a : v.b, p.length);
+  }
+}, 500);
+
+async function arrive(id, v, here, dest, plen) {
+  const [hx, hy] = here.split("_").map(Number), [dx, dy] = dest.split("_").map(Number), c = carry[id];
+  if (c) {                                                                   // 1. rozładunek
+    const buyer = (tiles[here] || {}).t === "buyer";
+    const target = buyer ? null : inRange(hx, hy, 2).filter(k => (RECIPE[tiles[k].t]?.in || []).includes(c.cargo))
+      .sort((a, b) => ((stock[a] || {})[c.cargo] || 0) - ((stock[b] || {})[c.cargo] || 0))[0];
+    const n = target ? await adjust(target, c.cargo, c.n) : buyer ? c.n : 0;
+    if (n > 0) {
+      const pay = n * PRICE[c.cargo] * (1 + plen / 15) * (buyer ? 1.8 : 1);  // dłuższa trasa = więcej
+      cash += pay; savePlayer(); say(`+${Math.floor(pay)} $ za dostawę (${n} × ${CARGO_PL[c.cargo]})`);
+    }
+    carry[id] = null;
+  }
+  const accepts = new Set();                                                 // 2. załadunek tego, co przyjmie cel
+  if ((tiles[dest] || {}).t === "buyer") Object.keys(PRICE).forEach(x => accepts.add(x));
+  else inRange(dx, dy, 2).forEach(k => (RECIPE[tiles[k].t]?.in || []).forEach(x => accepts.add(x)));
+  let best = null;
+  for (const k of inRange(hx, hy, 2)) {
+    const o = RECIPE[tiles[k].t]?.out, n = o ? (stock[k] || {})[o] || 0 : 0;
+    if (n > 0 && accepts.has(o) && (!best || n > best.n)) best = { k, o, n };
+  }
+  if (best) { const n = -(await adjust(best.k, best.o, -Math.min(VEH[v.k].cap, best.n))); if (n > 0) carry[id] = { cargo: best.o, n }; }
+}
+
+// Kupno pojazdu: kliknij stację startową, potem docelową
+let pending = null;
+function routeClick(x, y) {
+  const key = x + "_" + y, t = (tiles[key] || {}).t;
+  if (t !== "station" && t !== "buyer") return say("Kliknij stację lub skup.");
+  if (!pending) { pending = key; return say("Teraz kliknij stację docelową."); }
+  if (pending === key) { pending = null; return say("Anulowano."); }
+  const veh = { k: tool, a: pending, b: key, o: uid }; pending = null;
+  if (!findPath(veh)) return say(tool === "truck" ? "Brak drogi między stacjami." : "Brak toru między stacjami.");
+  if (cash < VEH[tool].cost) return say("Za mało gotówki.");
+  cash -= VEH[tool].cost;
+  set(ref(db, "vehicles/" + Date.now().toString(36) + uid.slice(0, 3)), veh);
+  savePlayer(); say(VEH[tool].name + " wyjeżdża na trasę.");
+}
+
+// ============================================================
+// 7. BUDOWANIE I BURZENIE
+// ============================================================
+function act(x, y) {
+  if (x < 0 || y < 0 || x >= N || y >= N) return;
+  const key = x + "_" + y, existing = tiles[key];
+  if (VEH[tool]) return routeClick(x, y);
+
+  if (tool === "bulldoze") {
+    if (!existing || existing.o === "sys") return;
+    if (existing.o !== uid && !isAdmin) return say("To nie Twój budynek.");
+    cash += BUILD[existing.t].cost * 0.5;                 // zwrot 50%
+    remove(ref(db, "tiles/" + key)); remove(ref(db, "stock/" + key));
+    savePlayer();
+    return;
+  }
+  const ter = terrain[y * N + x];
+  if (ter === 0) return say("Nie można budować na wodzie.");
+  if (existing) return say("Pole jest zajęte.");
+  if (tool === "sawmill" && ter !== 2) return say("Tartak stawia się w lesie.");
+  const b = BUILD[tool];
+  if (cash < b.cost) return say("Za mało gotówki.");
+
+  cash -= b.cost;
+  set(ref(db, "tiles/" + key), { t: tool, o: uid, n: myName });
+  savePlayer();
+}
+
+let msgTimer;
+function say(t) { $("msg").textContent = t; clearTimeout(msgTimer); msgTimer = setTimeout(() => $("msg").textContent = "", 4000); }
+
+// ============================================================
+// 8. RYSOWANIE (widok izometryczny, cienie, cykl dnia i nocy)
+// ============================================================
+const hw = TW / 2, hh = TH / 2;
+const toScreen = (x, y) => ({ x: (x - y) * hw, y: (x + y) * hh });
+function toTile(px, py) {
+  const wx = (px - cam.x) / cam.z, wy = (py - cam.y) / cam.z;
+  return { x: Math.round((wy / hh + wx / hw) / 2), y: Math.round((wy / hh - wx / hw) / 2) };
+}
+const terAt = (x, y) => (x < 0 || y < 0 || x >= N || y >= N) ? 0 : terrain[y * N + x];
+const EDGE = [[1, 0, 1, 2], [0, 1, 2, 3], [-1, 0, 3, 0], [0, -1, 0, 1]];   // sąsiad -> krawędzie rombu
+
+const HOUSE_COL = ["#e8c9a0", "#e0a368", "#c9d6a3", "#d98f8f"];
+const ROOF_COL = ["#a8402f", "#6b4a3a", "#3f5a78"];
+const CAR_COL = ["#d24b4b", "#3f7fd2", "#e8c84a", "#f0f0f0", "#4aa86a"];
+const ownerCache = {};
+const ownerColor = id => ownerCache[id] || (ownerCache[id] = `hsl(${[...String(id)].reduce((a, c) => (a * 31 + c.charCodeAt(0)) % 360, 7)},80%,55%)`);
+
+const shCache = {};
+function shade(hex, f) {                      // przyciemnianie koloru (z cache)
+  const k = hex + f; if (shCache[k]) return shCache[k];
+  const n = parseInt(hex.slice(1), 16), c = s => Math.max(0, Math.min(255, ((n >> s) & 255) * f)) | 0;
+  return (shCache[k] = `rgb(${c(16)},${c(8)},${c(0)})`);
+}
+function poly(points, fill, stroke) {
+  ctx.beginPath();
+  points.forEach((p, i) => i ? ctx.lineTo(p[0], p[1]) : ctx.moveTo(p[0], p[1]));
+  ctx.closePath();
+  ctx.fillStyle = fill; ctx.fill();
+  if (stroke) { ctx.strokeStyle = stroke; ctx.lineWidth = 1; ctx.stroke(); }
+}
+
+let T = 0, night = 0, lod = false;            // czas, ciemność (0-1), tryb uproszczony przy oddaleniu
+const lights = [];                            // światła rysowane po nałożeniu nocy
+
+// --- pomocnicze: bryła z cieniem i okna ---
+function box(p, m, h, col) {
+  const b = [[p.x, p.y - hh + m / 2], [p.x + hw - m, p.y], [p.x, p.y + hh - m / 2], [p.x - hw + m, p.y]];
+  const t = b.map(q => [q[0], q[1] - h]);
+  poly(b.map(q => [q[0] + h * .3, q[1] + h * .1]), "rgba(0,0,0,.22)");       // cień
+  poly([b[3], b[2], t[2], t[3]], shade(col, .75), "#0004");                   // lewa ściana
+  poly([b[2], b[1], t[1], t[2]], shade(col, .55), "#0004");                   // prawa ściana
+  poly(t, shade(col, 1.1), "#0004");                                          // dach
+  return { b, t };
+}
+const fp = (a, b, h, u, v) => [a[0] + (b[0] - a[0]) * u, a[1] + (b[1] - a[1]) * u + h * v];  // punkt na ścianie
+function windows(a, b, h, rows, cols, seed) {
+  for (let r = 0; r < rows; r++) for (let c = 0; c < cols; c++) {
+    const u0 = (c + .25) / cols, u1 = (c + .75) / cols;
+    const v0 = .12 + (r + .2) / rows * .76, v1 = .12 + (r + .65) / rows * .76;
+    const lit = night > .25 && hash(seed + r * 5, c + seed * 3) > .4;         // nocą część okien świeci
+    poly([fp(a, b, h, u0, v0), fp(a, b, h, u1, v0), fp(a, b, h, u1, v1), fp(a, b, h, u0, v1)], lit ? "#ffd86b" : "#a9cfe0");
+  }
+}
+function flag(px, topY, owner) {              // flaga w kolorze właściciela
+  ctx.strokeStyle = "#ddd"; ctx.lineWidth = 1; ctx.beginPath(); ctx.moveTo(px, topY); ctx.lineTo(px, topY - 12); ctx.stroke();
+  poly([[px, topY - 12], [px + 8, topY - 9], [px, topY - 6]], ownerColor(owner));
+}
+
+// --- budynki ---
+function house(p, x, y) {
+  const r = hash(x, y), h = 16 + (r > .6 ? 10 : 0);
+  const { t } = box(p, 10, h, HOUSE_COL[(r * 4) | 0]);
+  const rc = ROOF_COL[(hash(y, x) * 3) | 0];
+  const A = [(t[0][0] + t[2][0]) / 2, (t[0][1] + t[2][1]) / 2 - 12];            // szczyt dachu
+  poly([t[0], t[3], A], shade(rc, .95)); poly([t[1], t[0], A], shade(rc, .75));  // tył dachu
+  poly([t[3], t[2], A], shade(rc, .85)); poly([t[2], t[1], A], shade(rc, .6));   // przód dachu
+  if (!lod) { const rows = h > 20 ? 2 : 1; windows(t[3], t[2], h, rows, 2, x + y); windows(t[2], t[1], h, rows, 2, x * y); }
+  return A[1];
+}
+function shop(p, x, y) {
+  const h = 22, { t } = box(p, 5, h, "#6aa9cf");
+  const cx = (t[0][0] + t[2][0]) / 2, cy = (t[0][1] + t[2][1]) / 2;
+  for (let k = 0; k < 6; k++)                                                    // markiza w paski
+    poly([fp(t[2], t[1], h, k / 6, .5), fp(t[2], t[1], h, (k + 1) / 6, .5), fp(t[2], t[1], h, (k + 1) / 6, .68), fp(t[2], t[1], h, k / 6, .68)], k % 2 ? "#f4efe2" : "#c94c4c");
+  poly([fp(t[2], t[1], h, .4, .72), fp(t[2], t[1], h, .6, .72), fp(t[2], t[1], h, .6, 1), fp(t[2], t[1], h, .4, 1)], "#3b2b20");  // drzwi
+  if (!lod) {
+    windows(t[3], t[2], h, 2, 3, x + y);
+    poly([[cx - 6, cy], [cx + 6, cy], [cx + 6, cy - 5], [cx - 6, cy - 5]], "#8a8f94");   // klimatyzator
+  }
+  return cy - 4;
+}
+function factory(p, x, y) {
+  const h = 26, col = "#b8555c", { t } = box(p, 3, h, col);
+  const cx = (t[0][0] + t[2][0]) / 2, cy = (t[0][1] + t[2][1]) / 2;
+  poly(t.map(q => [cx + (q[0] - cx) * .7, cy + (q[1] - cy) * .7]), shade(col, .9));   // świetlik dachu
+  if (!lod) windows(t[3], t[2], h, 1, 4, x + y);
+  poly([fp(t[2], t[1], h, .15, .55), fp(t[2], t[1], h, .85, .55), fp(t[2], t[1], h, .85, 1), fp(t[2], t[1], h, .15, 1)], "#5a3a3a");  // brama
+  for (const [dx, dy] of [[-9, -5], [3, -9]]) {                                   // kominy z dymem
+    ctx.fillStyle = "#6d6a68"; ctx.fillRect(cx + dx - 3, cy + dy - 22, 6, 22);
+    ctx.fillStyle = "#4a4846"; ctx.fillRect(cx + dx - 3, cy + dy - 22, 6, 3);
+    if (!lod) for (let k = 0; k < 4; k++) {
+      const a = (T * .35 + k / 4 + (dx + 10) * .07) % 1;
+      ctx.fillStyle = `rgba(210,210,210,${(1 - a) * .55})`;
+      ctx.beginPath(); ctx.arc(cx + dx + a * 14, cy + dy - 24 - a * 30, 3 + a * 7, 0, 6.3); ctx.fill();
+    }
+  }
+  return cy - 6;
+}
+
+// --- drogi z jeżdżącymi samochodami i latarniami ---
+function road(p, x, y) {
+  poly([[p.x, p.y - hh], [p.x + hw, p.y], [p.x, p.y + hh], [p.x - hw, p.y]], "#9a9a92");   // chodnik
+  const links = NEIGH.filter(([dx, dy]) => ["road", "station", "buyer"].includes(typeAt(x + dx, y + dy)));
+  const seg = () => { ctx.beginPath(); links.forEach(([dx, dy]) => { const q = toScreen(x + dx / 2, y + dy / 2); ctx.moveTo(p.x, p.y); ctx.lineTo(q.x, q.y); }); ctx.stroke(); };
+  ctx.lineCap = "butt"; ctx.strokeStyle = "#4b4f55"; ctx.lineWidth = 13; seg();
+  ctx.fillStyle = "#4b4f55"; ctx.beginPath(); ctx.arc(p.x, p.y, 6.5, 0, 6.3); ctx.fill();
+  if (lod) return;
+  ctx.strokeStyle = "#e9d36a"; ctx.lineWidth = 1.2; ctx.setLineDash([4, 4]); seg(); ctx.setLineDash([]);
+  const alongX = typeAt(x + 1, y) === "road" || typeAt(x - 1, y) === "road";
+  const alongY = typeAt(x, y + 1) === "road" || typeAt(x, y - 1) === "road";
+  const r = hash(x + 5, y + 5);
+  if (r > .5 && (alongX || alongY)) {                                             // samochód
+    const ax = alongX ? [1, 0] : [0, 1], dir = r > .75 ? 1 : -1, u = (T * .18 * (1 + r) + r * 9) % 1;
+    const q = toScreen(x + ax[0] * (u - .5) * dir + ax[1] * .12 * dir, y + ax[1] * (u - .5) * dir + ax[0] * .12 * dir);
+    ctx.fillStyle = "rgba(0,0,0,.3)"; ctx.fillRect(q.x - 4, q.y - 1, 9, 3);
+    ctx.fillStyle = CAR_COL[(r * 50 | 0) % 5]; ctx.fillRect(q.x - 4, q.y - 5, 8, 4);
+    ctx.fillStyle = "#cfe6f0"; ctx.fillRect(q.x - 2, q.y - 7, 4, 2);
+    if (night > .2) lights.push([q.x, q.y - 3, 9]);
+  }
+  if (hash(x, y + 77) > .8) {                                                     // latarnia
+    ctx.strokeStyle = "#333"; ctx.lineWidth = 1.5; ctx.beginPath(); ctx.moveTo(p.x - 12, p.y + 2); ctx.lineTo(p.x - 12, p.y - 16); ctx.stroke();
+    ctx.fillStyle = "#ffe9a0"; ctx.fillRect(p.x - 14, p.y - 18, 4, 3);
+    if (night > .2) lights.push([p.x - 12, p.y - 16, 22]);
+  }
+}
+
+// --- tory, stacje, przemysł, skupy ---
+function rail(p, x, y) {
+  poly([[p.x, p.y - hh], [p.x + hw, p.y], [p.x, p.y + hh], [p.x - hw, p.y]], "#8d8470");     // podsypka
+  const links = NEIGH.filter(([dx, dy]) => ["rail", "station", "buyer"].includes(typeAt(x + dx, y + dy)));
+  const seg = () => { ctx.beginPath(); links.forEach(([dx, dy]) => { const q = toScreen(x + dx / 2, y + dy / 2); ctx.moveTo(p.x, p.y); ctx.lineTo(q.x, q.y); }); ctx.stroke(); };
+  ctx.lineCap = "butt"; ctx.lineWidth = 9; ctx.strokeStyle = "#5a4630"; ctx.setLineDash([2, 4]); seg(); ctx.setLineDash([]);   // podkłady
+  ctx.lineWidth = 3; ctx.strokeStyle = "#555"; seg(); ctx.lineWidth = 1; ctx.strokeStyle = "#d0d0d0"; seg();               // szyny
+}
+function station(p, x, y) {
+  box(p, 12, 4, "#c9c2b0");
+  const cx = p.x, cy = p.y - 4;
+  ctx.strokeStyle = "#555"; ctx.lineWidth = 1.5;
+  for (const [dx, dy] of [[-14, 0], [14, 0], [0, -7], [0, 7]]) { ctx.beginPath(); ctx.moveTo(cx + dx, cy + dy); ctx.lineTo(cx + dx, cy + dy - 14); ctx.stroke(); }
+  poly([[cx, cy - 21], [cx + 16, cy - 14], [cx, cy - 7], [cx - 16, cy - 14]], "#c94c4c", "#0004");   // zadaszenie
+  return cy - 21;
+}
+function stacks(cx, cy, list, glow) {                    // kominy z dymem
+  for (const [dx, dy] of list) {
+    ctx.fillStyle = "#6d6a68"; ctx.fillRect(cx + dx - 3, cy + dy - 22, 6, 22);
+    ctx.fillStyle = "#4a4846"; ctx.fillRect(cx + dx - 3, cy + dy - 22, 6, 3);
+    if (glow && night > .2) lights.push([cx + dx, cy + dy - 22, 16]);
+    if (!lod) for (let k = 0; k < 4; k++) {
+      const a = (T * .35 + k / 4 + (dx + 10) * .07) % 1;
+      ctx.fillStyle = `rgba(190,190,190,${(1 - a) * .55})`;
+      ctx.beginPath(); ctx.arc(cx + dx + a * 14, cy + dy - 24 - a * 30, 3 + a * 7, 0, 6.3); ctx.fill();
+    }
+  }
+}
+function mine(p, x, y) {
+  const { t } = box(p, 8, 10, "#6e5a48"), cx = p.x, cy = p.y - 10;
+  ctx.strokeStyle = "#3b2f25"; ctx.lineWidth = 2; ctx.beginPath();                              // wieża szybowa
+  ctx.moveTo(cx - 8, cy + 2); ctx.lineTo(cx, cy - 24); ctx.lineTo(cx + 8, cy + 2); ctx.moveTo(cx - 4, cy - 8); ctx.lineTo(cx + 4, cy - 8); ctx.stroke();
+  ctx.beginPath(); ctx.arc(cx, cy - 26, 5, 0, 6.3); ctx.stroke();
+  const a = T * 2; ctx.beginPath(); ctx.moveTo(cx - Math.cos(a) * 5, cy - 26 - Math.sin(a) * 5); ctx.lineTo(cx + Math.cos(a) * 5, cy - 26 + Math.sin(a) * 5); ctx.stroke();
+  poly([[cx + 8, cy + 8], [cx + 22, cy + 8], [cx + 15, cy - 4]], "#4a4a52");                       // hałda rudy
+  return cy - 32;
+}
+function sawmill(p, x, y) {
+  const { t } = box(p, 8, 14, "#a67c52");
+  poly([t[3], t[2], t[1], t[0]], "#7a5638");
+  for (let k = 0; k < 6; k++) {                                                                    // stos kłód
+    const cx = p.x + 12 + (k % 3) * 5 - (k > 2 ? 2 : 0), cy = p.y + 3 - (k > 2 ? 5 : 0);
+    ctx.fillStyle = "#8b5a2b"; ctx.beginPath(); ctx.arc(cx, cy, 3, 0, 6.3); ctx.fill();
+    ctx.fillStyle = "#d9b27c"; ctx.beginPath(); ctx.arc(cx, cy, 1.4, 0, 6.3); ctx.fill();
+  }
+  return p.y - 18;
+}
+function steel(p, x, y) {
+  const h = 28, { t } = box(p, 4, h, "#7b8794"), cx = (t[0][0] + t[2][0]) / 2, cy = (t[0][1] + t[2][1]) / 2;
+  if (!lod) windows(t[3], t[2], h, 1, 3, x + y);
+  poly([fp(t[2], t[1], h, .2, .6), fp(t[2], t[1], h, .8, .6), fp(t[2], t[1], h, .8, 1), fp(t[2], t[1], h, .2, 1)], "#e8742c");   // rozgrzany piec
+  stacks(cx, cy, [[-9, -4], [6, -8]], true);
+  return cy - 6;
+}
+function buyer(p, x, y) {
+  const h = 22, { t } = box(p, 0, h, "#d4b254");
+  poly([fp(t[3], t[2], h, .12, .2), fp(t[3], t[2], h, .88, .2), fp(t[3], t[2], h, .88, .62), fp(t[3], t[2], h, .12, .62)], "#2d6a4f");   // szyld
+  const q = fp(t[3], t[2], h, .5, .45);
+  ctx.fillStyle = "#fff"; ctx.font = "bold 10px sans-serif"; ctx.textAlign = "center"; ctx.fillText("SKUP", q[0], q[1]);
+  poly([fp(t[2], t[1], h, .2, .5), fp(t[2], t[1], h, .8, .5), fp(t[2], t[1], h, .8, 1), fp(t[2], t[1], h, .2, 1)], "#5b4b2a");         // brama
+  return t[0][1] + 6;
+}
+function drawVehicles() {                                // ciężarówki i pociągi (pozycja z zegara)
+  for (const [id, v] of Object.entries(vehicles)) {
+    const path = getPath(id, v); if (!path || path.length < 2) continue;
+    const s = travelS(id, v), train = v.k === "train";
+    for (let k = 0; k < (train ? 3 : 1); k++) {
+      const q = posAt(path, s - k * .55), sx = q.x * cam.z + cam.x, sy = q.y * cam.z + cam.y;
+      if (sx < -40 || sx > canvas.width + 40 || sy < -40 || sy > canvas.height + 40) continue;
+      ctx.fillStyle = "rgba(0,0,0,.3)"; ctx.fillRect(q.x - 7, q.y - 1, 15, 3);
+      if (!train) { ctx.fillStyle = ownerColor(v.o); ctx.fillRect(q.x - 6, q.y - 8, 12, 6); ctx.fillStyle = "#eee"; ctx.fillRect(q.x + 2, q.y - 10, 4, 4); }
+      else {
+        ctx.fillStyle = k ? "#7a6a58" : "#2f3640"; ctx.fillRect(q.x - 7, q.y - 9, 14, 7);
+        ctx.fillStyle = ownerColor(v.o); ctx.fillRect(q.x - 7, q.y - 9, 14, 2);
+        if (!k) { ctx.fillStyle = "#f6e27a"; ctx.fillRect(q.x + 4, q.y - 7, 3, 2); if (night > .2) lights.push([q.x + 6, q.y - 6, 14]); }
+      }
+    }
+  }
+}
+
+// --- natura ---
+function tree(x, y, s, pine) {
+  ctx.fillStyle = "rgba(0,0,0,.2)"; ctx.beginPath(); ctx.ellipse(x + 3, y + 1, 9 * s, 3.5 * s, 0, 0, 6.3); ctx.fill();
+  ctx.fillStyle = "#6b4a2f"; ctx.fillRect(x - 1.5 * s, y - 6 * s, 3 * s, 6 * s);
+  if (pine) for (let k = 0; k < 3; k++) { const w = (9 - k * 2) * s, by = y - (5 + k * 7) * s; poly([[x - w, by], [x + w, by], [x, by - 10 * s]], k % 2 ? "#2f6b3a" : "#3b7d45"); }
+  else {
+    ctx.fillStyle = "#3f8a3f"; ctx.beginPath(); ctx.arc(x, y - 12 * s, 8 * s, 0, 6.3); ctx.fill();
+    ctx.fillStyle = "#58a652"; ctx.beginPath(); ctx.arc(x - 2 * s, y - 15 * s, 5 * s, 0, 6.3); ctx.fill();
+  }
+}
+function decor(p, x, y, ter) {
+  const r = hash(x + 11, y + 3);
+  if (ter === 2) [[-8, -3], [7, -5], [-1, 5]].forEach(([dx, dy], k) => tree(p.x + dx, p.y + dy, .8 + hash(x + k, y) * .5, hash(y, x + k) > .5));
+  else if (ter === 1) {
+    if (r > .94) tree(p.x, p.y, 1, r > .97);
+    else if (r > .88) ["#f4d03f", "#e8668a", "#fff"].forEach((c, k) => { ctx.fillStyle = c; ctx.fillRect(p.x - 8 + k * 7, p.y - 2 + (k % 2) * 4, 2, 2); });
+    else if (r < .03) { ctx.fillStyle = "#8d8f94"; ctx.beginPath(); ctx.ellipse(p.x, p.y, 6, 3.5, 0, 0, 6.3); ctx.fill(); }
+  }
+}
+
+// --- jeden kafelek ---
+function drawTile(x, y) {
+  const i = y * N + x, p = toScreen(x, y), sx = p.x * cam.z + cam.x, sy = p.y * cam.z + cam.y;
+  if (sx < -90 || sx > canvas.width + 90 || sy < -70 * cam.z || sy > canvas.height + 110 * cam.z) return;   // poza ekranem
+  const c = [[p.x, p.y - hh], [p.x + hw, p.y], [p.x, p.y + hh], [p.x - hw, p.y]], ter = terrain[i];
+  poly(c, groundCol[i]);
+  if (ter === 0 && !lod) {
+    if (Math.sin(T * 1.6 + x * .9 + y * .6) > .75) { ctx.strokeStyle = "#ffffff55"; ctx.lineWidth = 1; ctx.beginPath(); ctx.moveTo(p.x - 6, p.y - 1); ctx.lineTo(p.x + 6, p.y - 1); ctx.stroke(); }
+    for (const [dx, dy, a, b] of EDGE) if (terAt(x + dx, y + dy) !== 0) {          // piana przy brzegu
+      ctx.strokeStyle = "rgba(255,255,255,.55)"; ctx.lineWidth = 2; ctx.beginPath(); ctx.moveTo(c[a][0], c[a][1]); ctx.lineTo(c[b][0], c[b][1]); ctx.stroke();
+    }
+  }
+  const b = tiles[x + "_" + y];
+  if (!b) { if (!lod) decor(p, x, y, ter); return; }
+  if (b.t === "road") return road(p, x, y);
+  if (b.t === "rail") return rail(p, x, y);
+  const top = ({ house, shop, factory, station, mine, sawmill, steel, buyer }[b.t])(p, x, y);
+  if (lod || b.o === "sys") return;
+  flag(p.x, top, b.o);
+  const st = stock[x + "_" + y];                                                  // pasek zapasu nad budynkiem
+  if (st) { const sum = Object.values(st).reduce((a, c) => a + c, 0); ctx.fillStyle = "#0008"; ctx.fillRect(p.x - 12, top - 18, 24, 4); ctx.fillStyle = "#f0b24a"; ctx.fillRect(p.x - 12, top - 18, 24 * Math.min(1, sum / 60), 4); }
+}
+
+// --- klatka ---
+function draw() {
+  if (canvas.width !== innerWidth || canvas.height !== innerHeight) { canvas.width = innerWidth; canvas.height = innerHeight; }
+  T = performance.now() / 1000;
+  night = Math.max(0, Math.min(1, -Math.sin(Date.now() / 240000 * 6.2832) * 1.6));   // doba trwa 4 min, taka sama u wszystkich
+  lod = cam.z < .8; lights.length = 0;
+
+  ctx.setTransform(1, 0, 0, 1, 0, 0);
+  ctx.fillStyle = "#0f2a35"; ctx.fillRect(0, 0, canvas.width, canvas.height);
+  ctx.setTransform(cam.z, 0, 0, cam.z, cam.x, cam.y);
+
+  const cs = [toTile(0, 0), toTile(canvas.width, 0), toTile(0, canvas.height), toTile(canvas.width, canvas.height)];   // widoczny obszar
+  const x0 = Math.max(0, Math.min(...cs.map(c => c.x)) - 3), x1 = Math.min(N - 1, Math.max(...cs.map(c => c.x)) + 5);
+  const y0 = Math.max(0, Math.min(...cs.map(c => c.y)) - 3), y1 = Math.min(N - 1, Math.max(...cs.map(c => c.y)) + 5);
+  for (let y = y0; y <= y1; y++) for (let x = x0; x <= x1; x++) drawTile(x, y);
+  drawVehicles();
+
+  if (hover && hover.x >= 0 && hover.y >= 0 && hover.x < N && hover.y < N) {       // podgląd budowy: zielony = można
+    const p = toScreen(hover.x, hover.y), occupied = !!tiles[hover.x + "_" + hover.y];
+    const ok = tool === "bulldoze" ? occupied : VEH[tool] ? ["station", "buyer"].includes((tiles[hover.x + "_" + hover.y] || {}).t) : terrain[hover.y * N + hover.x] !== 0 && !occupied && cash >= BUILD[tool].cost;
+    poly([[p.x, p.y - hh], [p.x + hw, p.y], [p.x, p.y + hh], [p.x - hw, p.y]], ok ? "#7dffa066" : "#ff6a6a66", "#fff");
+  }
+
+  ctx.setTransform(1, 0, 0, 1, 0, 0);                                               // noc
+  if (night > .02) { ctx.fillStyle = `rgba(8,16,48,${night * .55})`; ctx.fillRect(0, 0, canvas.width, canvas.height); }
+  ctx.setTransform(cam.z, 0, 0, cam.z, cam.x, cam.y);
+  if (lights.length) {
+    ctx.globalCompositeOperation = "lighter";
+    for (const [lx, ly, r] of lights) {
+      ctx.fillStyle = `rgba(255,200,90,${.18 * night})`; ctx.beginPath(); ctx.arc(lx, ly, r, 0, 6.3); ctx.fill();
+      ctx.fillStyle = `rgba(255,220,140,${.25 * night})`; ctx.beginPath(); ctx.arc(lx, ly, r * .45, 0, 6.3); ctx.fill();
+    }
+    ctx.globalCompositeOperation = "source-over";
+  }
+  $("cash").textContent = Math.floor(cash);
+  $("inc").textContent = income();
+  const hk = hover && hover.x + "_" + hover.y, hb = hk && tiles[hk];                // opis budynku pod kursorem
+  $("tip").textContent = hb && BUILD[hb.t] && BUILD[hb.t].h > 0
+    ? `${BUILD[hb.t].name} (${hb.n || "system"}): ` + (Object.entries(stock[hk] || {}).map(([c, n]) => `${CARGO_PL[c]} ${n}`).join(", ") || "brak towarów")
+    : DEFAULT_TIP;
+  requestAnimationFrame(draw);
+}
+
+// --- minimapa (klik = skok kamery) ---
+const mini = $("mini"), mctx = mini.getContext("2d"), miniBase = document.createElement("canvas");
+mini.width = mini.height = miniBase.width = miniBase.height = N;
+{
+  const m = miniBase.getContext("2d"), MC = ["#2f6f8f", "#6fa65a", "#3f7f45", "#d9c58a"];
+  for (let i = 0; i < N * N; i++) { m.fillStyle = MC[terrain[i]]; m.fillRect(i % N, (i / N) | 0, 1, 1); }
+}
+setInterval(() => {
+  mctx.drawImage(miniBase, 0, 0);
+  for (const k in tiles) { const [x, y] = k.split("_"); mctx.fillStyle = ownerColor(tiles[k].o); mctx.fillRect(x, y, 1, 1); }
+  const c = toTile(innerWidth / 2, innerHeight / 2);
+  mctx.strokeStyle = "#fff"; mctx.strokeRect(c.x - 5, c.y - 5, 10, 10);
+}, 700);
+mini.onclick = e => {
+  const r = mini.getBoundingClientRect(), s = toScreen((e.clientX - r.left) / r.width * N, (e.clientY - r.top) / r.height * N);
+  cam.x = innerWidth / 2 - s.x * cam.z; cam.y = innerHeight / 2 - s.y * cam.z;
+};
+
+// ============================================================
+// 9. STEROWANIE (mysz / dotyk)
+// ============================================================
+let drag = null;
+canvas.addEventListener("pointerdown", e => { drag = { x: e.clientX, y: e.clientY, cx: cam.x, cy: cam.y, moved: false }; });
+canvas.addEventListener("pointermove", e => {
+  hover = toTile(e.clientX, e.clientY);
+  if (!drag) return;
+  const dx = e.clientX - drag.x, dy = e.clientY - drag.y;
+  if (Math.abs(dx) + Math.abs(dy) > 5) drag.moved = true;
+  if (drag.moved) { cam.x = drag.cx + dx; cam.y = drag.cy + dy; }
+});
+canvas.addEventListener("pointerup", e => {
+  if (drag && !drag.moved) { const t = toTile(e.clientX, e.clientY); act(t.x, t.y); }
+  drag = null;
+});
+canvas.addEventListener("wheel", e => {
+  const old = cam.z;
+  cam.z = Math.max(0.25, Math.min(2.5, cam.z * (e.deltaY < 0 ? 1.1 : 0.9)));
+  cam.x = e.clientX - (e.clientX - cam.x) * cam.z / old;     // zoom w stronę kursora
+  cam.y = e.clientY - (e.clientY - cam.y) * cam.z / old;
+});
+
+// pasek narzędzi
+const bar = $("bar");
+[...Object.keys(BUILD).filter(k => k !== "buyer"), ...Object.keys(VEH), "bulldoze"].forEach(k => {
+  const btn = document.createElement("button");
+  btn.textContent = k === "bulldoze" ? "Burz" : `${(BUILD[k] || VEH[k]).name} (${(BUILD[k] || VEH[k]).cost} $)`;
+  btn.onclick = () => { tool = k; [...bar.children].forEach(b => b.classList.remove("on")); btn.classList.add("on"); };
+  if (k === tool) btn.classList.add("on");
+  bar.appendChild(btn);
+});
+
+// ============================================================
+// 10. KONSOLA (klawisz `)
+// ============================================================
+const con = $("con"), out = $("out"), inp = $("in");
+const log = t => { out.textContent += t + "\n"; out.scrollTop = out.scrollHeight; };
+
+addEventListener("keydown", e => {
+  if (e.key === "`") {
+    e.preventDefault();
+    const open = con.style.display === "flex";
+    con.style.display = open ? "none" : "flex";
+    if (!open) { inp.focus(); if (!out.textContent) log("Konsola. Wpisz 'help'."); }
+  }
+});
+
+inp.addEventListener("keydown", async e => {
+  if (e.key !== "Enter") return;
+  const line = inp.value.trim(); inp.value = "";
+  if (!line) return;
+  log("> " + line.replace(/^(login \S+ ).*/, "$1***"));
+  const [cmd, ...args] = line.split(/\s+/);
+
+  switch (cmd) {
+    case "help":
+      log("login <użytkownik> <hasło>  – logowanie admina\nlogout\nreset   – (admin) czyści całą mapę\ngive <ile>  – (admin) dodaje gotówkę\nwho     – status");
+      break;
+    case "login":
+      // UWAGA: to zabezpieczenie jest tylko po stronie klienta (patrz instrukcja)
+      if (args[0] === "admin" && args[1] === "admin") { isAdmin = true; log("Zalogowano jako admin."); }
+      else log("Błędne dane.");
+      break;
+    case "logout": isAdmin = false; log("Wylogowano."); break;
+    case "who": log(isAdmin ? "admin" : "gracz " + myName); break;
+    case "give":
+      if (!isAdmin) return log("Brak uprawnień. Użyj: login admin admin");
+      cash += Number(args[0]) || 0; savePlayer(); log("Dodano gotówkę.");
+      break;
+    case "reset":
+      if (!isAdmin) return log("Brak uprawnień. Użyj: login admin admin");
+      await remove(ref(db, "tiles")); await remove(ref(db, "stock")); await remove(ref(db, "vehicles"));
+      await set(ref(db, "resetAt"), Date.now());     // sygnał dla wszystkich klientów
+      log("Mapa zresetowana.");
+      break;
+    default: log("Nieznana komenda. Wpisz 'help'.");
+  }
+});
+
+// ============================================================
+// START
+// ============================================================
+// kamera startuje na najbliższym lądzie od środka mapy
+function findLand() {
+  for (let r = 0; r < N / 2; r++) for (let dy = -r; dy <= r; dy++) for (let dx = -r; dx <= r; dx++) {
+    const x = N / 2 + dx, y = N / 2 + dy;
+    if (terrain[y * N + x] === 1) return { x, y };
+  }
+  return { x: N / 2, y: N / 2 };
+}
+const start = toScreen(findLand().x, findLand().y);
+cam.x = innerWidth / 2 - start.x * cam.z; cam.y = innerHeight / 2 - start.y * cam.z;
+requestAnimationFrame(draw);     // mapa rysuje się od razu, także gdy Firebase nie odpowiada
+init().catch(err => { say("Błąd Firebase: " + err.message); console.error(err); });
+</script>
+</body>
+</html>

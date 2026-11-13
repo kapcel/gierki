@@ -1,0 +1,328 @@
+<!DOCTYPE html>
+<html lang="pl"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Złote Kasyno</title>
+<style>
+*{box-sizing:border-box}body{margin:0;min-height:100vh;background:radial-gradient(900px 600px at 50% -10%,#3b0d1a,#0a0408) fixed;color:#f4ead0;font:15px system-ui,sans-serif}
+#app{max-width:1000px;margin:auto;padding:16px}h1,h2{text-align:center;font-family:Georgia,serif;letter-spacing:.08em}
+.neon{font-size:clamp(30px,7vw,60px);color:#ffd86b;text-shadow:0 0 8px #ffb300,0 0 24px #ff8c00,0 0 48px #e11d48;animation:fk 3s infinite}
+@keyframes fk{0%,92%,100%{opacity:1}94%{opacity:.5}96%{opacity:1}98%{opacity:.6}}
+button{background:linear-gradient(#ffd86b,#e0a100);color:#2a1500;border:0;border-radius:10px;padding:10px 16px;font-weight:800;cursor:pointer;box-shadow:0 4px 0 #7a5200;transition:.12s;margin:3px}button:hover:not(:disabled){transform:translateY(-2px)}button:active{transform:translateY(2px);box-shadow:0 1px 0 #7a5200}button:disabled{opacity:.4}
+button.g{background:#2b1b22;color:#f4ead0;box-shadow:0 4px 0 #0008}button.on{outline:3px solid #fff;filter:brightness(1.2)}
+.chip{width:56px;height:56px;border-radius:50%;border:4px dashed #fff;background:#b91c1c;color:#fff;padding:0;box-shadow:0 4px 0 #0008}
+input,select{background:#1b0d13;color:inherit;border:1px solid #6b4a2a;border-radius:10px;padding:10px;font:inherit}
+.card{background:#1d0f16cc;border:1px solid #6b4a2a;border-radius:14px;padding:16px;margin:12px 0;box-shadow:0 8px 24px #0007}
+.row{display:flex;gap:10px;align-items:center;flex-wrap:wrap;justify-content:center}
+.tiles{display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:14px}
+.gt{cursor:pointer;text-align:center;padding:26px 10px;border-radius:16px;background:linear-gradient(160deg,#0f5a3a,#073b26);border:2px solid #ffd86b;transition:.2s;font-weight:800;font-size:18px}
+.gt:hover{transform:translateY(-6px) scale(1.03);box-shadow:0 0 30px #ffb30088}.gt i{display:block;font-style:normal;font-size:56px;animation:bob 2.5s infinite}.gt small{display:block;color:#aef;font-weight:400}.gt.off{filter:grayscale(1);opacity:.5;cursor:default;pointer-events:none}
+@keyframes bob{50%{transform:translateY(-8px) rotate(6deg)}}
+#top{position:sticky;top:0;z-index:20;display:flex;gap:12px;justify-content:space-between;align-items:center;padding:8px 16px;background:#150a0fee;border-bottom:2px solid #ffd86b}#top.hide{display:none}
+#mn.pl{display:inline-block;animation:pl .6s}@keyframes pl{50%{transform:scale(1.6);color:#4ade80}}
+.felt{background:radial-gradient(ellipse at center,#14804f,#073b26);border:8px solid #4a2a12;border-radius:26px;padding:16px;box-shadow:inset 0 0 60px #000a,0 10px 30px #000a;text-align:center}
+.cd{display:inline-flex;align-items:center;justify-content:center;width:46px;height:66px;margin:2px;background:#fff;color:#111;border-radius:7px;font-style:normal;font-weight:800;font-size:17px;box-shadow:0 3px 8px #0008}.cd.r{color:#d11}
+.cd.bk{background:repeating-linear-gradient(45deg,#7a1230,#7a1230 6px,#a01a40 6px,#a01a40 12px);border:2px solid #fff}.cd.nw{animation:dl .5s}
+@keyframes dl{0%{opacity:0;transform:translate(-120px,-90px) rotate(-200deg) scale(.5)}100%{opacity:1}}
+.seats{display:flex;gap:10px;flex-wrap:wrap;justify-content:center;margin:14px 0}.seat{min-width:150px;background:#0006;border:2px solid #ffffff22;border-radius:14px;padding:8px}
+.seat.on{border-color:#ffd86b;animation:gl 1s infinite}.seat.me{background:#06402b}@keyframes gl{50%{box-shadow:0 0 22px #ffd86b}}
+.wh{position:relative;width:min(300px,80vw);height:min(300px,80vw);margin:auto}
+#wheel{width:100%;height:100%;border-radius:50%;border:10px solid #ffd86b;box-shadow:0 0 30px #000a;transition:transform 4.2s cubic-bezier(.12,.7,.1,1)}
+.pt{position:absolute;left:50%;top:-8px;margin-left:-10px;border:10px solid transparent;border-top:22px solid #fff;z-index:2}
+#wn{position:absolute;inset:30%;border-radius:50%;background:#150a0f;display:flex;align-items:center;justify-content:center;font-size:40px;font-weight:900}
+.slot{max-width:480px;margin:auto;padding:22px;border-radius:22px;background:linear-gradient(#a3122e,#5d0a1b);border:6px solid #ffd86b;box-shadow:0 0 40px #ff8c0066;text-align:center}
+.reels{display:flex;gap:10px;justify-content:center;background:#fff;padding:14px;border-radius:14px;margin:14px 0}.reel{width:30%;font-size:64px;background:#eee;border-radius:10px;height:100px;line-height:100px;overflow:hidden;color:#111}
+.reel.sp{animation:sh .12s infinite;filter:blur(1px)}@keyframes sh{50%{transform:translateY(8px)}}
+.lights{height:12px;border-radius:6px;background:repeating-linear-gradient(90deg,#ffd86b 0 14px,#611 14px 28px);animation:ls .5s steps(2) infinite}@keyframes ls{to{background-position:14px 0}}
+#ts{position:fixed;left:50%;top:38%;z-index:99;pointer-events:none;font-size:clamp(28px,7vw,56px);font-weight:900;text-shadow:0 4px 20px #000;animation:tp 2.4s forwards;white-space:nowrap}
+.w{color:#4ade80}.l{color:#ff6b6b}
+@keyframes tp{0%{opacity:0;transform:translate(-50%,-30%) scale(.4)}12%{opacity:1;transform:translate(-50%,-50%) scale(1.15)}20%{transform:translate(-50%,-50%) scale(1)}85%{opacity:1}100%{opacity:0;transform:translate(-50%,-80%)}}
+.cf{position:fixed;top:-40px;z-index:98;font-size:28px;pointer-events:none;animation:fall 2.2s linear forwards}@keyframes fall{to{transform:translateY(110vh) rotate(720deg)}}
+.slots{display:grid;grid-template-columns:repeat(auto-fit,minmax(140px,1fr));gap:8px}.sl{border:2px solid #ffd86b;border-radius:10px;padding:14px;text-align:center;background:#150a0f}
+.uc{display:inline-flex;align-items:center;justify-content:center;width:52px;height:76px;margin:3px;border-radius:10px;border:3px solid #fff;color:#fff;font-weight:900;font-size:22px;font-style:normal;box-shadow:0 3px 8px #0008;text-shadow:0 1px 2px #0006;user-select:none;transition:.12s}
+.uc.R{background:#d11f2f}.uc.Y{background:#e8b800;color:#2a2200;text-shadow:none}.uc.G{background:#18a04a}.uc.B{background:#1e5fd1}
+.uc.W{background:conic-gradient(#d11f2f 0 25%,#e8b800 0 50%,#18a04a 0 75%,#1e5fd1 0)}
+.uc.bk{background:repeating-linear-gradient(45deg,#111,#111 6px,#2a0a12 6px,#2a0a12 12px);border-color:#e11d48;font-size:13px}
+.uc.sm{width:24px;height:36px;font-size:0;border-width:2px;margin:1px;border-radius:5px}
+.uc.ok{cursor:pointer;transform:translateY(-8px);box-shadow:0 0 14px #ffd86b}.uc.ok:hover{transform:translateY(-14px) scale(1.06)}
+.uc.no{opacity:.4}.uc.nw{animation:dl .5s}
+.ub{display:inline-block;background:#e11d48;color:#fff;border-radius:8px;padding:1px 8px;font-weight:900;animation:gl 1s infinite}
+</style></head><body>
+<div id="top" class="hide"><b>👤 <span id="nk"></span></b><span>💰 <b id="mn">0</b>$</span><button class="g" onclick="hall()">🏠 Hala</button></div>
+<div id="app"></div>
+<script>
+// ====== FIREBASE (Realtime Database) — bez konfiguracji działa tryb lokalny (karty tej przeglądarki) ======
+const FIREBASE_CONFIG = {
+  apiKey: "AIzaSyAIfoEEAm3llWm8e5czgna6uGae9KZTAHs",
+    authDomain: "kasyno-97f28.firebaseapp.com",
+    projectId: "kasyno-97f28",
+    storageBucket: "kasyno-97f28.firebasestorage.app",
+    messagingSenderId: "1045457141747",
+    appId: "1:1045457141747:web:c0f83ed3409e9bd7acdc86",
+    measurementId: "G-WQTTKC9LYK",
+    databaseURL: "https://kasyno-97f28-default-rtdb.europe-west1.firebasedatabase.app"
+};
+const $=s=>document.querySelector(s),A=$('#app'),esc=s=>String(s).replace(/[&<>"']/g,c=>'&#'+c.charCodeAt(0)+';');
+const ME={id:localStorage.cid||(localStorage.cid='u'+Math.random().toString(36).slice(2,9)),name:localStorage.cn||'',money:+localStorage.cm||1000};
+const BN=['Bot Zabrze','Bot Tychy','Bot Rybnik','Bot Bytom','Bot Gliwice','Bot Opole'];
+let DB,unsub,R,RID,HT,LAP,SK,G,LR={},RB={k:'r',v:7},SEEN={},LSP,WROT=0,busy,SB=50,DK=[],DH=[];
+async function initDB(){
+ if(FIREBASE_CONFIG){const B='https://www.gstatic.com/firebasejs/10.12.2/',a=await import(B+'firebase-app.js'),D=await import(B+'firebase-database.js'),db=D.getDatabase(a.initializeApp(FIREBASE_CONFIG));
+  const er=w=>e=>{alert('Firebase – błąd '+w+': '+e.message+'\nSprawdź reguły bazy (Realtime Database → Reguły → Opublikuj).');throw e};
+  DB={set:(p,v)=>D.set(D.ref(db,p),v).catch(er('zapisu')),rm:p=>D.remove(D.ref(db,p)).catch(er('zapisu')),on:(p,cb)=>D.onValue(D.ref(db,p),s=>cb(s.val()),e=>alert('Firebase – błąd odczytu: '+e.message))};return}
+ const K='casino_db',L={},get=()=>JSON.parse(localStorage.getItem(K)||'{}'),at=(o,p)=>p.split('/').reduce((a,k)=>a==null?a:a[k],o);
+ const fire=()=>{const d=get();for(const p in L)L[p].forEach(f=>f(at(d,p)??null))};
+ const put=(p,v)=>{const d=get(),ks=p.split('/'),l=ks.pop();let o=d;ks.forEach(k=>o=o[k]=o[k]||{});if(v==null)delete o[l];else o[l]=v;localStorage.setItem(K,JSON.stringify(d));fire()};
+ addEventListener('storage',e=>e.key==K&&fire());
+ DB={set:async(p,v)=>put(p,v),rm:async p=>put(p,null),on:(p,cb)=>{(L[p]=L[p]||[]).push(cb);cb(at(get(),p)??null);return()=>{L[p]=L[p].filter(f=>f!=cb)}}};
+}
+// ====== NARZĘDZIA ======
+function addMoney(d){ME.money+=d;localStorage.cm=ME.money;const m=$('#mn');m.textContent=ME.money;m.classList.remove('pl');void m.offsetWidth;m.classList.add('pl');DB.set('users/'+ME.id,{n:ME.name,m:ME.money}).catch(()=>{})}
+function toast(t,c){$('#ts')?.remove();const e=document.createElement('div');e.id='ts';e.className=c||'';e.textContent=t;document.body.append(e);setTimeout(()=>e.remove(),2400);
+ if(c=='w')for(let i=0;i<28;i++){const f=document.createElement('div');f.className='cf';f.textContent='🪙';f.style.left=Math.random()*100+'vw';f.style.animationDelay=Math.random()*.7+'s';document.body.append(f);setTimeout(()=>f.remove(),3200)}}
+const slot=(r,i)=>r.players&&r.players[i],ids=r=>[...Array(r.max).keys()],mySlot=()=>R&&ids(R).find(i=>slot(R,i)&&slot(R,i).id==ME.id);
+const who=(r,i)=>slot(r,i)||(r.bots?{id:'bot'+i,name:BN[i],bot:1}:null);
+function leaveRoom(){clearInterval(HT);HT=0;const r=R,id=RID,i=r&&mySlot();RID=0;R=0;SK=0;unsub&&unsub();unsub=0;if(r&&id){if(r.host==ME.id)DB.rm('rooms/'+id);else if(i!=null)DB.rm('rooms/'+id+'/players/'+i)}}
+// ====== MENU I HALA ======
+function login(){leaveRoom();$('#top').className='hide';
+ A.innerHTML=`<h1 class=neon>🎰 ZŁOTE KASYNO 🎰</h1><div class=card style="max-width:420px;margin:auto"><label>Twój nick<br><input id=nm maxlength=14 value="${esc(ME.name)}" style="width:100%"></label><br><br><label>Ile masz pieniędzy? ($)<br><input id=mo type=number min=100 max=1000000 value="${ME.money>0?ME.money:1000}" style="width:100%"></label><br><br><button style="width:100%" onclick="go()">Wejdź do kasyna →</button></div>${FIREBASE_CONFIG?'':'<p class=row>⚠ Tryb lokalny (brak Firebase)</p>'}`}
+function go(){const n=$('#nm').value.trim();if(!n)return alert('Wpisz nick');ME.name=localStorage.cn=n;ME.money=Math.max(100,Math.min(1e6,+$('#mo').value||1000));localStorage.cm=ME.money;hall()}
+function hall(){leaveRoom();G=0;$('#top').className='';$('#nk').textContent=ME.name;$('#mn').textContent=ME.money;
+ A.innerHTML=`<h2 class=neon style="font-size:34px">Hala gier</h2><div class=tiles>
+ <div class=gt onclick="slots()"><i>🎰</i>Jednoręki bandyta<small>solo</small></div>
+ <div class=gt onclick="lobby('bj')"><i>🃏</i>Blackjack<small>publiczne stoły + boty</small></div>
+ <div class=gt onclick="lobby('rl')"><i>🎡</i>Ruletka<small>publiczne stoły + boty</small></div>
+ <div class=gt onclick="lobby('tx')"><i>♠️</i>Texas Hold'em<small>publiczne stoły + boty</small></div>
+ <div class=gt onclick="lobby('un')"><i>🎴</i>Uno<small>publiczne stoły + boty</small></div></div>
+ ${ME.money<=0?'<div class=row style="margin-top:14px"><button onclick="addMoney(500);hall()">Pożycz 500$</button></div>':''}
+ <div class=card><b>🏆 Najbogatsi gracze</b><div id=rk></div></div>`;
+ unsub=DB.on('users',u=>{const e=$('#rk');if(e)e.innerHTML=Object.values(u||{}).sort((a,b)=>b.m-a.m).slice(0,5).map((x,i)=>`<div>${i+1}. ${esc(x.n)} — ${x.m}$</div>`).join('')||'Brak danych'})}
+// ====== AUTOMAT ======
+const SY=['🍒','🍋','🔔','⭐','💎','7️⃣'],WT=[30,25,20,13,8,4],MU=[5,8,12,20,40,100];
+function slots(){leaveRoom();G='sl';
+ A.innerHTML=`<h2 class=neon style="font-size:32px">Jednoręki bandyta</h2><div class=slot><div class=lights></div><div class=reels>${[0,1,2].map(k=>`<div class=reel id=rl${k}>🍒</div>`).join('')}</div><div class=lights></div>
+ <p id=bs class=row>${[10,50,100,500].map(a=>`<button class="g ${a==SB?'on':''}" onclick="setB(${a})">${a}$</button>`).join('')}</p>
+ <button style="font-size:22px;width:100%" onclick="spin()">🎰 KRĘĆ!</button><p class=row><small>3 takie same: 🍒×5 🍋×8 🔔×12 ⭐×20 💎×40 7️⃣×100 · 2 takie same: zwrot stawki</small></p></div>`}
+function setB(a){SB=a;document.querySelectorAll('#bs button').forEach(b=>b.classList.toggle('on',parseInt(b.textContent)==a))}
+function wp(){let x=Math.random()*100,i=0;while(x>=WT[i]){x-=WT[i];i++}return i}
+function spin(){if(busy)return;if(ME.money<SB)return toast('Za mało środków','l');busy=1;addMoney(-SB);const res=[wp(),wp(),wp()];
+ [0,1,2].forEach(k=>{const e=$('#rl'+k),iv=setInterval(()=>e.textContent=SY[Math.random()*6|0],70);e.classList.add('sp');setTimeout(()=>{clearInterval(iv);e.textContent=SY[res[k]];e.classList.remove('sp')},900+k*500)});
+ setTimeout(()=>{const[a,b,c]=res,m=a==b&&b==c?MU[a]:(a==b||b==c||a==c)?1:0,w=SB*m;busy=0;if(w)addMoney(w);
+  if(m>1)toast((m>=40?'JACKPOT! ':'WYGRANA ')+'+'+(w-SB)+'$','w');else if(m==1)toast('Zwrot stawki','');else toast('−'+SB+'$','l')},2200)}
+// ====== LOBBY ======
+const NAME={bj:'Blackjack',rl:'Ruletka',tx:"Texas Hold'em",un:'Uno'};
+function lobby(g){leaveRoom();G=g;
+ A.innerHTML=`<h2 class=neon style="font-size:32px">${NAME[g]}</h2><div class=row><button onclick="newTable()">+ Utwórz stół</button><button class=g onclick="hall()">← Hala</button></div><div id=list class=card></div>`;
+ unsub=DB.on('rooms',rs=>{LR=rs||{};const e=$('#list');if(!e)return;
+  const l=Object.entries(LR).filter(([k,r])=>r&&r.g==g&&Date.now()-r.created<216e5).sort((a,b)=>b[1].created-a[1].created);
+  e.innerHTML=l.length?l.map(([k,r])=>{const n=ids(r).filter(i=>slot(r,i)).length,m=ids(r).some(i=>slot(r,i)&&slot(r,i).id==ME.id),free=n<r.max&&(r.status=='lobby'||(r.st&&r.st.ph=='bet'));
+   return `<div class=row style="justify-content:space-between;padding:8px 0;border-bottom:1px solid #6b4a2a"><div><b>${esc(r.name)}</b> <small>host: ${esc(r.hostName)} · ${n}/${r.max}${r.ante?' · ante '+r.ante+'$':''}${r.bots?' · 🤖 boty':''}${r.status=='play'?' · trwa gra':''}</small></div><button onclick="join('${k}')" ${m||free?'':'disabled'}>${m?'Wróć':'Dołącz'}</button></div>`}).join(''):'Brak stołów — utwórz pierwszy!'})}
+function newTable(){A.innerHTML=`<h2 class=neon style="font-size:30px">Nowy stół: ${NAME[G]}</h2><div class=card style="max-width:440px;margin:auto"><label>Nazwa stołu<br><input id=rn maxlength=24 value="Stół ${esc(ME.name)}" style="width:100%"></label><br><br><label>Liczba miejsc<br><select id=mx><option>4<option>2<option>6</select></label><br><br>${G=='tx'||G=='un'?'<label>Wejście do rozdania (ante, $)<br><select id=an><option>10<option>50<option>100<option>500</select></label><br><br>':''}<label><input type=checkbox id=bo checked> Puste miejsca zajmą boty</label><br><br><div class=row><button class=g onclick="lobby(G)">← Wróć</button><button onclick="create()">Utwórz stół</button></div></div>`}
+function create(){const id='r'+Math.random().toString(36).slice(2,8);
+ DB.set('rooms/'+id,{g:G,name:($('#rn').value.trim()||'Stół').slice(0,24),host:ME.id,hostName:ME.name,max:+$('#mx').value,ante:G=='tx'||G=='un'?+$('#an').value:0,bots:$('#bo').checked,status:'lobby',created:Date.now(),players:{0:{id:ME.id,name:ME.name}}}).then(()=>enter(id))}
+async function join(k){const r=LR[k];let i=ids(r).find(i=>slot(r,i)&&slot(r,i).id==ME.id);if(i==null){i=ids(r).find(i=>!slot(r,i));if(i==null)return;await DB.set('rooms/'+k+'/players/'+i,{id:ME.id,name:ME.name})}enter(k)}
+function enter(id){unsub&&unsub();RID=id;LAP=0;SK=0;SEEN={};unsub=DB.on('rooms/'+id,r=>{R=r;if(!r){clearInterval(HT);HT=0;alert('Stół został zamknięty');RID=0;return lobby(G)}r.status=='play'?play():roomView()})}
+function roomView(){const r=R,h=r.host==ME.id;
+ A.innerHTML=`<h2 class=neon style="font-size:30px">${esc(r.name)}</h2><div class=card><div class=slots>${ids(r).map(i=>{const s=slot(r,i);return `<div class=sl>${s?esc(s.name)+(s.id==r.host?' 👑':''):r.bots?'🤖 Bot (dołączy)':'— wolne —'}</div>`}).join('')}</div>
+ ${h?`<p><label><input type=checkbox ${r.bots?'checked':''} onchange="DB.set('rooms/${RID}/bots',this.checked)"> Boty uzupełnią puste miejsca</label></p>`:`<p>Boty: ${r.bots?'tak':'nie'}</p>`}</div>
+ <div class=row><button class=g onclick="lobby(G)">Wyjdź</button>${h?'<button onclick="DB.set(\'rooms/\'+RID+\'/status\',\'play\')">▶ Start gry</button>':'<span>Czekaj na hosta…</span>'}</div>`}
+// ====== KARTY ======
+const SU='♠♥♦♣',RK='A,2,3,4,5,6,7,8,9,10,J,Q,K'.split(',');
+const card=(c,nw)=>c<0?`<i class="cd bk ${nw?'nw':''}"></i>`:`<i class="cd ${[1,2].includes(c/13|0)?'r':''} ${nw?'nw':''}">${RK[c%13]}${SU[c/13|0]}</i>`;
+const cv=c=>{const r=c%13;return r==0?11:r>8?10:r+1};
+function val(h){let v=0,a=0;h.forEach(c=>{v+=cv(c);if(c%13==0)a++});while(v>21&&a-->0)v-=10;return v}
+const dk=()=>{if(DK.length<12)DK=[...Array(52).keys()].sort(()=>Math.random()-.5);return DK.pop()};
+const setS=o=>DB.set('rooms/'+RID+'/st',o);
+// ====== SILNIK STOŁÓW (host) ======
+function tick(){if(!R||R.host!=ME.id||R.status!='play')return;TK[R.g]()}
+function bjTick(){const r=R,s=r.st||{},now=Date.now(),P='rooms/'+RID;
+ if(!s.ph||(s.ph=='res'&&now>s.t)){DB.set(P+'/bets',null);DB.set(P+'/act',null);return setS({ph:'bet',n:(s.n||0)+1,t:now+12000})}
+ if(s.ph=='bet'&&now>s.t){const bets={},hands={};
+  ids(r).forEach(i=>{const p=who(r,i);if(!p)return;const a=p.bot?[10,25,50,100][Math.random()*4|0]:(r.bets&&r.bets[i])||0;if(a>0){bets[i]=a;hands[i]=[dk(),dk()]}});
+  const o=Object.keys(hands);if(!o.length)return setS({ph:'bet',n:s.n+1,t:now+12000});
+  DH=[dk(),dk()];const n={ph:'play',n:s.n,t:now+10000,lm:now,bets,hands,dealer:[DH[0],-1],sd:{0:0}};
+  const f=o.map(Number).find(i=>val(hands[i])<21);if(f==null)return bjEnd(n);n.turn=f;return setS(n)}
+ if(s.ph=='play'){const tu=s.turn,p=who(r,tu),h=s.hands[tu],a=r.act;let mv=0;
+  if(!p||p.bot){if(now-s.lm>1100)mv=val(h)<17?'h':'s'}else if(a&&a.s==tu&&a.n==s.n)mv=a.a;else if(now>s.t)mv='s';
+  if(!mv)return;if(a)DB.set(P+'/act',null);
+  const n={...s,hands:{...s.hands},sd:{...s.sd},lm:now,t:now+10000};
+  if(mv=='h')n.hands[tu]=[...h,dk()];else n.sd[tu]=1;
+  const act=i=>n.hands[i]&&val(n.hands[i])<21&&!n.sd[i],nx=act(tu)?tu:Object.keys(n.hands).map(Number).filter(act).find(i=>i>tu);
+  if(nx==null)return bjEnd(n);n.turn=nx;setS(n)}}
+function bjEnd(s){const d=DH.length>1?DH.slice():[dk(),dk()];while(val(d)<17)d.push(dk());const dv=val(d),pay={},sum=[];
+ Object.entries(s.hands).forEach(([i,h])=>{if(!h)return;const v=val(h),a=s.bets[i],bj=v==21&&h.length==2,db=dv==21&&d.length==2,m=v>21?0:bj&&!db?2.5:db&&!bj?0:dv>21||v>dv?2:v==dv?1:0;
+  pay[i]=Math.floor(a*m);sum.push({i:+i,n:(who(R,i)||{name:'?'}).name,d:v>21?'Fura':bj?'Blackjack':v+' vs '+dv,w:pay[i]-a})});
+ setS({...s,turn:-1,ph:'res',t:Date.now()+5500,dealer:d,pay,sum})}
+const RED=[1,3,5,7,9,12,14,16,18,19,21,23,25,27,30,32,34,36],RN={r:'🔴 Czerwone',b:'⚫ Czarne',e:'Parzyste',o:'Nieparzyste',l:'1–18',h:'19–36',n:'Numer'};
+const WG='conic-gradient('+[...Array(37).keys()].map(n=>`${n?RED.includes(n)?'#c0152e':'#151515':'#0a8f3c'} ${n*360/37}deg ${(n+1)*360/37}deg`).join(',')+')';
+function rlWin(b,n){const ok={r:()=>RED.includes(n),b:()=>n>0&&!RED.includes(n),e:()=>n>0&&n%2==0,o:()=>n%2==1,l:()=>n>=1&&n<=18,h:()=>n>=19,n:()=>n==b.v}[b.k]();return ok?b.a*(b.k=='n'?36:2):0}
+function rlTick(){const r=R,s=r.st||{},now=Date.now(),P='rooms/'+RID;
+ if(!s.ph||(s.ph=='res'&&now>s.t)){DB.set(P+'/bets',null);return setS({ph:'bet',n:(s.n||0)+1,t:now+15000,num:s.num??-1})}
+ if(s.ph=='bet'&&now>s.t){const num=Math.random()*37|0,pay={},sum=[];
+  ids(r).forEach(i=>{const p=who(r,i);if(!p)return;const b=p.bot?{k:'rbeolhn'[Math.random()*7|0],v:Math.random()*37|0,a:[10,25,50][Math.random()*3|0]}:(r.bets&&r.bets[i]);if(!b)return;
+   const w=rlWin(b,num);pay[i]=w;sum.push({i,n:p.name,d:RN[b.k]+(b.k=='n'?' '+b.v:'')+' '+b.a+'$',w:w-b.a})});
+  return setS({ph:'spin',n:s.n,t:now+4500,num,pay,sum})}
+ if(s.ph=='spin'&&now>s.t)setS({...s,ph:'res',t:now+4500})}
+// ====== WIDOKI STOŁÓW (klient) ======
+function play(){if(R.host==ME.id&&!HT)HT=setInterval(tick,500);if(R.g=='tx')pkPay();applyRes();DW[R.g]()}
+function applyRes(){const s=R.st;if(!s||s.ph!='res'||LAP==RID+s.n)return;LAP=RID+s.n;const i=mySlot(),m=s.sum&&s.sum.find(x=>x&&x.i==i);
+ if(m){addMoney(s.pay[i]||0);toast(m.w>0?'WYGRANA +'+m.w+'$':m.w==0?'Zwrot stawki':'−'+(-m.w)+'$',m.w>0?'w':m.w<0?'l':'')}}
+setInterval(()=>{const e=$('#tm');if(e&&R&&R.st)e.textContent=Math.max(0,Math.ceil((R.st.t-Date.now())/1000))},300);
+const sumHtml=s=>(s.sum||[]).map(x=>`<div class="${x.w>0?'w':x.w<0?'l':''}">${esc(x.n)}: ${esc(x.d)} → ${x.w>=0?'+':''}${x.w}$</div>`).join('')||'Nikt nie postawił';
+function bjDraw(){const r=R,s=r.st;if(!s)return A.innerHTML='<div class=card>Przygotowanie stołu…</div>';
+ const me=mySlot(),bets=s.ph=='bet'?r.bets||{}:s.bets||{},hs=s.hands||{};if(SEEN.n!=s.n)SEEN={n:s.n};
+ const cds=(h,k)=>(h||[]).map((c,j)=>{const nw=!SEEN[k+j];SEEN[k+j]=1;return card(c,nw)}).join(''),dl=s.dealer||[];
+ const seats=ids(r).map(i=>{const p=who(r,i);if(!p)return '';const h=hs[i],v=h?val(h):0;
+  return `<div class="seat ${s.ph=='play'&&s.turn==i?'on':''} ${i==me?'me':''}"><b>${esc(p.name)}${p.bot?' 🤖':''}</b><div>${cds(h,'p'+i+':')}</div><div>${h?(v>21?'💥 Fura':v==21&&h.length==2?'🌟 Blackjack':v):'&nbsp;'}</div><div>${bets[i]?'🪙 '+bets[i]+'$':'&nbsp;'}</div></div>`}).join('');
+ let c;if(s.ph=='bet')c=`<p>Obstawiaj! ⏱ <b id=tm></b>s — twój zakład: <b>${(r.bets&&r.bets[me])||0}$</b></p><div class=row>${[10,50,100,500].map(a=>`<button class=chip onclick="bjBet(${a})">${a}</button>`).join('')}</div>`;
+ else if(s.ph=='play')c=s.turn==me?`<p>Twój ruch ⏱ <b id=tm></b>s</p><div class=row><button onclick="bjAct('h')">Dobierz</button><button class=g onclick="bjAct('s')">Pas</button></div>`:`<p>Gra: ${esc((who(r,s.turn)||{name:'?'}).name)}</p>`;
+ else c='<p><b>Wyniki:</b></p>'+sumHtml(s);
+ A.innerHTML=`<div class=felt><div><b>Krupier</b> ${cds(dl,'d')} <b>${dl.includes(-1)?'':val(dl)}</b></div><div class=seats>${seats}</div></div><div class=card style="text-align:center">${c}</div><div class=row><button class=g onclick="lobby('bj')">Wyjdź ze stołu</button></div>`}
+function bjBet(a){const s=R.st,me=mySlot();if(!s||s.ph!='bet'||me==null)return;if(ME.money<a)return toast('Za mało środków','l');addMoney(-a);DB.set('rooms/'+RID+'/bets/'+me,((R.bets&&R.bets[me])||0)+a)}
+function bjAct(a){DB.set('rooms/'+RID+'/act',{s:mySlot(),a,n:R.st.n,k:Date.now()})}
+const wnum=n=>{const e=$('#wn');if(e){e.textContent=n;e.style.color=n?RED.includes(n)?'#ff5c5c':'#fff':'#4ade80'}};
+function spinW(n){const t=-(n+.5)*360/37;WROT+=1800+(((t-WROT)%360)+360)%360;$('#wheel').style.transform='rotate('+WROT+'deg)';$('#wn').textContent='…';setTimeout(()=>wnum(n),4300)}
+function rlDraw(){const r=R,s=r.st;
+ if(SK!=RID){SK=RID;A.innerHTML=`<div class=felt><div class=wh><div id=wheel style="background:${WG}"></div><i class=pt></i><div id=wn>–</div></div></div><div id=dyn></div>`;$('#wheel').style.transform='rotate('+WROT+'deg)'}
+ if(!s)return $('#dyn').innerHTML='<div class=card>Przygotowanie stołu…</div>';
+ if(s.ph=='spin'&&LSP!=RID+s.n){LSP=RID+s.n;spinW(s.num)}else if(s.ph!='spin'&&s.num>=0)wnum(s.num);
+ const me=mySlot(),b=r.bets&&r.bets[me];let c;
+ if(s.ph=='bet')c=`<p>Postaw zakład ⏱ <b id=tm></b>s</p><div class=row>${Object.entries(RN).map(([k,n])=>`<button class="g ${RB.k==k?'on':''}" onclick="RB.k='${k}';rlDraw()">${n}</button>`).join('')}</div>
+  <div class=row style="margin-top:8px">Numer (0–36): <input type=number min=0 max=36 value=${RB.v} style="width:80px" onchange="RB.k='n';RB.v=Math.max(0,Math.min(36,+this.value||0));rlDraw()"></div>
+  <div class=row style="margin:10px">${[10,50,100,500].map(a=>`<button class=chip onclick="rlBet(${a})">${a}</button>`).join('')}</div>
+  <p>Twój zakład: <b>${b?RN[b.k]+(b.k=='n'?' '+b.v:'')+' — '+b.a+'$':'brak'}</b></p>`;
+ else if(s.ph=='spin')c='<p>Kulka się kręci… 🎡</p>';else c='<p><b>Wyniki:</b></p>'+sumHtml(s);
+ $('#dyn').innerHTML=`<div class=card style="text-align:center">${c}</div><div class=row><button class=g onclick="lobby('rl')">Wyjdź ze stołu</button></div>`}
+function rlBet(a){const s=R.st,me=mySlot();if(!s||s.ph!='bet'||me==null)return;const b=R.bets&&R.bets[me];
+ if(b&&(b.k!=RB.k||(b.k=='n'&&b.v!=RB.v)))return toast('Jeden zakład na rundę','l');if(ME.money<a)return toast('Za mało środków','l');
+ addMoney(-a);DB.set('rooms/'+RID+'/bets/'+me,{k:RB.k,v:RB.v,a:(b?b.a:0)+a})}
+// ====== TEXAS HOLD'EM + UNO ======
+let PD={},UP=0;
+const shuf=a=>{for(let i=a.length;i>1;){const j=Math.random()*i--|0;[a[i],a[j]]=[a[j],a[i]]}return a};
+const TK={bj:bjTick,rl:rlTick,tx:pkTick,un:unTick},DW={bj:bjDraw,rl:rlDraw,tx:pkDraw,un:unDraw};
+// --- wspólna faza "ante" (wejście do rozdania), jak faza zakładów w blackjacku ---
+function antePhase(r,s,now,mk){const P='rooms/'+RID,B=r.ante||10;
+ if(!s.ph||(s.ph=='res'&&now>s.t)){DB.set(P+'/bets',null);DB.set(P+'/act',null);setS({ph:'bet',n:(s.n||0)+1,t:now+15000});return 1}
+ if(s.ph=='bet'&&now>s.t){const pl=ids(r).filter(i=>{const p=who(r,i);return p&&(p.bot||(r.bets&&r.bets[i]))});
+  if(pl.length<2){const hum=pl.filter(i=>!who(r,i).bot),pay={},sum=[];
+   hum.forEach(i=>{pay[i]=B;sum.push({i,n:who(r,i).name,d:'Za mało graczy',w:0})});
+   if(hum.length)setS({ph:'res',n:s.n,t:now+3000,pay,sum});else setS({ph:'bet',n:s.n+1,t:now+15000});return 1}
+  setS(mk(pl));return 1}}
+function anteJoin(){const s=R&&R.st,me=mySlot(),B=R.ante||10;if(!s||s.ph!='bet'||me==null||(R.bets&&R.bets[me]))return;
+ if(ME.money<B)return toast('Za mało środków','l');addMoney(-B);DB.set('rooms/'+RID+'/bets/'+me,B)}
+function anteBox(r){const me=mySlot(),B=r.ante||10,j=r.bets&&r.bets[me];
+ const seats=ids(r).map(i=>{const p=who(r,i);if(!p)return '';const on=p.bot||(r.bets&&r.bets[i]);
+  return `<div class="seat ${i==me?'me':''}"><b>${esc(p.name)}${p.bot?' 🤖':''}</b><div>${on?'✔ w grze':'czeka…'}</div></div>`}).join('');
+ return{seats,ctl:`<p>Wejście do rozdania: <b>${B}$</b> ⏱ <b id=tm></b>s</p><div class=row>${j?'<b class=w>✔ Jesteś w grze</b>':me==null?'':`<button onclick="anteJoin()">Wchodzę (${B}$)</button>`}</div><p><small>Potrzeba min. 2 graczy (puste miejsca zajmą boty, jeśli są włączone)</small></p>`}}
+// --- ocena układów pokerowych ---
+const PN=['Wysoka karta','Para','Dwie pary','Trójka','Strit','Kolor','Full','Kareta','Poker'],PS=['Przed flopem','Flop','Turn','River'];
+function ev5(c){const v=c.map(x=>x%13?x%13+1:14).sort((a,b)=>b-a),f=c.every(x=>(x/13|0)==(c[0]/13|0)),m={};v.forEach(x=>m[x]=(m[x]||0)+1);
+ const g=Object.entries(m).map(([x,n])=>[n,+x]).sort((a,b)=>b[0]-a[0]||b[1]-a[1]);let k=g.map(x=>x[1]);
+ const st=g.length==5&&(v[0]-v[4]==4||(v[0]==14&&v[1]==5&&v[4]==2));if(st)k=[v[0]==14&&v[1]==5?5:v[0]];
+ const cat=st&&f?8:g[0][0]==4?7:g[0][0]==3&&g[1][0]==2?6:f?5:st?4:g[0][0]==3?3:g[0][0]==2&&g[1][0]==2?2:g[0][0]==2?1:0;
+ let s=cat;for(let j=0;j<5;j++)s=s*15+(k[j]||0);return s}
+function best(cs){let b=0;(function f(i,c){if(c.length==5){b=Math.max(b,ev5(c));return}if(cs.length-i<5-c.length)return;f(i+1,[...c,cs[i]]);f(i+1,c)})(0,[]);return b}
+function pkBot(s,i,B){const h=s.hole[i],need=s.cb-((s.ci||{})[i]||0),vis=s.bd.slice(0,[0,3,4,5][s.rd]);let st;
+ if(!vis.length){const v=h.map(c=>c%13?c%13+1:14);st=v[0]==v[1]?.5+v[0]/40:(v[0]+v[1])/56+((h[0]/13|0)==(h[1]/13|0)?.1:0)+(Math.abs(v[0]-v[1])<3?.05:0)}
+ else st=[.2,.5,.7,.82,.85,.9,.95,.97,1][best([...h,...vis])/15**5|0];
+ const x=st+(Math.random()-.5)*.25,up=s.rs<4&&Math.random()<.6;
+ if(need>0)return x>.8&&up?'r':x>.42||(need<=B&&x>.3)?'c':'f';return x>.7&&up?'r':'k'}
+// --- silnik Texas Hold'em (host): limit poker, ante zamiast blindów, max 4 stawki na rundę ---
+function pkTick(){const r=R,s=r.st||{},now=Date.now(),B=r.ante||10,P='rooms/'+RID;
+ if(antePhase(r,s,now,pl=>{const D=shuf([...Array(52).keys()]),hole={},al={},ct={},o=(s.n||0)%pl.length;
+  pl.forEach(i=>{hole[i]=[D.pop(),D.pop()];al[i]=1;ct[i]=B});
+  const ord=[...pl.slice(o),...pl.slice(0,o)];return{ph:'play',n:s.n,q:0,t:now+20000,lm:now,B,ord,hole,bd:D.splice(-5),pot:B*pl.length,ct,al,cb:0,rs:0,rd:0,sh:0,turn:ord[0],last:null}}))return;
+ if(s.ph!='play')return;
+ const tu=s.turn,p=who(r,tu),a=r.act,need=s.cb-((s.ci||{})[tu]||0);let mv=0;
+ if(!p||p.bot){if(now-s.lm>1200)mv=p?pkBot(s,tu,B):'f'}else if(a&&a.s==tu&&a.n==s.n&&a.q==s.q)mv=a.a;else if(now>s.t)mv=need>0?'f':'k';
+ if(!mv)return;if(a)DB.set(P+'/act',null);pkMove(s,mv)}
+function pkMove(s,mv){const r=R,B=r.ante||10,n=JSON.parse(JSON.stringify(s)),tu=s.turn,nm=(who(r,tu)||{name:'?'}).name;
+ n.ci=n.ci||{};n.ac=n.ac||{};
+ const sz=s.rd<2?B:2*B,need=s.cb-(n.ci[tu]||0);let m=mv;
+ if(m=='c'&&need<=0)m='k';if(m=='k'&&need>0)m='f';if(m=='r'&&s.rs>=4)m=need>0?'c':'k';
+ const put=x=>{n.ci[tu]=(n.ci[tu]||0)+x;n.ct[tu]+=x;n.pot+=x};
+ if(m=='f')n.al[tu]=0;else if(m=='c')put(need);else if(m=='r'){n.cb=s.cb+sz;put(n.cb-(n.ci[tu]||0));n.rs++;n.ac={}}
+ n.ac[tu]=1;n.q++;n.lm=Date.now();n.t=Date.now()+20000;
+ n.last=nm+': '+(m=='f'?'pas':m=='k'?'czeka':m=='c'?'sprawdza '+need+'$':need?'podbija do '+n.cb+'$':'stawia '+sz+'$');
+ const al=n.ord.filter(i=>n.al[i]);
+ if(al.length<2)return pkEnd(n,0);
+ if(al.every(i=>n.ac[i]&&(n.ci[i]||0)==n.cb)){if(n.rd>=3)return pkEnd(n,1);n.rd++;n.ci={};n.cb=0;n.rs=0;n.ac={};n.turn=al[0]}
+ else{const o=n.ord,L=o.length,x=o.indexOf(tu);for(let j=1;j<=L;j++){const c=o[(x+j)%L];if(n.al[c]){n.turn=c;break}}}
+ setS(n)}
+function pkEnd(n,sh){const r=R,al=n.ord.filter(i=>n.al[i]),pay={},sum=[],sc={},ds={},nm=i=>(who(r,i)||{name:'?'}).name;let win=al;
+ if(sh){al.forEach(i=>{sc[i]=best([...n.hole[i],...n.bd]);ds[i]=PN[sc[i]/15**5|0]});const mx=Math.max(...al.map(i=>sc[i]));win=al.filter(i=>sc[i]==mx)}
+ const part=Math.floor(n.pot/win.length);win.forEach(i=>pay[i]=part);pay[win[0]]+=n.pot-part*win.length;
+ n.ord.forEach(i=>sum.push({i,n:nm(i),d:n.al[i]?(sh?ds[i]+(win.includes(i)?' 🏆':''):'Wszyscy spasowali 🏆'):'Pas',w:(pay[i]||0)-n.ct[i]}));
+ setS({...n,turn:-1,ph:'res',t:Date.now()+8000,pay,sum,sh:sh?1:0,rd:sh?3:n.rd})}
+// klient: pobiera z portfela dopłaty z aktualnego stanu stołu (ante zapłacone przy wejściu)
+function pkPay(){const s=R.st,me=mySlot();if(me==null||!s||!s.ct||s.ct[me]==null||(s.ph!='play'&&s.ph!='res'))return;
+ const k=RID+':'+s.n;if(PD.k!=k)PD={k,v:s.B};const d=s.ct[me]-PD.v;if(d>0){PD.v=s.ct[me];addMoney(-d)}}
+function pkAct(a){const s=R.st,me=mySlot();if(!s||s.ph!='play'||s.turn!=me)return;DB.set('rooms/'+RID+'/act',{s:me,a,n:s.n,q:s.q,k:Date.now()})}
+function pkDraw(){const r=R,s=r.st,me=mySlot(),B=r.ante||10,out=`<div class=row><button class=g onclick="lobby('tx')">Wyjdź ze stołu</button></div>`;
+ if(!s)return A.innerHTML='<div class=card>Przygotowanie stołu…</div>';
+ if(s.ph=='bet'){const b=anteBox(r);return A.innerHTML=`<div class=felt><h2 style="margin:0">♠️ Texas Hold'em</h2><div class=seats>${b.seats}</div></div><div class=card style="text-align:center">${b.ctl}</div>${out}`}
+ if(!s.ct)return A.innerHTML=`<div class=card style="text-align:center"><p><b>Wyniki:</b></p>${sumHtml(s)}</div>${out}`;
+ if(SEEN.n!=s.n)SEEN={n:s.n};
+ const sd=s.ph=='res'&&s.sh,ci=s.ci||{},al=s.al||{},nb=sd?5:[0,3,4,5][s.rd],bd=s.bd||[],inn=(s.ord||[]).includes(me);
+ const cds=(h,k,show)=>(h||[]).map((c,j)=>{const key=k+j+(show?'s':''),nw=!SEEN[key];SEEN[key]=1;return card(show?c:-1,nw)}).join('');
+ const board=[0,1,2,3,4].map(j=>j<nb?cds([bd[j]],'b'+j,1):'<i class=cd style="opacity:.15"></i>').join('');
+ const sm={};(s.sum||[]).forEach(x=>x&&(sm[x.i]=x.d));
+ const seats=(s.ord||[]).map(i=>{const p=who(r,i)||{name:'?'},show=i==me||(sd&&al[i]);
+  return `<div class="seat ${s.ph=='play'&&s.turn==i?'on':''} ${i==me?'me':''}" style="${al[i]?'':'opacity:.45'}"><b>${esc(p.name)}${p.bot?' 🤖':''}</b><div>${cds(s.hole&&s.hole[i],'h'+i+':',show)}</div><div>${!al[i]?'Pas':sd?esc(sm[i]||''):s.ph=='play'&&s.turn==i?'🤔':'&nbsp;'}</div><div>🪙 ${s.ct[i]||0}$</div></div>`}).join('');
+ let c;
+ if(s.ph=='res')c='<p><b>Wyniki:</b></p>'+sumHtml(s);
+ else if(s.turn==me){const need=s.cb-(ci[me]||0),sz=s.rd<2?B:2*B;
+  c=`<p>Twój ruch ⏱ <b id=tm></b>s</p><div class=row><button class=g onclick="pkAct('f')">Pas</button>${need?`<button onclick="pkAct('c')" ${ME.money<need?'disabled':''}>Sprawdzam ${need}$</button>`:`<button onclick="pkAct('k')">Czekam</button>`}${s.rs<4?`<button onclick="pkAct('r')" ${ME.money<need+sz?'disabled':''}>${need?'Podbij +'+sz+'$ (razem '+(need+sz)+'$)':'Stawiam '+sz+'$'}</button>`:''}</div>`}
+ else c=`<p>${!inn?'Obserwujesz rozdanie':al[me]?'Gra: '+esc((who(r,s.turn)||{name:'?'}).name)+' ⏱ <b id=tm></b>s':'Spasowałeś — czekasz na koniec rozdania'}</p>`;
+ A.innerHTML=`<div class=felt><div><b>${PS[s.rd]}</b> · 💰 Pula: <b>${s.pot}$</b></div><div style="margin:8px 0">${board}</div><div class=seats>${seats}</div><small>${esc(s.last||'')}</small></div><div class=card style="text-align:center">${c}</div>${out}`}
+// --- UNO ---
+const CE={R:'🔴',Y:'🟡',G:'🟢',B:'🔵'},ut=c=>c[0]=='W'?(c=='W4'?'+4':'★'):{S:'⊘',R:'⇄','+':'+2'}[c[1]]||c[1];
+const canU=(c,s,h)=>c[0]=='W'?(c=='W'||!h.some(x=>x[0]==s.col)):c[0]==s.col||(s.top[0]!='W'&&c.slice(1)==s.top.slice(1));
+function unDeck(){const d=[];'RYGB'.split('').forEach(c=>{d.push(c+'0');for(let i=1;i<=9;i++)d.push(c+i,c+i);['S','R','+'].forEach(x=>d.push(c+x,c+x))});for(let i=0;i<4;i++)d.push('W','W4');return shuf(d)}
+function ud(n,i,k){const h=n.hands[i]=n.hands[i]||[];n.dr=n.dr||[];n.ds=n.ds||[];
+ for(let j=0;j<k;j++){if(!n.dr.length){n.dr=shuf(n.ds);n.ds=[]}if(!n.dr.length)break;h.push(n.dr.pop())}}
+function unStart(s,pl,now){const dr=unDeck(),hands={};pl.forEach(i=>hands[i]=dr.splice(-7));let top;
+ for(;;){top=dr.pop();if(/^[RYGB]\d$/.test(top))break;dr.splice(Math.random()*dr.length|0,0,top)}
+ return{ph:'play',n:s.n,q:0,t:now+25000,lm:now,ord:pl,hands,top,col:top[0],dir:1,turn:pl[s.n%pl.length],dr,ds:[],dd:0,dc:null,last:null}}
+function unBot(s,i){const h=s.hands[i]||[],pl=h.filter(c=>canU(c,s,h)&&(!s.dd||c==s.dc)),cc={};
+ h.forEach(c=>{if(c[0]!='W')cc[c[0]]=(cc[c[0]]||0)+1});const o=Object.keys(cc).sort((a,b)=>cc[b]-cc[a])[0]||'R';
+ if(!pl.length)return{a:s.dd?'p':'d'};const nw=pl.filter(c=>c[0]!='W'),q=nw.length?nw:pl;return{a:'c',c:q[Math.random()*q.length|0],o}}
+function unTick(){const r=R,s=r.st||{},now=Date.now(),P='rooms/'+RID;
+ if(antePhase(r,s,now,pl=>unStart(s,pl,now)))return;
+ if(s.ph!='play')return;
+ const tu=s.turn,p=who(r,tu),a=r.act;let mv=0;
+ if(!p||p.bot){if(now-s.lm>1300)mv=unBot(s,tu)}else if(a&&a.s==tu&&a.n==s.n&&a.q==s.q)mv=a;else if(now>s.t)mv={a:s.dd?'p':'d'};
+ if(!mv)return;if(a)DB.set(P+'/act',null);unMove(s,mv)}
+function unMove(s,mv){const r=R,n=JSON.parse(JSON.stringify(s)),tu=s.turn,now=Date.now(),nm=(who(r,tu)||{name:'?'}).name,h=n.hands[tu]=n.hands[tu]||[],L=n.ord.length;
+ n.ds=n.ds||[];n.dr=n.dr||[];
+ const nx=k=>n.ord[((n.ord.indexOf(tu)+n.dir*k)%L+L)%L],fin=k=>{n.turn=nx(k);n.dd=0;n.dc=null;n.q++;n.lm=Date.now();n.t=Date.now()+25000;setS(n)};
+ if(mv.a=='d'){if(n.dd)return fin(1);const b=h.length;ud(n,tu,1);const c=h.length>b?h[h.length-1]:null;n.last=nm+' dobiera kartę';
+  if(c&&canU(c,n,h)){n.dd=1;n.dc=c;n.q++;n.lm=now;n.t=now+25000;return setS(n)}return fin(1)}
+ if(mv.a=='p'){if(!n.dd)return unMove(s,{a:'d'});n.last=nm+' pasuje';return fin(1)}
+ if(mv.a=='c'){const c=mv.c,x=h.indexOf(c);if(x<0||!canU(c,n,h)||(n.dd&&c!=n.dc))return;
+  h.splice(x,1);n.ds.push(n.top);n.top=c;n.col=c[0]=='W'?(mv.o&&'RYGB'.includes(mv.o)?mv.o:'R'):c[0];
+  const sy=c.slice(1),tg=nx(1);let k=1;
+  if(c=='W4'){ud(n,tg,4);k=2}else if(sy=='+'){ud(n,tg,2);k=2}else if(sy=='S')k=2;else if(sy=='R'&&c[0]!='W'){n.dir=-n.dir;if(L==2)k=2}
+  n.last=nm+': '+(c[0]=='W'?'🌈 '+ut(c)+' → '+CE[n.col]:CE[c[0]]+' '+ut(c));
+  if(!h.length)return unEnd(n,tu);return fin(k)}}
+function unEnd(n,w){const B=R.ante||10,pot=B*n.ord.length,pay={},sum=[];
+ n.ord.forEach(i=>{sum.push({i,n:(who(R,i)||{name:'?'}).name,d:i==w?'Wygrywa! 🎉':'Zostało kart: '+(n.hands[i]||[]).length,w:i==w?pot-B:-B});if(i==w)pay[i]=pot});
+ setS({...n,turn:-1,ph:'res',t:Date.now()+7000,pay,sum})}
+function unSend(o){const s=R.st,me=mySlot();if(!s||s.ph!='play'||s.turn!=me)return;UP=0;DB.set('rooms/'+RID+'/act',{s:me,a:o.a,c:o.c||null,o:o.o||null,n:s.n,q:s.q,k:Date.now()})}
+const unAct=a=>unSend({a}),unPlay=c=>{if(c[0]=='W'){UP=c;return unDraw()}unSend({a:'c',c})},unCol=o=>unSend({a:'c',c:UP,o});
+function unDraw(){const r=R,s=r.st,me=mySlot(),out=`<div class=row><button class=g onclick="lobby('un')">Wyjdź ze stołu</button></div>`;
+ if(!s)return A.innerHTML='<div class=card>Przygotowanie stołu…</div>';
+ if(s.ph=='bet'){const b=anteBox(r);return A.innerHTML=`<div class=felt><h2 style="margin:0">🎴 Uno</h2><div class=seats>${b.seats}</div></div><div class=card style="text-align:center">${b.ctl}</div>${out}`}
+ if(!s.hands)return A.innerHTML=`<div class=card style="text-align:center"><p><b>Wyniki:</b></p>${sumHtml(s)}</div>${out}`;
+ const hd=i=>(s.hands&&s.hands[i])||[],mine=hd(me),my=s.ph=='play'&&s.turn==me,inn=(s.ord||[]).includes(me);
+ if(!my)UP=0;if(SEEN.n!=s.n)SEEN={n:s.n};const prev=SEEN.hn??mine.length;SEEN.hn=mine.length;
+ const seats=(s.ord||[]).filter(i=>i!=me).map(i=>{const p=who(r,i)||{name:'?'},k=hd(i).length;
+  return `<div class="seat ${s.ph=='play'&&s.turn==i?'on':''}"><b>${esc(p.name)}${p.bot?' 🤖':''}</b><div>${'<i class="uc bk sm"></i>'.repeat(Math.min(k,10))}</div><div><b>🎴 ${k}</b> ${k==1&&s.ph=='play'?'<span class=ub>UNO!</span>':''}</div></div>`}).join('');
+ const center=`<div class=row style="margin:10px"><div><i class="uc bk">UNO</i><br><small>stos: ${(s.dr||[]).length}</small></div><div><i class="uc ${s.col}">${ut(s.top)}</i><br><small>${CE[s.col]}</small></div><div style="font-size:30px">${s.dir>0?'↻':'↺'}</div></div>`;
+ const hand=mine.map((c,j)=>{const ok=my&&canU(c,s,mine)&&(!s.dd||c==s.dc);return `<i class="uc ${c[0]} ${ok?'ok':my?'no':''} ${j>=prev?'nw':''}" ${ok?`onclick="unPlay('${c}')"`:''}>${ut(c)}</i>`}).join('');
+ let c;
+ if(s.ph=='res')c='<p><b>Wyniki:</b></p>'+sumHtml(s);
+ else if(my&&UP)c=`<p>Wybierz kolor:</p><div class=row>${['R','Y','G','B'].map(o=>`<i class="uc ${o} ok" style="height:46px" onclick="unCol('${o}')"></i>`).join('')}<button class=g onclick="UP=0;unDraw()">Anuluj</button></div>`;
+ else if(my)c=`<p>Twój ruch ⏱ <b id=tm></b>s${s.dd?' — zagraj dobraną kartę albo pasuj':''}</p><div class=row>${s.dd?`<button class=g onclick="unAct('p')">Pas</button>`:`<button class=g onclick="unAct('d')">Dobierz kartę</button>`}</div>`;
+ else c=`<p>${inn?'Gra: '+esc((who(r,s.turn)||{name:'?'}).name)+' ⏱ <b id=tm></b>s':'Obserwujesz rozdanie'}</p>`;
+ A.innerHTML=`<div class=felt><div class=seats>${seats}</div>${center}<small>${esc(s.last||'')}</small></div><div class=card style="text-align:center">${c}<div class=row style="margin-top:6px">${inn?hand:''}</div>${inn&&mine.length==1&&s.ph=='play'?'<span class=ub>UNO!</span>':''}</div>${out}`}
+initDB().then(login).catch(e=>A.innerHTML='<p>Błąd Firebase: '+esc(e.message)+'</p>');
+</script></body></html>
