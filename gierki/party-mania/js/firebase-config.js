@@ -9,7 +9,5 @@ export const firebaseConfig = {
   storageBucket: "mini-8de9a.firebasestorage.app",
   messagingSenderId: "340799656307",
   appId: "1:340799656307:web:83b547997932b950e53506",
-  measurementId: "G-V3QMP7QPH9",
-  databaseURL: "https://mini-8de9a-default-rtdb.europe-west1.firebasedatabase.app"
-  
+  measurementId: "G-V3QMP7QPH9"
 };
