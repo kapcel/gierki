@@ -1,0 +1,430 @@
+<!DOCTYPE html>
+<html lang="pl">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Milionerzy Online</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Archivo:wght@400;600;800&family=Archivo+Black&display=swap" rel="stylesheet">
+<style>
+:root{--bg:#070b2e;--bg2:#0b1240;--card:#111a55cc;--line:#2a3a8f;--tx:#f3f5ff;--mut:#9aa6e0;--gold:#ffb627;--gold2:#ffd76a;--ok:#2fd27a;--bad:#ff4d5e;--sel:#ff9a1f}
+*{box-sizing:border-box}
+body{margin:0;min-height:100vh;font:400 16px/1.5 Archivo,system-ui,sans-serif;color:var(--tx);
+ background:radial-gradient(ellipse 80% 60% at 50% -10%,#3a2a9c 0,#14187a 35%,var(--bg) 75%) fixed}
+body:before{content:"";position:fixed;inset:0;pointer-events:none;background:
+ conic-gradient(from 200deg at 50% -20%,transparent 0 10deg,#ffffff09 10deg 14deg,transparent 14deg 32deg,#ffffff07 32deg 36deg,transparent 36deg 60deg,#ffffff08 60deg 64deg,transparent 64deg)}
+main{max-width:1100px;margin:0 auto;padding:24px 16px 60px;position:relative}
+h1{font:400 clamp(40px,8vw,76px)/1 "Archivo Black",Archivo,sans-serif;margin:6px 0 4px;text-align:center;letter-spacing:-.01em;
+ background:linear-gradient(180deg,#fff 20%,var(--gold2) 60%,var(--gold) 100%);-webkit-background-clip:text;background-clip:text;color:transparent;filter:drop-shadow(0 4px 18px #ffb62755)}
+.sub{text-align:center;color:var(--mut);margin:0 0 26px}
+h2{font:800 20px/1.2 Archivo,sans-serif;margin:0 0 14px}
+.card{background:var(--card);border:1px solid var(--line);border-radius:18px;padding:20px;margin-bottom:16px;backdrop-filter:blur(6px);box-shadow:0 10px 40px #0006}
+input{width:100%;font:inherit;color:var(--tx);background:var(--bg2);border:2px solid var(--line);border-radius:12px;padding:12px 14px;outline:none}
+input:focus-visible,button:focus-visible{outline:3px solid var(--gold);outline-offset:2px}
+input::placeholder{color:#6f7cbd}
+button{font:800 16px Archivo,sans-serif;border:0;border-radius:12px;padding:12px 20px;cursor:pointer;background:linear-gradient(180deg,var(--gold2),var(--gold));color:#2a1700;box-shadow:0 4px 0 #b9740a}
+button:hover{filter:brightness(1.07)}button:active{transform:translateY(2px);box-shadow:0 2px 0 #b9740a}
+button:disabled{opacity:.4;cursor:not-allowed;transform:none}
+button.alt{background:transparent;color:var(--tx);border:2px solid var(--line);box-shadow:none}
+button.danger{background:linear-gradient(180deg,#ff7a85,var(--bad));color:#fff;box-shadow:0 4px 0 #a3202d}
+.row{display:flex;gap:10px;flex-wrap:wrap}.row>*{flex:1;min-width:140px}
+.hr{text-align:center;color:var(--mut);margin:16px 0}
+.code{font:400 40px "Archivo Black",sans-serif;letter-spacing:.15em;color:var(--gold);text-align:center;margin:2px 0}
+.hint{color:var(--mut);text-align:center;font-size:14px}
+.err{color:var(--bad);text-align:center;min-height:22px;margin:10px 0 0}
+.players{display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:8px}
+.p{background:var(--bg2);border:2px solid var(--line);border-radius:12px;padding:9px 10px;text-align:center;position:relative}
+.p b{display:block;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.p .m{color:var(--gold2);font-weight:800}
+.p .st{font-size:12px;color:var(--mut)}
+.p.lock{border-color:var(--sel)}
+.p.out{opacity:.45}.p.win{border-color:var(--ok);box-shadow:0 0 0 4px #2fd27a33}
+.p.me:after{content:"Ty";position:absolute;top:5px;right:8px;font-size:11px;color:var(--gold);font-weight:800}
+/* plansza gry */
+.stage{display:grid;grid-template-columns:1fr 250px;gap:16px;align-items:start}
+@media(max-width:860px){.stage{grid-template-columns:1fr}.ladder{order:-1}}
+.ladder{padding:12px 10px}
+.ladder ol{list-style:none;margin:0;padding:0;display:flex;flex-direction:column-reverse;gap:2px}
+.ladder li{display:flex;justify-content:space-between;padding:3px 12px;border-radius:99px;font-weight:800;font-size:14px;color:var(--gold2)}
+.ladder li span{color:var(--mut);font-weight:600}
+.ladder li.g{color:#fff}
+.ladder li.cur{background:linear-gradient(90deg,var(--sel),var(--gold));color:#2a1700}.ladder li.cur span{color:#2a1700}
+.ladder li.done{opacity:.55}
+@media(max-width:860px){.ladder ol{flex-direction:row-reverse;overflow-x:auto;gap:4px}.ladder li{flex:0 0 auto;font-size:12px;gap:6px}}
+.ll{display:flex;justify-content:center;gap:14px;margin-bottom:14px}
+.ll button{width:68px;height:68px;border-radius:50%;padding:0;font-size:28px;background:radial-gradient(circle at 50% 35%,#2c3aa8,#141c66);border:2px solid #6f7fe0;box-shadow:0 0 18px #3d4fe066;color:#fff;position:relative}
+.ll button small{position:absolute;bottom:-20px;left:50%;transform:translateX(-50%);font-size:10.5px;white-space:nowrap;color:var(--mut);font-weight:600}
+.ll button.used{opacity:.3;filter:grayscale(1)}
+.ll button.used:after{content:"";position:absolute;inset:8px;background:linear-gradient(45deg,transparent 46%,var(--bad) 46% 54%,transparent 54%)}
+.ll button.act{box-shadow:0 0 0 4px var(--gold),0 0 24px var(--gold)}
+.qbox{position:relative;margin:30px 0 14px;padding:22px 26px;text-align:center;font:800 clamp(19px,3.4vw,26px)/1.3 Archivo,sans-serif;
+ background:linear-gradient(180deg,#1b2580,#0b1146);border:2px solid #8fa0ff;clip-path:polygon(28px 0,calc(100% - 28px) 0,100% 50%,calc(100% - 28px) 100%,28px 100%,0 50%);min-height:96px;display:flex;align-items:center;justify-content:center}
+.qmeta{display:flex;justify-content:space-between;align-items:center;gap:10px;color:var(--mut);font-size:14px}
+.cat{display:inline-block;background:var(--gold);color:#2a1700;font-weight:800;border-radius:99px;padding:2px 12px;font-size:13px}
+.ans{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+@media(max-width:620px){.ans{grid-template-columns:1fr}}
+.a{all:unset;cursor:pointer;display:flex;align-items:center;gap:10px;padding:14px 30px;min-height:30px;font:600 17px/1.25 Archivo,sans-serif;color:#fff;
+ background:linear-gradient(180deg,#1b2580,#0b1146);border:2px solid #8fa0ff;clip-path:polygon(20px 0,calc(100% - 20px) 0,100% 50%,calc(100% - 20px) 100%,20px 100%,0 50%);position:relative;transition:filter .15s}
+.a:hover{filter:brightness(1.25)}
+.a b{color:var(--sel);font-weight:800}
+.a.sel{background:linear-gradient(180deg,#ffb33d,#e07a00);color:#1d0f00}.a.sel b{color:#fff}
+.a.ok{background:linear-gradient(180deg,#4ff0a0,#139a55);color:#05200f}.a.ok b{color:#fff}
+.a.bad{background:linear-gradient(180deg,#ff7a85,#b81f2e)}
+.a.gone{visibility:hidden}
+.a.dis{cursor:default}.a.dis:hover{filter:none}
+.a .who{margin-left:auto;display:flex;gap:4px;flex-wrap:wrap;justify-content:flex-end}
+.a .who i{font-style:normal;font-size:11px;background:#000a;color:#fff;border-radius:99px;padding:1px 7px}
+.a .pct{margin-left:auto;font-size:13px;opacity:.9}
+.timer{height:8px;background:var(--bg2);border-radius:9px;overflow:hidden;margin:14px 0}
+.timer i{display:block;height:100%;background:linear-gradient(90deg,var(--gold),var(--sel));width:100%}
+.poll{display:flex;gap:10px;align-items:flex-end;justify-content:center;height:110px;margin:6px 0 4px}
+.poll div{width:44px;text-align:center;font-size:12px;color:var(--mut)}
+.poll div i{display:block;background:linear-gradient(180deg,var(--gold2),var(--sel));border-radius:6px 6px 0 0;margin-bottom:4px;min-height:2px}
+.say{text-align:center;font:400 26px "Archivo Black",sans-serif;margin:8px 0}.say.ok{color:var(--ok)}.say.bad{color:var(--bad)}
+.win{font:400 clamp(30px,6vw,50px) "Archivo Black",sans-serif;color:var(--gold);text-align:center;margin:6px 0}
+.pod{display:flex;justify-content:center;align-items:flex-end;gap:12px;margin:16px 0}
+.pod div{width:min(32%,180px);text-align:center;border-radius:14px 14px 0 0;padding:12px 8px;background:linear-gradient(180deg,#2a3aa8,#141c66);border:1px solid var(--line)}
+.pod b{display:block;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.pod .m{color:var(--gold2);font-weight:800}
+.on{background:linear-gradient(180deg,var(--gold2),var(--gold))!important;color:#2a1700!important;border-color:var(--gold)!important}
+.pulse{animation:pulse 1s ease-in-out infinite}@keyframes pulse{50%{opacity:.55}}
+.flash{animation:flash .45s ease-in-out 4}@keyframes flash{50%{filter:brightness(1.8)}}
+</style>
+</head>
+<body>
+<main>
+<h1>Milionerzy</h1>
+<p class="sub">Zagraj z przyjaciółmi o wirtualny milion. To samo pytanie dla wszystkich, każdy wspina się po swojej drabince.</p>
+<div id="app"></div>
+<div class="err" id="err"></div>
+</main>
+
+<script type="module">
+import {initializeApp} from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
+import {getAuth,signInAnonymously} from "https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js";
+import {getDatabase,ref,onValue,set,update,get,runTransaction} from "https://www.gstatic.com/firebasejs/10.12.2/firebase-database.js";
+
+/* ===== KONFIGURACJA FIREBASE (ten sam projekt co 1 z 10) ===== */
+const firebaseConfig = {
+  apiKey: "AIzaSyAuHuhsMxjWnI_L8Um4_XvUQtg0r94IF-w",
+  authDomain: "z10-2d52b.firebaseapp.com",
+  projectId: "z10-2d52b",
+  storageBucket: "z10-2d52b.firebasestorage.app",
+  messagingSenderId: "594459285336",
+  appId: "1:594459285336:web:2f75be09d8d83faaac772d",
+  measurementId: "G-3XHDDEH03R",
+  databaseURL: "https://z10-2d52b-default-rtdb.europe-west1.firebasedatabase.app"
+};
+const MAX = 20;
+const LADDER = [500, 1000, 2000, 5000, 10000, 20000, 40000, 75000, 125000, 250000, 500000, 1000000];
+const SAFE = [1, 6];                         // indeksy kwot gwarantowanych: 1 000 zł i 40 000 zł
+const TIME = [30000, 40000, 50000];          // czas na odpowiedź wg trudności
+const SUSPENSE = 2200, PAUSE = 6000;
+const LL = {
+  cut: ["✂️", "Cięcie", "Usuwa dwie błędne odpowiedzi – tylko u Ciebie."],
+  spy: ["👀", "Podgląd", "Pokazuje na żywo, co zaznaczyli rywale (gdy brak rywali – sondaż widowni)."],
+  dbl: ["🎯", "Podwójny strzał", "Zaznaczasz dwie odpowiedzi – wystarczy, że jedna jest dobra."],
+};
+/* ============================================================= */
+
+const $ = s => document.querySelector(s);
+const app = $("#app"), errEl = $("#err");
+const esc = s => String(s ?? "").replace(/[&<>"']/g, c => ({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
+const showErr = m => { errEl.textContent = m || ""; };
+const zl = n => Number(n || 0).toLocaleString("pl-PL") + " zł";
+const L = "ABCD";
+const tierOf = lv => lv < 4 ? 0 : lv < 8 ? 1 : 2;
+const safeWon = lv => { let w = 0; for (const s of SAFE) if (lv > s) w = LADDER[s]; return w; };   // lv = liczba dobrych odpowiedzi
+
+let db, uid, code = null, room = null, unsub = null, qTimer = null, tick = null, lastHandled = "";
+let picking = [];                 // lokalnie zaznaczone (przed zatwierdzeniem)
+let lastPhaseKey = "";
+
+try {
+  const fb = initializeApp(firebaseConfig);
+  db = getDatabase(fb);
+  uid = (await signInAnonymously(getAuth(fb))).user.uid;
+} catch (e) { showErr("Nie udało się połączyć z Firebase. Sprawdź konfigurację i logowanie anonimowe."); console.error(e); }
+
+const rc = () => ref(db, "rooms/" + code);
+const me = () => room?.players?.[uid];
+const plist = r => Object.entries(r.players || {}).map(([id, p]) => ({id, ...p})).sort((a, b) => a.order - b.order);
+const active = r => plist(r).filter(p => p.st === "in");
+const nameOf = id => esc(room.players?.[id]?.name || "—");
+
+/* ---------- pytania ---------- */
+const BANK = ([[0,"Geografia","Jak nazywa się stolica Francji?","Paryż","Lyon","Marsylia","Nicea"],[0,"Geografia","Jak nazywa się stolica Niemiec?","Berlin","Monachium","Hamburg","Frankfurt nad Menem"],[0,"Geografia","Jak nazywa się stolica Włoch?","Rzym","Mediolan","Neapol","Wenecja"],[0,"Geografia","Jak nazywa się stolica Hiszpanii?","Madryt","Barcelona","Sewilla","Walencja"],[0,"Geografia","Jak nazywa się stolica Wielkiej Brytanii?","Londyn","Manchester","Liverpool","Edynburg"],[0,"Geografia","Jak nazywa się stolica Rosji?","Moskwa","Sankt Petersburg","Nowosybirsk","Kazań"],[0,"Geografia","Jak nazywa się stolica Japonii?","Tokio","Osaka","Kioto","Jokohama"],[0,"Geografia","Jak nazywa się stolica Czech?","Praga","Brno","Ostrawa","Pilzno"],[0,"Geografia","Jak nazywa się stolica Ukrainy?","Kijów","Lwów","Odessa","Charków"],[0,"Geografia","Jak nazywa się stolica Litwy?","Wilno","Kowno","Kłajpeda","Szawle"],[0,"Geografia","Jak nazywa się stolica Grecji?","Ateny","Saloniki","Patras","Heraklion"],[0,"Geografia","Jak nazywa się stolica Austrii?","Wiedeń","Salzburg","Graz","Innsbruck"],[0,"Geografia","Jak nazywa się stolica Węgier?","Budapeszt","Debreczyn","Segedyn","Pecz"],[0,"Geografia","Jak nazywa się stolica Portugalii?","Lizbona","Porto","Faro","Coimbra"],[0,"Geografia","Jak nazywa się stolica Egiptu?","Kair","Aleksandria","Giza","Luksor"],[0,"Geografia","Jak nazywa się stolica Słowacji?","Bratysława","Koszyce","Preszów","Żylina"],[0,"Geografia","Jak nazywa się stolica Chin?","Pekin","Szanghaj","Hongkong","Kanton"],[0,"Geografia","Jak nazywa się stolica Norwegii?","Oslo","Bergen","Trondheim","Stavanger"],[0,"Geografia","Jak nazywa się stolica Szwecji?","Sztokholm","Göteborg","Malmö","Uppsala"],[0,"Geografia","Jak nazywa się stolica Danii?","Kopenhaga","Aarhus","Odense","Aalborg"],[0,"Geografia","Jak nazywa się stolica Irlandii?","Dublin","Cork","Galway","Limerick"],[0,"Geografia","Jak nazywa się stolica Holandii?","Amsterdam","Rotterdam","Eindhoven","Utrecht"],[1,"Geografia","Jak nazywa się stolica Stanów Zjednoczonych?","Waszyngton","Nowy Jork","Los Angeles","Chicago"],[1,"Geografia","Jak nazywa się stolica Kanady?","Ottawa","Toronto","Vancouver","Montreal"],[1,"Geografia","Jak nazywa się stolica Australii?","Canberra","Sydney","Melbourne","Perth"],[1,"Geografia","Jak nazywa się stolica Szwajcarii?","Berno","Zurych","Genewa","Bazylea"],[1,"Geografia","Jak nazywa się stolica Turcji?","Ankara","Stambuł","Izmir","Antalya"],[1,"Geografia","Jak nazywa się stolica Brazylii?","Brasília","Rio de Janeiro","São Paulo","Salvador"],[1,"Geografia","Jak nazywa się stolica Belgii?","Bruksela","Antwerpia","Brugia","Gandawa"],[1,"Geografia","Jak nazywa się stolica Finlandii?","Helsinki","Tampere","Turku","Oulu"],[1,"Geografia","Jak nazywa się stolica Chorwacji?","Zagrzeb","Split","Dubrownik","Rijeka"],[1,"Geografia","Jak nazywa się stolica Rumunii?","Bukareszt","Kluż-Napoka","Konstanca","Timișoara"],[1,"Geografia","Jak nazywa się stolica Bułgarii?","Sofia","Warna","Płowdiw","Burgas"],[1,"Geografia","Jak nazywa się stolica Serbii?","Belgrad","Nowy Sad","Nisz","Kragujevac"],[1,"Geografia","Jak nazywa się stolica Łotwy?","Ryga","Dyneburg","Lipawa","Jurmała"],[1,"Geografia","Jak nazywa się stolica Estonii?","Tallinn","Tartu","Parnawa","Narwa"],[1,"Geografia","Jak nazywa się stolica Białorusi?","Mińsk","Grodno","Brześć","Homel"],[1,"Geografia","Jak nazywa się stolica Islandii?","Reykjavik","Akureyri","Keflavík","Húsavík"],[1,"Geografia","Jak nazywa się stolica Indii?","Nowe Delhi","Mumbaj","Kalkuta","Bangalur"],[1,"Geografia","Jak nazywa się stolica Argentyny?","Buenos Aires","Córdoba","Rosario","Mendoza"],[1,"Geografia","Jak nazywa się stolica Korei Południowej?","Seul","Pusan","Inczon","Daegu"],[1,"Geografia","Jak nazywa się stolica Tajlandii?","Bangkok","Phuket","Chiang Mai","Pattaya"],[1,"Geografia","Jak nazywa się stolica Kuby?","Hawana","Santiago de Cuba","Varadero","Camagüey"],[1,"Geografia","Jak nazywa się stolica Maroka?","Rabat","Casablanca","Marrakesz","Fez"],[1,"Geografia","Jak nazywa się stolica Nowej Zelandii?","Wellington","Auckland","Christchurch","Queenstown"],[1,"Geografia","Jak nazywa się stolica Słowenii?","Lublana","Maribor","Koper","Bled"],[1,"Geografia","Jak nazywa się stolica Wietnamu?","Hanoi","Ho Chi Minh","Hajfong","Da Nang"],[1,"Geografia","Jak nazywa się stolica Iraku?","Bagdad","Basra","Mosul","Irbil"],[1,"Geografia","Jak nazywa się stolica Peru?","Lima","Cusco","Arequipa","Trujillo"],[1,"Geografia","Jak nazywa się stolica Kolumbii?","Bogota","Medellín","Cali","Cartagena"],[1,"Geografia","Jak nazywa się stolica Chile?","Santiago","Valparaíso","Antofagasta","Concepción"],[1,"Geografia","Jak nazywa się stolica Kenii?","Nairobi","Mombasa","Kisumu","Nakuru"],[1,"Geografia","Jak nazywa się stolica Mołdawii?","Kiszyniów","Bielce","Tyraspol","Komrat"],[1,"Geografia","Jak nazywa się stolica Albanii?","Tirana","Durrës","Wlora","Szkodra"],[1,"Geografia","Jak nazywa się stolica Cypru?","Nikozja","Limassol","Larnaka","Pafos"],[1,"Geografia","Jak nazywa się stolica Gruzji?","Tbilisi","Batumi","Kutaisi","Gori"],[1,"Geografia","Jak nazywa się stolica Meksyku?","Meksyk","Guadalajara","Cancún","Monterrey"],[2,"Geografia","Jak nazywa się stolica Kazachstanu?","Astana","Ałmaty","Szymkent","Karaganda"],[2,"Geografia","Jak nazywa się stolica Pakistanu?","Islamabad","Karaczi","Lahaur","Peszawar"],[2,"Geografia","Jak nazywa się stolica Nigerii?","Abudża","Lagos","Kano","Ibadan"],[2,"Geografia","Jak nazywa się stolica Tanzanii?","Dodoma","Dar es Salaam","Arusza","Zanzibar"],[2,"Geografia","Jak nazywa się stolica Mongolii?","Ułan Bator","Darchan","Erdenet","Chovd"],[2,"Geografia","Jak nazywa się stolica Kirgistanu?","Biszkek","Osz","Dżalalabad","Karakoł"],[2,"Geografia","Jak nazywa się stolica Uzbekistanu?","Taszkent","Samarkanda","Buchara","Chiwa"],[2,"Geografia","Jak nazywa się stolica Azerbejdżanu?","Baku","Gandża","Sumgait","Szeki"],[2,"Geografia","Jak nazywa się stolica Armenii?","Erywań","Giumri","Wanadzor","Eczmiadzyn"],[2,"Geografia","Jak nazywa się stolica Nepalu?","Katmandu","Pokhara","Lalitpur","Bhaktapur"],[2,"Geografia","Jak nazywa się stolica Laosu?","Wientian","Luang Prabang","Pakxe","Savannakhet"],[2,"Geografia","Jak nazywa się stolica Kambodży?","Phnom Penh","Siem Reap","Battambang","Sihanoukville"],[2,"Geografia","Jak nazywa się stolica Etiopii?","Addis Abeba","Dire Dawa","Gonder","Mekele"],[2,"Geografia","Jak nazywa się stolica Ghany?","Akra","Kumasi","Tamale","Takoradi"],[2,"Geografia","Jak nazywa się stolica Senegalu?","Dakar","Saint-Louis","Thiès","Ziguinchor"],[2,"Geografia","Jak nazywa się stolica Ekwadoru?","Quito","Guayaquil","Cuenca","Manta"],[2,"Geografia","Jak nazywa się stolica Urugwaju?","Montevideo","Punta del Este","Salto","Colonia del Sacramento"],[2,"Geografia","Jak nazywa się stolica Wenezueli?","Caracas","Maracaibo","Valencia","Barquisimeto"],[2,"Geografia","Jak nazywa się stolica Liechtensteinu?","Vaduz","Schaan","Balzers","Triesen"],[2,"Geografia","Jak nazywa się stolica Macedonii Północnej?","Skopje","Ochryda","Bitola","Kumanowo"],[2,"Geografia","Jak nazywa się stolica Czarnogóry?","Podgorica","Kotor","Budva","Cetynia"],[2,"Geografia","Jak nazywa się stolica Bośni i Hercegowiny?","Sarajewo","Banja Luka","Mostar","Tuzla"],[2,"Geografia","Jak nazywa się stolica Kosowa?","Prisztina","Prizren","Peć","Mitrowica"],[2,"Geografia","Jak nazywa się stolica Madagaskaru?","Antananarywa","Toamasina","Mahajanga","Fianarantsoa"],[2,"Geografia","Jak nazywa się stolica Namibii?","Windhuk","Walvis Bay","Swakopmund","Lüderitz"],[2,"Geografia","Jak nazywa się stolica Zimbabwe?","Harare","Bulawayo","Mutare","Gweru"],[2,"Geografia","Jak nazywa się stolica Jordanii?","Amman","Akaba","Irbid","Zarka"],[2,"Geografia","Jak nazywa się stolica Syrii?","Damaszek","Aleppo","Hims","Latakia"],[2,"Geografia","Jak nazywa się stolica Libanu?","Bejrut","Trypolis","Sydon","Tyr"],[2,"Geografia","Jak nazywa się stolica Arabii Saudyjskiej?","Rijad","Dżudda","Mekka","Medyna"],[2,"Geografia","Jak nazywa się stolica Zjednoczonych Emiratów Arabskich?","Abu Zabi","Dubaj","Szardża","Adżman"],[2,"Geografia","Jak nazywa się stolica Omanu?","Maskat","Salala","Sohar","Nizwa"],[2,"Geografia","Jak nazywa się stolica Malezji?","Kuala Lumpur","Johor Bahru","George Town","Malakka"],[2,"Geografia","Jak nazywa się stolica Jamajki?","Kingston","Montego Bay","Ocho Rios","Negril"],[2,"Geografia","Jak nazywa się stolica Turkmenistanu?","Aszchabad","Turkmenbaszy","Mary","Daszoguz"],[2,"Geografia","Jak nazywa się stolica Tadżykistanu?","Duszanbe","Chodżent","Kulab","Chorog"],[2,"Geografia","Jak nazywa się stolica Filipin?","Manila","Cebu","Davao","Zamboanga"],[0,"Literatura","Kto jest autorem utworu „Pan Tadeusz”?","Adam Mickiewicz","Stefan Żeromski","Zygmunt Krasiński","Zbigniew Herbert"],[1,"Literatura","Kto jest autorem utworu „Dziady”?","Adam Mickiewicz","Zbigniew Herbert","Julian Tuwim","Stefan Żeromski"],[1,"Literatura","Kto jest autorem utworu „Konrad Wallenrod”?","Adam Mickiewicz","Stanisław Wyspiański","Andrzej Sapkowski","Sławomir Mrożek"],[0,"Literatura","Kto jest autorem utworu „Lalka”?","Bolesław Prus","Stanisław Lem","Olga Tokarczuk","Sławomir Mrożek"],[1,"Literatura","Kto jest autorem utworu „Faraon”?","Bolesław Prus","Zofia Nałkowska","Jarosław Iwaszkiewicz","Wisława Szymborska"],[0,"Literatura","Kto jest autorem utworu „Quo vadis”?","Henryk Sienkiewicz","Jarosław Iwaszkiewicz","Olga Tokarczuk","Czesław Miłosz"],[0,"Literatura","Kto jest autorem utworu „Krzyżacy”?","Henryk Sienkiewicz","Stanisław Wyspiański","Adam Mickiewicz","Andrzej Sapkowski"],[0,"Literatura","Kto jest autorem utworu „W pustyni i w puszczy”?","Henryk Sienkiewicz","Bolesław Prus","Stefan Żeromski","Jan Kochanowski"],[1,"Literatura","Kto jest autorem utworu „Potop”?","Henryk Sienkiewicz","Stefan Żeromski","Czesław Miłosz","Adam Mickiewicz"],[1,"Literatura","Kto jest autorem utworu „Chłopi”?","Władysław Reymont","Jan Brzechwa","Wisława Szymborska","Zygmunt Krasiński"],[1,"Literatura","Kto jest autorem utworu „Ziemia obiecana”?","Władysław Reymont","Maria Konopnicka","Bruno Schulz","Aleksander Fredro"],[1,"Literatura","Kto jest autorem utworu „Wesele”?","Stanisław Wyspiański","Witold Gombrowicz","Bruno Schulz","Zofia Nałkowska"],[1,"Literatura","Kto jest autorem utworu „Nad Niemnem”?","Eliza Orzeszkowa","Zbigniew Herbert","Julian Tuwim","Henryk Sienkiewicz"],[1,"Literatura","Kto jest autorem utworu „Przedwiośnie”?","Stefan Żeromski","Zofia Nałkowska","Zygmunt Krasiński","Henryk Sienkiewicz"],[2,"Literatura","Kto jest autorem utworu „Ludzie bezdomni”?","Stefan Żeromski","Sławomir Mrożek","Jan Kochanowski","Czesław Miłosz"],[2,"Literatura","Kto jest autorem utworu „Syzyfowe prace”?","Stefan Żeromski","Władysław Reymont","Julian Tuwim","Ignacy Krasicki"],[2,"Literatura","Kto jest autorem utworu „Ferdydurke”?","Witold Gombrowicz","Ignacy Krasicki","Olga Tokarczuk","Aleksander Fredro"],[1,"Literatura","Kto jest autorem utworu „Kordian”?","Juliusz Słowacki","Adam Mickiewicz","Ignacy Krasicki","Witold Gombrowicz"],[1,"Literatura","Kto jest autorem utworu „Balladyna”?","Juliusz Słowacki","Witold Gombrowicz","Czesław Miłosz","Stanisław Lem"],[1,"Literatura","Kto jest autorem utworu „Zemsta”?","Aleksander Fredro","Henryk Sienkiewicz","Bruno Schulz","Olga Tokarczuk"],[2,"Literatura","Kto jest autorem utworu „Śluby panieńskie”?","Aleksander Fredro","Sławomir Mrożek","Wisława Szymborska","Bolesław Prus"],[1,"Literatura","Kto jest autorem utworu „Treny”?","Jan Kochanowski","Stanisław Lem","Zbigniew Herbert","Jarosław Iwaszkiewicz"],[2,"Literatura","Kto jest autorem utworu „Nie-Boska komedia”?","Zygmunt Krasiński","Andrzej Sapkowski","Wisława Szymborska","Bruno Schulz"],[2,"Literatura","Kto jest autorem utworu „Sklepy cynamonowe”?","Bruno Schulz","Zbigniew Herbert","Stanisław Wyspiański","Stanisław Lem"],[1,"Literatura","Kto jest autorem utworu „Solaris”?","Stanisław Lem","Olga Tokarczuk","Wisława Szymborska","Zbigniew Herbert"],[2,"Literatura","Kto jest autorem utworu „Cyberiada”?","Stanisław Lem","Zbigniew Herbert","Adam Mickiewicz","Olga Tokarczuk"],[2,"Literatura","Kto jest autorem utworu „Zniewolony umysł”?","Czesław Miłosz","Maria Konopnicka","Jarosław Iwaszkiewicz","Stefan Żeromski"],[2,"Literatura","Kto jest autorem utworu „Tango”?","Sławomir Mrożek","Juliusz Słowacki","Ignacy Krasicki","Wisława Szymborska"],[2,"Literatura","Kto jest autorem utworu „Bieguni”?","Olga Tokarczuk","Jan Brzechwa","Bolesław Prus","Ignacy Krasicki"],[2,"Literatura","Kto jest autorem utworu „Księgi Jakubowe”?","Olga Tokarczuk","Andrzej Sapkowski","Bruno Schulz","Czesław Miłosz"],[0,"Literatura","Kto jest autorem utworu „Lokomotywa”?","Julian Tuwim","Stefan Żeromski","Czesław Miłosz","Maria Konopnicka"],[0,"Literatura","Kto jest autorem utworu „Akademia pana Kleksa”?","Jan Brzechwa","Bolesław Prus","Andrzej Sapkowski","Ignacy Krasicki"],[2,"Literatura","Kto jest autorem utworu „Bajki i przypowieści”?","Ignacy Krasicki","Stanisław Lem","Julian Tuwim","Czesław Miłosz"],[2,"Literatura","Kto jest autorem utworu „Granica”?","Zofia Nałkowska","Jan Brzechwa","Zbigniew Herbert","Stanisław Wyspiański"],[2,"Literatura","Kto jest autorem utworu „Panny z Wilka”?","Jarosław Iwaszkiewicz","Zbigniew Herbert","Witold Gombrowicz","Julian Tuwim"],[1,"Literatura","Kto jest autorem utworu „Krew elfów”?","Andrzej Sapkowski","Aleksander Fredro","Zbigniew Herbert","Julian Tuwim"],[2,"Literatura","Kto jest autorem utworu „Mendel Gdański”?","Maria Konopnicka","Zbigniew Herbert","Ignacy Krasicki","Wisława Szymborska"],[0,"Literatura","Kto jest autorem utworu „Romeo i Julia”?","William Szekspir","Homer","Lewis Carroll","J.R.R. Tolkien"],[1,"Literatura","Kto jest autorem utworu „Hamlet”?","William Szekspir","J.K. Rowling","Wiktor Hugo","Mark Twain"],[1,"Literatura","Kto jest autorem utworu „Don Kichot”?","Miguel de Cervantes","Daniel Defoe","Jane Austen","William Szekspir"],[1,"Literatura","Kto jest autorem utworu „Boska komedia”?","Dante Alighieri","Miguel de Cervantes","Aleksander Puszkin","Michaił Bułhakow"],[1,"Literatura","Kto jest autorem utworu „Zbrodnia i kara”?","Fiodor Dostojewski","Lewis Carroll","Umberto Eco","Albert Camus"],[1,"Literatura","Kto jest autorem utworu „Wojna i pokój”?","Lew Tołstoj","Juliusz Verne","Homer","Agatha Christie"],[2,"Literatura","Kto jest autorem utworu „Anna Karenina”?","Lew Tołstoj","Stephen King","Karol Dickens","George Orwell"],[2,"Literatura","Kto jest autorem utworu „Eugeniusz Oniegin”?","Aleksander Puszkin","Stephen King","Wiktor Hugo","Jane Austen"],[2,"Literatura","Kto jest autorem utworu „Proces”?","Franz Kafka","Astrid Lindgren","Karol Dickens","Juliusz Verne"],[1,"Literatura","Kto jest autorem utworu „Nędznicy”?","Wiktor Hugo","Agatha Christie","Johann Wolfgang Goethe","Daniel Defoe"],[1,"Literatura","Kto jest autorem utworu „Trzej muszkieterowie”?","Aleksander Dumas","Karol Dickens","Homer","J.K. Rowling"],[1,"Literatura","Kto jest autorem utworu „Hrabia Monte Christo”?","Aleksander Dumas","Arthur Conan Doyle","Antoine de Saint-Exupéry","Stephen King"],[2,"Literatura","Kto jest autorem utworu „Duma i uprzedzenie”?","Jane Austen","Miguel de Cervantes","Daniel Defoe","Mark Twain"],[1,"Literatura","Kto jest autorem utworu „Przygody Tomka Sawyera”?","Mark Twain","Ernest Hemingway","Juliusz Verne","Stephen King"],[1,"Literatura","Kto jest autorem utworu „Stary człowiek i morze”?","Ernest Hemingway","Homer","Fiodor Dostojewski","Juliusz Verne"],[1,"Literatura","Kto jest autorem utworu „Rok 1984”?","George Orwell","Astrid Lindgren","Homer","Albert Camus"],[1,"Literatura","Kto jest autorem utworu „Folwark zwierzęcy”?","George Orwell","Agatha Christie","Aleksander Dumas","Juliusz Verne"],[0,"Literatura","Kto jest autorem utworu „Władca Pierścieni”?","J.R.R. Tolkien","Stephen King","Albert Camus","Aleksander Puszkin"],[1,"Literatura","Kto jest autorem utworu „Hobbit, czyli tam i z powrotem”?","J.R.R. Tolkien","Albert Camus","J.K. Rowling","Daniel Defoe"],[0,"Literatura","Kto jest autorem utworu „Harry Potter i Kamień Filozoficzny”?","J.K. Rowling","Hans Christian Andersen","Karol Dickens","Albert Camus"],[1,"Literatura","Kto jest autorem utworu „W osiemdziesiąt dni dookoła świata”?","Juliusz Verne","Dante Alighieri","Michaił Bułhakow","Aleksander Dumas"],[1,"Literatura","Kto jest autorem utworu „Opowieść wigilijna”?","Karol Dickens","Lewis Carroll","Juliusz Verne","Ernest Hemingway"],[1,"Literatura","Kto jest autorem utworu „Morderstwo w Orient Expressie”?","Agatha Christie","Fiodor Dostojewski","Franz Kafka","Hans Christian Andersen"],[1,"Literatura","Kto jest autorem utworu „Pies Baskerville’ów”?","Arthur Conan Doyle","Jonathan Swift","J.R.R. Tolkien","Lew Tołstoj"],[2,"Literatura","Kto jest autorem utworu „Sto lat samotności”?","Gabriel García Márquez","J.K. Rowling","Stephen King","William Szekspir"],[2,"Literatura","Kto jest autorem utworu „Imię róży”?","Umberto Eco","Dante Alighieri","William Szekspir","J.K. Rowling"],[2,"Literatura","Kto jest autorem utworu „Mistrz i Małgorzata”?","Michaił Bułhakow","Arthur Conan Doyle","Agatha Christie","Stephen King"],[0,"Literatura","Kto jest autorem utworu „Mały Książę”?","Antoine de Saint-Exupéry","Daniel Defoe","Dante Alighieri","Gabriel García Márquez"],[0,"Literatura","Kto jest autorem utworu „Dzieci z Bullerbyn”?","Astrid Lindgren","Homer","Franz Kafka","Wiktor Hugo"],[0,"Literatura","Kto jest autorem utworu „Brzydkie kaczątko”?","Hans Christian Andersen","Fiodor Dostojewski","Gabriel García Márquez","Miguel de Cervantes"],[2,"Literatura","Kto jest autorem utworu „Faust”?","Johann Wolfgang Goethe","Hans Christian Andersen","Agatha Christie","Albert Camus"],[1,"Literatura","Kto jest autorem utworu „Iliada”?","Homer","Aleksander Dumas","Michaił Bułhakow","Hans Christian Andersen"],[1,"Literatura","Kto jest autorem utworu „Robinson Crusoe”?","Daniel Defoe","Umberto Eco","Ernest Hemingway","Lew Tołstoj"],[1,"Literatura","Kto jest autorem utworu „Podróże Guliwera”?","Jonathan Swift","William Szekspir","Mark Twain","Michaił Bułhakow"],[1,"Literatura","Kto jest autorem utworu „Alicja w Krainie Czarów”?","Lewis Carroll","Arthur Conan Doyle","Hans Christian Andersen","Stephen King"],[2,"Literatura","Kto jest autorem utworu „Lśnienie”?","Stephen King","Albert Camus","Daniel Defoe","Juliusz Verne"],[2,"Literatura","Kto jest autorem utworu „Dżuma”?","Albert Camus","Antoine de Saint-Exupéry","Astrid Lindgren","Stephen King"],[1,"Historia","W którym roku odbyła się bitwa pod Grunwaldem?","1410","1403","1412","1400"],[0,"Historia","W którym roku Polska przyjęła chrzest?","966","991","969","952"],[0,"Historia","W którym roku wybuchła II wojna światowa?","1939","1942","1919","1936"],[0,"Historia","W którym roku zakończyła się II wojna światowa?","1945","1940","1960","1931"],[0,"Historia","W którym roku Polska odzyskała niepodległość?","1918","1921","1920","1915"],[1,"Historia","W którym roku uchwalono Konstytucję 3 maja?","1791","1800","1816","1777"],[1,"Historia","W którym roku wybuchło powstanie warszawskie?","1944","1941","1969","1914"],[1,"Historia","W którym roku Krzysztof Kolumb dotarł do Ameryki?","1492","1482","1489","1472"],[1,"Historia","W którym roku upadł mur berliński?","1989","1969","2000","1984"],[0,"Historia","W którym roku Polska wstąpiła do Unii Europejskiej?","2004","2010","2019","2013"],[1,"Historia","W którym roku Polska wstąpiła do NATO?","1999","1969","2024","2001"],[1,"Historia","W którym roku człowiek po raz pierwszy stanął na Księżycu?","1969","1994","1964","1973"],[2,"Historia","W którym roku Jurij Gagarin poleciał w kosmos?","1961","1964","1959","1956"],[1,"Historia","W którym roku wybuchła rewolucja francuska?","1789","1779","1787","1804"],[1,"Historia","W którym roku ogłoszono Deklarację Niepodległości Stanów Zjednoczonych?","1776","1771","1762","1779"],[2,"Historia","W którym roku miała miejsce odsiecz wiedeńska?","1683","1680","1708","1686"],[2,"Historia","W którym roku zawarto unię lubelską?","1569","1573","1567","1572"],[2,"Historia","W którym roku zawarto unię w Krewie?","1385","1383","1389","1391"],[2,"Historia","W którym roku nastąpił I rozbiór Polski?","1772","1758","1774","1769"],[2,"Historia","W którym roku nastąpił III rozbiór Polski?","1795","1775","1785","1799"],[1,"Historia","W którym roku powstał NSZZ „Solidarność”?","1980","1975","1950","1984"],[1,"Historia","W którym roku wprowadzono w Polsce stan wojenny?","1981","1961","1979","1992"],[1,"Historia","W którym roku Karol Wojtyła został papieżem?","1978","1975","1976","1984"],[1,"Historia","W którym roku doszło do katastrofy w Czarnobylu?","1986","1956","1972","1990"],[1,"Historia","W którym roku zatonął Titanic?","1912","1909","1921","1914"],[0,"Historia","W którym roku doszło do zamachów na World Trade Center?","2001","1994","1987","2005"],[2,"Historia","W którym roku odbyła się bitwa pod Hastings?","1066","1061","1063","1059"],[2,"Historia","W którym roku upadło Cesarstwo Zachodniorzymskie?","476","487","478","473"],[2,"Historia","W którym roku odbył się zjazd gnieźnieński?","1000","986","997","993"],[2,"Historia","W którym roku Turcy zdobyli Konstantynopol?","1453","1448","1478","1439"],[2,"Historia","W którym roku Marcin Luter ogłosił swoje tezy?","1517","1519","1515","1532"],[2,"Historia","W którym roku odbyła się bitwa pod Waterloo?","1815","1826","1808","1813"],[2,"Historia","W którym roku wydano dzieło Kopernika „O obrotach sfer niebieskich”?","1543","1538","1568","1545"],[2,"Historia","W którym roku wybuchło powstanie listopadowe?","1830","1855","1828","1810"],[1,"Historia","W którym roku wybuchło powstanie styczniowe?","1863","1865","1874","1843"],[1,"Historia","W którym roku odbyła się Bitwa Warszawska zwana Cudem nad Wisłą?","1920","1917","1910","1890"],[2,"Historia","W którym roku założono Akademię Krakowską?","1364","1350","1379","1362"],[2,"Historia","W którym roku odbyły się pierwsze nowożytne igrzyska olimpijskie?","1896","1900","1893","1898"],[2,"Historia","W którym roku Polska weszła do strefy Schengen?","2007","2002","1977","1982"],[1,"Historia","W którym roku rozpadł się Związek Radziecki?","1991","1986","2016","1993"],[2,"Historia","W którym roku Lech Wałęsa otrzymał Pokojową Nagrodę Nobla?","1983","1980","1963","1986"],[2,"Historia","W którym roku Wisława Szymborska otrzymała Nagrodę Nobla?","1996","1998","2021","2005"],[2,"Historia","W którym roku Hitler został kanclerzem Niemiec?","1933","1930","1936","1926"],[1,"Chemia","Który pierwiastek ma symbol chemiczny H?","wodór","hel","złoto","tytan"],[2,"Chemia","Który pierwiastek ma symbol chemiczny He?","hel","wolfram","sód","fluor"],[2,"Chemia","Który pierwiastek ma symbol chemiczny Li?","lit","potas","fluor","brom"],[2,"Chemia","Który pierwiastek ma symbol chemiczny B?","bor","bizmut","bar","brom"],[1,"Chemia","Który pierwiastek ma symbol chemiczny C?","węgiel","cyna","chlor","cynk"],[1,"Chemia","Który pierwiastek ma symbol chemiczny N?","azot","nikiel","neon","chrom"],[1,"Chemia","Który pierwiastek ma symbol chemiczny O?","tlen","ołów","osm","potas"],[2,"Chemia","Który pierwiastek ma symbol chemiczny F?","fluor","fosfor","brom","wapń"],[2,"Chemia","Który pierwiastek ma symbol chemiczny Ne?","neon","nikiel","bor","tlen"],[1,"Chemia","Który pierwiastek ma symbol chemiczny Na?","sód","nikiel","neon","mangan"],[2,"Chemia","Który pierwiastek ma symbol chemiczny Mg?","magnez","mangan","miedź","żelazo"],[2,"Chemia","Który pierwiastek ma symbol chemiczny Al?","glin","antymon","arsen","argon"],[2,"Chemia","Który pierwiastek ma symbol chemiczny Si?","krzem","srebro","sód","siarka"],[2,"Chemia","Który pierwiastek ma symbol chemiczny P?","fosfor","potas","platyna","polon"],[2,"Chemia","Który pierwiastek ma symbol chemiczny S?","siarka","srebro","sód","krypton"],[1,"Chemia","Który pierwiastek ma symbol chemiczny Cl?","chlor","chrom","cynk","cyna"],[2,"Chemia","Który pierwiastek ma symbol chemiczny Ar?","argon","azot","antymon","arsen"],[2,"Chemia","Który pierwiastek ma symbol chemiczny K?","potas","kadm","krzem","ksenon"],[2,"Chemia","Który pierwiastek ma symbol chemiczny Ca?","wapń","chrom","cynk","cyna"],[2,"Chemia","Który pierwiastek ma symbol chemiczny Ti?","tytan","tlen","ołów","polon"],[2,"Chemia","Który pierwiastek ma symbol chemiczny Cr?","chrom","cyna","cynk","chlor"],[2,"Chemia","Który pierwiastek ma symbol chemiczny Mn?","mangan","magnez","miedź","arsen"],[1,"Chemia","Który pierwiastek ma symbol chemiczny Fe?","żelazo","fosfor","fluor","sód"],[2,"Chemia","Który pierwiastek ma symbol chemiczny Co?","kobalt","cyna","chrom","cynk"],[2,"Chemia","Który pierwiastek ma symbol chemiczny Ni?","nikiel","neon","hel","wapń"],[1,"Chemia","Który pierwiastek ma symbol chemiczny Cu?","miedź","chlor","cynk","chrom"],[2,"Chemia","Który pierwiastek ma symbol chemiczny Zn?","cynk","złoto","rtęć","azot"],[2,"Chemia","Który pierwiastek ma symbol chemiczny As?","arsen","argon","azot","antymon"],[2,"Chemia","Który pierwiastek ma symbol chemiczny Br?","brom","bor","bar","bizmut"],[2,"Chemia","Który pierwiastek ma symbol chemiczny Kr?","krypton","kadm","krzem","ksenon"],[1,"Chemia","Który pierwiastek ma symbol chemiczny Ag?","srebro","azot","argon","arsen"],[2,"Chemia","Który pierwiastek ma symbol chemiczny Cd?","kadm","cyna","chrom","chlor"],[2,"Chemia","Który pierwiastek ma symbol chemiczny Sn?","cyna","sód","srebro","siarka"],[2,"Chemia","Który pierwiastek ma symbol chemiczny Sb?","antymon","siarka","srebro","sód"],[2,"Chemia","Który pierwiastek ma symbol chemiczny I?","jod","kadm","wodór","żelazo"],[2,"Chemia","Który pierwiastek ma symbol chemiczny Xe?","ksenon","antymon","bizmut","cynk"],[2,"Chemia","Który pierwiastek ma symbol chemiczny W?","wolfram","węgiel","wapń","wodór"],[2,"Chemia","Który pierwiastek ma symbol chemiczny Pt?","platyna","potas","polon","neon"],[1,"Chemia","Który pierwiastek ma symbol chemiczny Au?","złoto","azot","antymon","arsen"],[2,"Chemia","Który pierwiastek ma symbol chemiczny Hg?","rtęć","hel","miedź","ksenon"],[2,"Chemia","Który pierwiastek ma symbol chemiczny Pb?","ołów","platyna","potas","polon"],[2,"Chemia","Który pierwiastek ma symbol chemiczny U?","uran","sód","osm","nikiel"],[2,"Chemia","Który pierwiastek ma symbol chemiczny Ra?","rad","rtęć","radon","ksenon"],[2,"Chemia","Który pierwiastek ma symbol chemiczny Po?","polon","platyna","potas","rtęć"],[2,"Chemia","Który pierwiastek ma symbol chemiczny Rn?","radon","rad","rtęć","wapń"],[2,"Chemia","Który pierwiastek ma symbol chemiczny Bi?","bizmut","bar","brom","bor"],[2,"Chemia","Który pierwiastek ma symbol chemiczny Ba?","bar","bor","brom","bizmut"],[2,"Chemia","Który pierwiastek ma symbol chemiczny Os?","osm","ołów","magnez","antymon"],[0,"Różne","Jak nazywa się młode psa?","szczenię","kocię","źrebię","cielę"],[0,"Różne","Ile nóg ma pająk?","8","6","10","4"],[0,"Różne","Jaki kolor powstaje ze zmieszania żółtego i niebieskiego?","zielony","fioletowy","pomarańczowy","brązowy"],[0,"Różne","Ile dni ma tydzień?","7","5","6","8"],[0,"Różne","Który miesiąc ma najmniej dni?","luty","kwiecień","listopad","czerwiec"],[0,"Różne","Jaki odgłos wydaje krowa?","muu","bee","kwa","hau"],[0,"Różne","Ile to jest 7 razy 8?","56","54","48","64"],[0,"Różne","Z czego najczęściej robi się frytki?","z ziemniaków","z marchwi","z selera","z kukurydzy"],[0,"Różne","Który ptak według tradycji przynosi dzieci?","bocian","wróbel","sowa","czapla"],[0,"Różne","Jak nazywa się drewniany pajacyk, któremu rósł nos od kłamstw?","Pinokio","Piotruś Pan","Calineczek","Jaś"],[0,"Różne","Kto mieszka w Stumilowym Lesie?","Kubuś Puchatek","Smerfy","Muminki","Reksio"],[0,"Różne","Jaki kształt ma znak „STOP”?","ośmiokąt","trójkąt","koło","kwadrat"],[0,"Różne","Który z tych owoców jest cytrusem?","pomarańcza","jabłko","gruszka","śliwka"],[0,"Różne","Jak nazywa się zamarznięta woda?","lód","para","rosa","mgła"],[0,"Różne","Który instrument ma klawiaturę?","fortepian","skrzypce","trąbka","gitara"],[0,"Różne","Jak nazywa się dom pszczół?","ul","gniazdo","nora","kopiec"],[0,"Różne","Gdzie według tradycji mieszka Święty Mikołaj?","w Laponii","na Hawajach","w Egipcie","w Brazylii"],[0,"Różne","Jak nazywa się najwyższa góra w Polsce?","Rysy","Śnieżka","Giewont","Babia Góra"],[0,"Różne","Która rzeka przepływa przez Warszawę?","Wisła","Odra","Warta","Bug"],[0,"Różne","Czym jest „Mazurek Dąbrowskiego”?","hymnem Polski","ciastem","obrazem","operą"],[0,"Różne","Ile godzin ma doba?","24","12","20","36"],[0,"Różne","Jak nazywa się pierwsza litera alfabetu greckiego?","alfa","beta","omega","gamma"],[0,"Różne","Z mleka którego zwierzęcia robi się oscypki?","owcy","krowy","kozy","klaczy"],[0,"Różne","Ile wynosi połowa ze stu?","50","25","20","40"],[0,"Różne","Kim jest Shrek?","ogrem","smokiem","osłem","rycerzem"],[0,"Różne","Który z tych sportów uprawia się na lodzie?","hokej","rugby","krykiet","baseball"],[0,"Różne","Która pora roku następuje po zimie?","wiosna","lato","jesień","przesilenie"],[0,"Różne","Ile boków ma trójkąt?","3","4","2","5"],[0,"Różne","Jak nazywa się sklep z lekami?","apteka","drogeria","piekarnia","kiosk"],[0,"Różne","Które z tych zwierząt jest ssakiem?","delfin","rekin","pingwin","krokodyl"],[0,"Różne","Co mierzy termometr?","temperaturę","ciśnienie","wilgotność","czas"],[0,"Różne","Jak nazywa się kolorowy łuk na niebie po deszczu?","tęcza","zorza","halo","miraż"],[0,"Różne","Kto broni bramki w piłce nożnej?","bramkarz","obrońca","sędzia","kapitan"],[0,"Różne","Kto namalował „Mona Lisę”?","Leonardo da Vinci","Pablo Picasso","Vincent van Gogh","Jan Matejko"],[0,"Różne","Jakie kolory ma flaga Polski?","biały i czerwony","biały i niebieski","czerwony i zielony","żółty i niebieski"],[0,"Różne","Ile sztuk to tuzin?","12","10","20","6"],[0,"Różne","Gdzie żyją pingwiny cesarskie?","na Antarktydzie","w Arktyce","w Afryce","w Amazonii"],[0,"Różne","Co oznacza skrót „np.”?","na przykład","na pewno","nie pamiętam","niedaleko poczty"],[0,"Różne","Które zwierzę nazywa się królem zwierząt?","lew","tygrys","słoń","goryl"],[0,"Różne","Który z tych pojazdów jeździ po szynach?","tramwaj","autobus","trolejbus","taksówka"],[0,"Różne","Kim był Fryderyk Chopin?","kompozytorem","malarzem","królem","astronomem"],[0,"Różne","Jak nazywa się smok z legendy o Krakowie?","Smok Wawelski","Smok Wiślany","Smok Tatrzański","Smok Mariacki"],[0,"Różne","Ile minut ma godzina?","60","100","30","90"],[0,"Różne","Jaki owoc według anegdoty spadł na głowę Newtonowi?","jabłko","gruszka","kokos","śliwka"],[0,"Różne","Czym żywi się głównie panda wielka?","bambusem","eukaliptusem","rybami","bananami"],[0,"Różne","Który dzień tygodnia następuje po środzie?","czwartek","wtorek","piątek","sobota"],[0,"Różne","W jakim mieście stoi wieża Eiffla?","Paryż","Rzym","Londyn","Madryt"],[0,"Różne","Ile wynosi 10% z 200?","20","10","2","40"],[0,"Różne","Jak nazywa się nasza galaktyka?","Droga Mleczna","Andromeda","Wielki Wóz","Plejady"],[0,"Różne","Ile nóg ma owad?","6","8","4","10"],[0,"Różne","Jak nazywa się samiec kury?","kogut","indor","gąsior","kaczor"],[0,"Różne","Który z tych owoców jest czerwony w środku?","arbuz","banan","melon miodowy","ananas"],[0,"Różne","Co produkują pszczoły?","miód","mleko","jedwab","cukier"],[0,"Różne","Czym tradycyjnie dekoruje się choinkę?","bombkami","pisankami","wiankami","palmami wielkanocnymi"],[0,"Różne","Jak nazywa się dzień 24 grudnia?","Wigilia","Sylwester","Andrzejki","Trzech Króli"],[0,"Różne","Kto pisze wiersze?","poeta","prozaik","malarz","rzeźbiarz"],[0,"Różne","Które zwierzę ma trąbę?","słoń","żyrafa","nosorożec","hipopotam"],[0,"Różne","Jaki kwiat z kolcami jest symbolem miłości?","róża","tulipan","stokrotka","słonecznik"],[0,"Różne","Jaki kolor mają liście latem?","zielony","niebieski","fioletowy","biały"],[0,"Różne","Jak nazywa się mieszkanie lisa?","nora","gawra","barłóg","dziupla"],[0,"Różne","Gdzie zimuje niedźwiedź?","w gawrze","w norze","w dziupli","w gnieździe"],[0,"Różne","Ile kół ma typowy samochód osobowy (bez zapasu)?","4","3","5","6"],[0,"Różne","Który z tych instrumentów jest dęty?","trąbka","wiolonczela","bęben","harfa"],[0,"Różne","Jak nazywa się chłopiec, który nie chciał dorosnąć?","Piotruś Pan","Pinokio","Kopciuszek","Jaś Fasola"],[0,"Różne","Ile to jest 100 minus 37?","63","73","67","53"],[0,"Różne","Kto jest autorem baśni „Kopciuszek” w wersji spopularyzowanej we Francji?","Charles Perrault","Bracia Grimm","Hans Christian Andersen","Ezop"],[1,"Wiedza ogólna","Ile kości ma dorosły człowiek?","206","180","212","250"],[1,"Wiedza ogólna","Jak nazywa się największy ocean?","Spokojny","Atlantycki","Indyjski","Arktyczny"],[1,"Wiedza ogólna","Jak nazywa się najdłuższa rzeka Europy?","Wołga","Dunaj","Ren","Dniepr"],[1,"Wiedza ogólna","Które państwo ma kształt buta?","Włochy","Grecja","Chorwacja","Portugalia"],[1,"Wiedza ogólna","Kto namalował „Bitwę pod Grunwaldem”?","Jan Matejko","Józef Chełmoński","Jacek Malczewski","Stanisław Wyspiański"],[1,"Wiedza ogólna","Jaki gaz pochłaniają rośliny podczas fotosyntezy?","dwutlenek węgla","tlen","azot","hel"],[1,"Wiedza ogólna","Która planeta jest najbliżej Słońca?","Merkury","Wenus","Mars","Ziemia"],[1,"Wiedza ogólna","Jak nazywa się waluta Japonii?","jen","juan","won","rupia"],[1,"Wiedza ogólna","Ilu zawodników jednej drużyny gra jednocześnie na boisku w siatkówce?","6","5","7","11"],[1,"Wiedza ogólna","Kto był pierwszym koronowanym królem Polski?","Bolesław Chrobry","Mieszko I","Kazimierz Wielki","Władysław Łokietek"],[1,"Wiedza ogólna","Kto odkrył polon i rad?","Maria Skłodowska-Curie","Mikołaj Kopernik","Albert Einstein","Ludwik Pasteur"],[1,"Wiedza ogólna","Co mierzy barometr?","ciśnienie atmosferyczne","temperaturę","wilgotność","prędkość wiatru"],[1,"Wiedza ogólna","Ile serc ma ośmiornica?","3","1","2","8"],[1,"Wiedza ogólna","Jakie zwierzę jest najwyższe na świecie?","żyrafa","słoń","struś","wielbłąd"],[1,"Wiedza ogólna","W jakiej dyscyplinie rozgrywa się Wimbledon?","tenis","golf","krykiet","polo"],[1,"Wiedza ogólna","Kto wyreżyserował „Seksmisję”?","Juliusz Machulski","Stanisław Bareja","Andrzej Wajda","Marek Piwowski"],[1,"Wiedza ogólna","W jakim mieście stoi Koloseum?","Rzym","Ateny","Wenecja","Neapol"],[1,"Wiedza ogólna","Jak nazywa się nauka o ptakach?","ornitologia","entomologia","ichtiologia","herpetologia"],[1,"Wiedza ogólna","Ile wynosi suma kątów wewnętrznych trójkąta?","180°","90°","270°","360°"],[1,"Wiedza ogólna","Jak nazywa się główny bohater „Krzyżaków”?","Zbyszko z Bogdańca","Andrzej Kmicic","Jan Skrzetuski","Michał Wołodyjowski"],[1,"Wiedza ogólna","Jak nazywa się ukochana Stanisława Wokulskiego w „Lalce”?","Izabela Łęcka","Oleńka Billewiczówna","Justyna Orzelska","Zosia Horeszkówna"],[1,"Wiedza ogólna","Ile województw ma Polska?","16","14","18","49"],[1,"Wiedza ogólna","Jak nazywa się przyrząd wskazujący kierunki świata?","kompas","sekstant","astrolabium","barometr"],[1,"Wiedza ogólna","Które z tych państw NIE graniczy z Polską?","Węgry","Słowacja","Litwa","Białoruś"],[1,"Wiedza ogólna","W jakiej jednostce mierzy się natężenie prądu?","amper","wolt","om","wat"],[1,"Wiedza ogólna","Kto skomponował „Cztery pory roku”?","Antonio Vivaldi","Wolfgang Amadeusz Mozart","Jan Sebastian Bach","Joseph Haydn"],[1,"Wiedza ogólna","Jak nazywa się słynny dzwon i wieża zegarowa w Londynie?","Big Ben","Big Bob","London Eye","Tower Bell"],[1,"Wiedza ogólna","Który ptak nie potrafi latać?","struś","bocian","jaskółka","orzeł"],[1,"Wiedza ogólna","Jak nazywa się utwór liryczny złożony z 14 wersów?","sonet","tren","fraszka","oda"],[1,"Wiedza ogólna","Ile strun ma klasyczna gitara?","6","4","5","7"],[1,"Wiedza ogólna","Jaki owoc jest głównym składnikiem guacamole?","awokado","limonka","mango","pomidor"],[1,"Wiedza ogólna","Który kraj zdobył mistrzostwo świata w piłce nożnej w 2022 roku?","Argentyna","Francja","Brazylia","Chorwacja"],[1,"Wiedza ogólna","Ile wynosi pierwiastek kwadratowy ze 144?","12","14","11","16"],[1,"Wiedza ogólna","Jak nazywa się najgłębsze jezioro świata?","Bajkał","Tanganika","Wiktorii","Ładoga"],[1,"Wiedza ogólna","Jak nazywano dzień lądowania aliantów w Normandii?","D-Day","V-Day","Z-Day","Dzień Zwycięstwa"],[1,"Wiedza ogólna","Która planeta słynie z wyraźnych pierścieni?","Saturn","Mars","Merkury","Wenus"],[1,"Wiedza ogólna","Jak nazywa się waluta Wielkiej Brytanii?","funt szterling","euro","frank","korona"],[1,"Wiedza ogólna","Kto zagrał Jacka w filmie „Titanic”?","Leonardo DiCaprio","Brad Pitt","Tom Cruise","Matt Damon"],[1,"Wiedza ogólna","Ile pól ma szachownica?","64","81","100","48"],[1,"Wiedza ogólna","Jak nazywa się samica jelenia?","łania","sarna","klempa","locha"],[1,"Wiedza ogólna","Z jakiego kraju pochodzi zespół ABBA?","Szwecja","Norwegia","Dania","Finlandia"],[1,"Wiedza ogólna","Jak nazywa się szkoła magii, do której chodzi Harry Potter?","Hogwart","Durmstrang","Beauxbatons","Ilvermorny"],[1,"Wiedza ogólna","Jakim gazem napełnia się balony, aby unosiły się w powietrzu?","helem","neonem","argonem","azotem"],[1,"Wiedza ogólna","Ile wynosi w przybliżeniu liczba pi?","3,14","2,71","1,41","1,61"],[1,"Wiedza ogólna","Którego skoczka narciarskiego nazywano „Orłem z Wisły”?","Adam Małysz","Kamil Stoch","Piotr Żyła","Dawid Kubacki"],[1,"Wiedza ogólna","Jak nazywa się ciepły, porywisty wiatr wiejący w Tatrach?","halny","bryza","bora","monsun"],[1,"Wiedza ogólna","Który z tych pierwiastków jest gazem szlachetnym?","argon","chlor","azot","wodór"],[1,"Wiedza ogólna","Jaki hormon wytwarza trzustka?","insulinę","adrenalinę","tyroksynę","melatoninę"],[1,"Wiedza ogólna","W którym mieście znajduje się Hala Stulecia?","Wrocław","Poznań","Katowice","Łódź"],[1,"Wiedza ogólna","Jak nazywa się cieśnina oddzielająca Europę od Afryki?","Gibraltarska","Bosfor","Kaletańska","Mesyńska"],[1,"Wiedza ogólna","Jak nazywa się nordycki bóg piorunów?","Thor","Odyn","Loki","Baldur"],[1,"Wiedza ogólna","Który kompozytor pod koniec życia był całkowicie głuchy?","Ludwig van Beethoven","Wolfgang Amadeusz Mozart","Fryderyk Chopin","Antonio Vivaldi"],[1,"Wiedza ogólna","Jaki gaz stanowi około 78% atmosfery ziemskiej?","azot","tlen","argon","dwutlenek węgla"],[1,"Wiedza ogólna","Które państwo ma najwięcej mieszkańców na świecie (stan na 2025)?","Indie","Chiny","Stany Zjednoczone","Indonezja"],[1,"Wiedza ogólna","Jak nazywał się pierwszy człowiek w kosmosie?","Jurij Gagarin","Neil Armstrong","Aleksiej Leonow","German Titow"],[1,"Wiedza ogólna","Jak nazywa się barwnik nadający roślinom zielony kolor?","chlorofil","karoten","hemoglobina","melanina"],[1,"Wiedza ogólna","Która z tych rzek przepływa przez Kraków?","Wisła","Odra","Warta","Dunajec"],[1,"Wiedza ogólna","Kto jest autorem teorii względności?","Albert Einstein","Isaac Newton","Niels Bohr","Max Planck"],[1,"Wiedza ogólna","Jak nazywa się stolica województwa podkarpackiego?","Rzeszów","Przemyśl","Krosno","Tarnów"],[1,"Wiedza ogólna","Jak nazywa się stolica województwa warmińsko-mazurskiego?","Olsztyn","Elbląg","Ełk","Giżycko"],[1,"Wiedza ogólna","Jak nazywa się stolica województwa podlaskiego?","Białystok","Suwałki","Łomża","Augustów"],[1,"Wiedza ogólna","Jak nazywa się najdłuższa rzeka świata według większości źródeł?","Nil","Jangcy","Missisipi","Kongo"],[1,"Wiedza ogólna","Ile zawodników liczy drużyna piłkarska na boisku?","11","10","12","9"],[1,"Wiedza ogólna","Jak nazywa się „trener tysiąclecia” polskiej piłki?","Kazimierz Górski","Antoni Piechniczek","Jerzy Engel","Leo Beenhakker"],[1,"Wiedza ogólna","Z ilu państw składa się Unia Europejska (2025)?","27","28","25","30"],[1,"Wiedza ogólna","Jak nazywa się pies z „Czterech pancernych”?","Szarik","Reksio","Burek","Azor"],[1,"Wiedza ogólna","Jaką nagrodę przyznaje się na festiwalu w Cannes?","Złotą Palmę","Złotego Lwa","Złotego Niedźwiedzia","Oscara"],[1,"Wiedza ogólna","Jak nazywa się waluta Szwajcarii?","frank","euro","korona","marka"],[1,"Wiedza ogólna","Jaka jest najmniejsza liczba pierwsza?","2","1","3","0"],[1,"Wiedza ogólna","Jak nazywa się stop miedzi z cyną?","brąz","mosiądz","stal","duraluminium"],[1,"Wiedza ogólna","Jak nazywa się słynny statek, którym pielgrzymi przypłynęli do Ameryki w 1620 roku?","Mayflower","Santa Maria","Victoria","Endeavour"],[1,"Wiedza ogólna","Kto wyreżyserował film „Pianista”?","Roman Polański","Andrzej Wajda","Krzysztof Kieślowski","Agnieszka Holland"],[2,"Wiedza ekspercka","Jak nazywa się najmniejsze państwo Ameryki Południowej?","Surinam","Urugwaj","Gujana","Ekwador"],[2,"Wiedza ekspercka","Kto napisał powieść „Mistrz i Małgorzata”?","Michaił Bułhakow","Fiodor Dostojewski","Lew Tołstoj","Borys Pasternak"],[2,"Wiedza ekspercka","Jak nazywał się koń Aleksandra Wielkiego?","Bucefał","Incitatus","Marengo","Rosynant"],[2,"Wiedza ekspercka","Jak nazywa się najwyższy szczyt Antarktydy?","Masyw Vinsona","Mount Erebus","Mount Kirkpatrick","Mount Sidley"],[2,"Wiedza ekspercka","Który polski matematyk jako pierwszy złamał szyfr Enigmy w 1932 roku?","Marian Rejewski","Stefan Banach","Hugo Steinhaus","Wacław Sierpiński"],[2,"Wiedza ekspercka","Jak nazywa się najdłuższa kość w ciele człowieka?","kość udowa","kość piszczelowa","kość ramienna","kość strzałkowa"],[2,"Wiedza ekspercka","Ile wynosi silnia z liczby 5?","120","60","25","720"],[2,"Wiedza ekspercka","Jak nazywa się kometa powracająca w pobliże Słońca co około 76 lat?","kometa Halleya","kometa Hale’a-Boppa","kometa Enckego","kometa Shoemaker-Levy"],[2,"Wiedza ekspercka","Jak nazywa się największy księżyc w Układzie Słonecznym?","Ganimedes","Tytan","Kallisto","Io"],[2,"Wiedza ekspercka","Kto skomponował operę „Straszny dwór”?","Stanisław Moniuszko","Karol Szymanowski","Fryderyk Chopin","Ignacy Jan Paderewski"],[2,"Wiedza ekspercka","Jak nazywa się stop miedzi z cynkiem?","mosiądz","brąz","stal","duraluminium"],[2,"Wiedza ekspercka","Jak nazywa się waluta Wietnamu?","dong","bat","riel","kip"],[2,"Wiedza ekspercka","Jaki minerał jest najmiększy w skali Mohsa?","talk","gips","kalcyt","kwarc"],[2,"Wiedza ekspercka","Kto był pierwszym prezydentem II Rzeczypospolitej?","Gabriel Narutowicz","Stanisław Wojciechowski","Ignacy Mościcki","Józef Piłsudski"],[2,"Wiedza ekspercka","Jak nazywał się pierwszy sztuczny satelita Ziemi?","Sputnik 1","Explorer 1","Wostok 1","Łuna 1"],[2,"Wiedza ekspercka","Jak nazywa się najwyższy wodospad świata?","Salto Ángel","Wodospad Wiktorii","Niagara","Iguazú"],[2,"Wiedza ekspercka","Ile wynosi suma kątów wewnętrznych pięciokąta?","540°","360°","720°","450°"],[2,"Wiedza ekspercka","Kto skonstruował lampę naftową?","Ignacy Łukasiewicz","Kazimierz Prószyński","Jan Szczepanik","Stefan Drzewiecki"],[2,"Wiedza ekspercka","W którym mieście urodził się Mikołaj Kopernik?","Toruń","Frombork","Kraków","Olsztyn"],[2,"Wiedza ekspercka","Kto namalował obraz „Szał uniesień”?","Władysław Podkowiński","Jacek Malczewski","Józef Mehoffer","Olga Boznańska"],[2,"Wiedza ekspercka","Jak nazywa się największa wyspa Morza Śródziemnego?","Sycylia","Sardynia","Cypr","Korsyka"],[2,"Wiedza ekspercka","Ile chromosomów ma typowa komórka somatyczna człowieka?","46","23","44","48"],[2,"Wiedza ekspercka","Jak nazywa się najstarsza polska uczelnia?","Uniwersytet Jagielloński","Uniwersytet Warszawski","Uniwersytet Wrocławski","Uniwersytet Wileński"],[2,"Wiedza ekspercka","Kto był ostatnim dyktatorem powstania styczniowego?","Romuald Traugutt","Ludwik Mierosławski","Marian Langiewicz","Józef Hauke-Bosak"],[2,"Wiedza ekspercka","Jak nazywa się przejście substancji ze stanu stałego bezpośrednio w gazowy?","sublimacja","resublimacja","kondensacja","parowanie"],[2,"Wiedza ekspercka","Jaki pierwiastek ma liczbę atomową 79?","złoto","srebro","platyna","rtęć"],[2,"Wiedza ekspercka","Która z tych wysp należy do Danii?","Bornholm","Gotlandia","Olandia","Rugia"],[2,"Wiedza ekspercka","Kto wyreżyserował film „Rejs”?","Marek Piwowski","Stanisław Bareja","Sylwester Chęciński","Tadeusz Chmielewski"],[2,"Wiedza ekspercka","Ile wynosi 2 do potęgi 10?","1024","1000","512","2048"],[2,"Wiedza ekspercka","Jak nazywa się najgłębsze miejsce oceanów na Ziemi?","Głębia Challengera","Rów Tonga","Głębia Sundajska","Rów Kurylski"],[2,"Wiedza ekspercka","Która z tych liczb jest liczbą pierwszą?","97","91","87","93"],[2,"Wiedza ekspercka","Jak nazywał się pies, pierwsze zwierzę wysłane na orbitę okołoziemską?","Łajka","Biełka","Striełka","Zwiozdoczka"],[2,"Wiedza ekspercka","Ile lat faktycznie trwała wojna stuletnia?","116","100","99","130"],[2,"Wiedza ekspercka","Kto namalował „Damę z gronostajem”?","Leonardo da Vinci","Rafael Santi","Sandro Botticelli","Tycjan"],[2,"Wiedza ekspercka","Jak nazywała się pierwsza kobieta w kosmosie?","Walentina Tierieszkowa","Swietłana Sawicka","Sally Ride","Jelena Kondakowa"],[2,"Wiedza ekspercka","Kto jako pierwszy dotarł na biegun południowy?","Roald Amundsen","Robert Scott","Ernest Shackleton","Fridtjof Nansen"],[2,"Wiedza ekspercka","Jak nazywa się waluta Republiki Południowej Afryki?","rand","naira","szyling","cedi"],[2,"Wiedza ekspercka","Co oznacza łacińska sentencja „carpe diem”?","chwytaj dzień","pamiętaj o śmierci","kości zostały rzucone","przybyłem, zobaczyłem, zwyciężyłem"],[2,"Wiedza ekspercka","Kto według tradycji wypowiedział słowa „Veni, vidi, vici”?","Juliusz Cezar","Oktawian August","Neron","Hannibal"],[2,"Wiedza ekspercka","Ile w przybliżeniu wynosi prędkość światła w próżni?","300 000 km/s","30 000 km/s","3 000 000 km/s","150 000 km/s"],[2,"Wiedza ekspercka","Jak nazywa się podział komórki prowadzący do powstania gamet?","mejoza","mitoza","osmoza","fotoliza"],[2,"Wiedza ekspercka","Jak nazywa się najwyższy szczyt Afryki?","Kilimandżaro","Mount Kenya","Ruwenzori","Ras Daszan"],[2,"Wiedza ekspercka","Kto był autorem „Kroniki polskiej” z początku XII wieku?","Gall Anonim","Wincenty Kadłubek","Jan Długosz","Janko z Czarnkowa"],[2,"Wiedza ekspercka","Jak nazywa się najwyższy szczyt Ameryki Południowej?","Aconcagua","Chimborazo","Huascarán","Ojos del Salado"],[2,"Wiedza ekspercka","Który polski pisarz jako pierwszy otrzymał literacką Nagrodę Nobla?","Henryk Sienkiewicz","Władysław Reymont","Czesław Miłosz","Bolesław Prus"],[2,"Wiedza ekspercka","Jak nazywa się słynne muzeum sztuki w Madrycie?","Prado","Uffizi","Luwr","Ermitaż"],[2,"Wiedza ekspercka","W którym mieście znajduje się Ermitaż?","Sankt Petersburg","Moskwa","Kijów","Wiedeń"],[2,"Wiedza ekspercka","Jak nazywa się nauka o grzybach?","mykologia","fykologia","briologia","lichenologia"],[2,"Wiedza ekspercka","Ile kości tworzy ludzką czaszkę (według typowego podziału)?","22","18","28","32"],[2,"Wiedza ekspercka","Jak nazywa się szwedzki chemik, fundator Nagrody Nobla?","Alfred Nobel","Anders Celsius","Carl Linneusz","Svante Arrhenius"],[2,"Wiedza ekspercka","Która planeta ma najwięcej potwierdzonych księżyców (stan na 2025)?","Saturn","Jowisz","Uran","Neptun"],[2,"Wiedza ekspercka","Jak nazywa się najwyższy szczyt Sudetów?","Śnieżka","Śnieżnik","Wielka Sowa","Ślęża"],[2,"Wiedza ekspercka","Jak nazywa się zatoka, nad którą leży Trójmiasto?","Zatoka Gdańska","Zatoka Pomorska","Zatoka Pucka","Zalew Wiślany"],[2,"Wiedza ekspercka","W którym roku Mikołaj Kopernik przeprowadził obronę Olsztyna przed Krzyżakami?","1521","1410","1466","1543"],[2,"Wiedza ekspercka","Kto skomponował balet „Harnasie”?","Karol Szymanowski","Stanisław Moniuszko","Witold Lutosławski","Krzysztof Penderecki"],[2,"Wiedza ekspercka","Jak nazywał się wódz Hunów zwany „biczem Bożym”?","Attyla","Czyngis-chan","Alaryk","Odoaker"],[2,"Wiedza ekspercka","Ile wynosi przyspieszenie ziemskie w przybliżeniu?","9,81 m/s²","8,91 m/s²","10,81 m/s²","6,67 m/s²"],[2,"Wiedza ekspercka","Jak nazywa się kwas zawarty w soku żołądkowym?","kwas solny","kwas siarkowy","kwas octowy","kwas cytrynowy"],[2,"Wiedza ekspercka","Który pierwiastek jest najlżejszy?","wodór","hel","lit","tlen"],[2,"Wiedza ekspercka","Jak nazywa się okres w dziejach Polski między 1918 a 1939 rokiem?","dwudziestolecie międzywojenne","pozytywizm","Młoda Polska","PRL"],[2,"Wiedza ekspercka","Kto był pierwszym prezydentem Polski wybranym w wyborach powszechnych?","Lech Wałęsa","Wojciech Jaruzelski","Aleksander Kwaśniewski","Tadeusz Mazowiecki"]]).map((r, i) => ({id: i, t: r[0], c: r[1], q: r[2], a: r[3], w: [r[4], r[5], r[6]]}));
+const seenKey = "mil_seen";
+const loadSeen = () => { try { return new Set(JSON.parse(localStorage.getItem(seenKey) || "[]")); } catch { return new Set(); } };
+const saveSeen = s => { try { localStorage.setItem(seenKey, JSON.stringify([...s].slice(-1500))); } catch {} };
+function pickQ(tier){
+  const used = room.used || {};
+  let seen = loadSeen(), c = BANK.filter(q => q.t === tier && !used[q.id] && !seen.has(q.id));
+  if (!c.length) { c = BANK.filter(q => q.t === tier && !used[q.id]); }
+  if (!c.length) c = BANK.filter(q => !used[q.id]);
+  const q = c[Math.random() * c.length | 0]; seen.add(q.id); saveSeen(seen);
+  const opts = [q.a, ...q.w].sort(() => Math.random() - .5);
+  return {id: q.id, text: q.q, cat: q.c, opts, tier};
+}
+const correctIdx = () => { const b = BANK[room.q?.id]; return b ? room.q.opts.indexOf(b.a) : -1; };
+
+/* ---------- dźwięk ---------- */
+let AC; function tone(f, d, type = "sine", v = .08, delay = 0){ try{ AC = AC || new (window.AudioContext||window.webkitAudioContext)(); const t = AC.currentTime + delay, o = AC.createOscillator(), g = AC.createGain(); o.type = type; o.frequency.value = f; g.gain.setValueAtTime(v, t); g.gain.exponentialRampToValueAtTime(.001, t + d); o.connect(g).connect(AC.destination); o.start(t); o.stop(t + d + .02);}catch{} }
+const SFX = {
+  lock: () => { tone(330, .25, "triangle"); tone(495, .3, "triangle", .06, .08); },
+  ok: () => [523, 659, 784, 1046].forEach((f, i) => tone(f, .35, "triangle", .08, i * .09)),
+  bad: () => { tone(220, .5, "sawtooth", .05); tone(155, .7, "sawtooth", .05, .2); },
+  sus: () => { tone(110, .25, "sine", .1); tone(110, .25, "sine", .1, .5); tone(110, .25, "sine", .1, 1); },
+  ll: () => [880, 660, 990].forEach((f, i) => tone(f, .18, "square", .03, i * .07)),
+};
+
+/* ---------- lobby ---------- */
+function home(){
+  app.innerHTML = `
+  <div class="card" style="max-width:520px;margin:0 auto 16px">
+    <h2>Twój pseudonim</h2>
+    <input id="name" maxlength="16" placeholder="np. Kasia" value="${esc(localStorage.getItem("n")||"")}">
+    <div class="hr"></div>
+    <button id="create" style="width:100%">Utwórz nowe lobby</button>
+    <div class="hr">albo dołącz kodem</div>
+    <div class="row"><input id="jc" maxlength="6" placeholder="KOD" style="text-transform:uppercase;letter-spacing:.2em;text-align:center"><button class="alt" id="join" style="flex:0 0 auto">Dołącz</button></div>
+  </div>
+  <div class="card" style="max-width:520px;margin:0 auto">
+    <h2>Zasady</h2>
+    <p style="margin:0 0 8px">Wszyscy dostają to samo pytanie i mają chwilę na odpowiedź. Dobra odpowiedź – wchodzisz szczebel wyżej. Zła – spadasz do kwoty gwarantowanej (<b>1 000 zł</b> lub <b>40 000 zł</b>) i odpadasz. Przed zatwierdzeniem możesz się wycofać z tym, co masz.</p>
+    <p style="margin:0">Każdy ma trzy koła ratunkowe: ${Object.values(LL).map(l => `<b>${l[0]} ${l[1]}</b> – ${l[2]}`).join(" ")}</p>
+  </div>`;
+  const nm = () => { const v = $("#name").value.trim(); if(!v){showErr("Wpisz pseudonim."); return null} localStorage.setItem("n",v); showErr(); return v; };
+  $("#create").onclick = async () => {
+    const n = nm(); if(!n) return;
+    try{
+      const chars = "ABCDEFGHJKLMNPQRSTUVWXYZ23456789";
+      code = Array.from({length:6}, () => chars[Math.random()*chars.length|0]).join("");
+      await set(rc(), {game:"mil", host:uid, phase:"lobby", created:Date.now(), players:{[uid]:fresh(n, 0)}});
+      enter();
+    }catch(e){ showErr("Nie można utworzyć lobby: " + e.message); }
+  };
+  $("#join").onclick = async () => {
+    const n = nm(); if(!n) return;
+    const c = $("#jc").value.trim().toUpperCase(); if(!c){showErr("Wpisz kod lobby.");return}
+    try{
+      code = c;
+      const snap = await get(rc());
+      if(!snap.exists() || snap.val().game !== "mil"){ code = null; return showErr("Nie ma lobby Milionerów o takim kodzie."); }
+      const r = snap.val(), ps = r.players || {};
+      if(!ps[uid]){
+        if(r.phase !== "lobby") { code = null; return showErr("Gra już trwa."); }
+        if(Object.keys(ps).length >= MAX) { code = null; return showErr(`Lobby jest pełne (${MAX} graczy).`); }
+        const order = Math.max(-1, ...Object.values(ps).map(p => p.order)) + 1;
+        await set(ref(db, `rooms/${code}/players/${uid}`), fresh(n, order));
+      }
+      enter();
+    }catch(e){ code = null; showErr("Nie można dołączyć: " + e.message); }
+  };
+  $("#jc").addEventListener("keydown", e => { if(e.key === "Enter") $("#join").click(); });
+}
+const fresh = (name, order) => ({name, order, lv:0, won:0, st:"in", tt:0, ll:{cut:false, spy:false, dbl:false}});
+
+function enter(){
+  showErr(); if (unsub) unsub();
+  unsub = onValue(rc(), s => {
+    if(!s.exists()){ leave(); return showErr("Lobby zostało zamknięte."); }
+    const prevKey = lastPhaseKey;
+    room = s.val();
+    lastPhaseKey = room.phase + "|" + (room.round || 0);
+    if (prevKey !== lastPhaseKey) { picking = []; onPhase(prevKey); }
+    render(); hostLogic();
+  });
+}
+function leave(){ if(unsub) unsub(); unsub=null; code=null; room=null; clearTimeout(qTimer); clearInterval(tick); home(); }
+function onPhase(prev){
+  if (!prev) return;
+  const p = me();
+  if (room.phase === "suspense") SFX.sus();
+  if (room.phase === "reveal" && p) { const mine = p.res; if (mine === "ok") SFX.ok(); else if (mine === "bad") SFX.bad(); }
+}
+
+/* ---------- widoki ---------- */
+function playersHTML(showPick){
+  return `<div class="players">${plist(room).map(p => {
+    const cls = p.st === "out" || p.st === "quit" ? "out" : p.st === "win" ? "win" : (room.phase === "q" && p.pick != null ? "lock" : "");
+    const st = p.st === "quit" ? "wycofał(a) się" : p.st === "out" ? "odpada" : p.st === "win" ? "MILIONER!" : room.phase === "q" ? (p.pick != null ? "✔ zatwierdzone" : "myśli…") : room.phase === "lobby" ? "gotowy" : "w grze";
+    const ll = Object.keys(LL).map(k => p.ll?.[k] ? "" : LL[k][0]).join("");
+    return `<div class="p ${cls} ${p.id===uid?"me":""}"><b>${esc(p.name)}${p.id===room.host?" ★":""}</b><div class="m">${zl(p.won)}</div><div class="st">${st}${room.phase!=="lobby" && ll ? " · " + ll : ""}</div></div>`;
+  }).join("")}</div>`;
+}
+function ladderHTML(lv, st){
+  return `<div class="card ladder"><ol>${LADDER.map((v, i) => `<li class="${SAFE.includes(i)?"g":""} ${i===lv && st==="in" ? "cur" : ""} ${i<lv?"done":""}"><span>${i+1}</span>${zl(v)}</li>`).join("")}</ol></div>`;
+}
+function render(){
+  const isHost = room.host === uid, ph = room.phase, ps = room.players || {}, n = Object.keys(ps).length;
+  let h = `<div class="card" style="padding:12px 18px"><div class="row" style="align-items:center"><div><div class="hint" style="text-align:left">Kod lobby</div><div class="code" style="text-align:left;font-size:30px">${esc(code)}</div></div>
+    <div class="hint" style="text-align:right">Gracze: ${n}/${MAX} · ★ prowadzący${room.round?` · pytanie <b style="color:var(--gold)">${room.round}/12</b>`:""}</div></div></div>`;
+  if (ph === "lobby") {
+    h += `<div class="card"><h2>Gracze w lobby</h2>${playersHTML()}</div>
+      <div class="row" style="max-width:520px;margin:0 auto">${isHost ? `<button id="start">Rozpocznij grę</button>` : `<div class="hint" style="align-self:center">Czekamy, aż prowadzący rozpocznie grę…</div>`}
+      <button class="alt" id="leave">Wyjdź</button></div>`;
+  } else if (ph === "over") {
+    const rank = plist(room).sort((a, b) => (b.won - a.won) || (a.tt - b.tt));
+    const top = rank.slice(0, 3), order = [top[1], top[0], top[2]].filter(Boolean);
+    h += `<div class="card"><div class="hint">${rank[0]?.won >= 1000000 ? "Mamy milionera!" : "Zwycięzca"}</div><div class="win">${esc(rank[0]?.name || "—")}</div>
+      <div class="pod">${order.map(p => { const pl = rank.indexOf(p); return `<div style="height:${[150,120,95][pl]}px"><div style="font-size:26px">${["🥇","🥈","🥉"][pl]}</div><b>${esc(p.name)}</b><div class="m">${zl(p.won)}</div></div>`; }).join("")}</div>
+      <div class="hint" style="margin-bottom:10px">Przy równych kwotach wygrywa szybszy (suma czasów odpowiedzi).</div>${playersHTML()}</div>
+      <div class="row" style="max-width:520px;margin:0 auto">${isHost?`<button id="again">Zagraj ponownie</button>`:""}<button class="alt" id="leave">Wyjdź</button></div>`;
+  } else {
+    const p = me() || {}, q = room.q || {}, inGame = p.st === "in", ci = correctIdx();
+    const dblOn = p.dblR === room.round, spyOn = p.spyR === room.round, cut = p.cutR === room.round ? (p.cut || []) : [];
+    const locked = p.pick != null, show = ph === "reveal";
+    h += `<div class="stage"><div>`;
+    h += `<div class="ll">${Object.entries(LL).map(([k, l]) => `<button data-ll="${k}" title="${esc(l[1] + ": " + l[2])}" class="${p.ll?.[k] ? "used" : ""} ${(k==="dbl"&&dblOn)||(k==="spy"&&spyOn)||(k==="cut"&&cut.length)?"act":""}" ${!inGame || locked || ph!=="q" || p.ll?.[k] ? "disabled" : ""}>${l[0]}<small>${l[1]}</small></button>`).join("")}</div>`;
+    h += `<div class="qmeta" style="margin-top:28px"><span class="cat">${esc(q.cat)}</span><span>Pytanie ${room.round}/12 za <b style="color:var(--gold2)">${zl(LADDER[room.round-1])}</b></span></div>`;
+    h += `<div class="qbox">${esc(q.text)}</div>`;
+    if (ph === "q") h += `<div class="timer"><i id="bar"></i></div>`;
+    // rozkład wyborów rywali (koło „Podgląd”) i podpisy na odpowiedziach po odsłonięciu
+    const picksBy = [[], [], [], []];
+    for (const o of plist(room)) { if (o.pick != null && o.pickR === room.round) { picksBy[o.pick].push(o); if (o.pick2 != null) picksBy[o.pick2].push(o); } }
+    let poll = null;
+    if (spyOn && ph === "q") poll = spyPoll(picksBy, p, ci);
+    h += `<div class="ans">${q.opts.map((o, i) => {
+      let cls = "a";
+      const mineSel = locked ? (p.pick === i || p.pick2 === i) : picking.includes(i);
+      if (cut.includes(i) && !show) cls += " gone";
+      if (mineSel) cls += " sel";
+      if (show && i === ci) cls += " ok flash";
+      else if (show && mineSel) cls += " bad";
+      if (!inGame || locked || ph !== "q") cls += " dis";
+      const who = show ? `<span class="who">${picksBy[i].map(x => `<i>${esc(x.name)}</i>`).join("")}</span>` : poll ? `<span class="pct">${poll[i]}</span>` : "";
+      return `<button class="${cls}" data-a="${i}"><b>${L[i]}:</b> ${esc(o)} ${who}</button>`;
+    }).join("")}</div>`;
+    if (ph === "q" && inGame) {
+      if (!locked) {
+        const need = dblOn ? 2 : 1;
+        h += `<div class="row" style="margin-top:16px">
+          <button id="lock" ${picking.length < need ? "disabled" : ""}>${picking.length < need ? (dblOn ? "Zaznacz dwie odpowiedzi" : "Zaznacz odpowiedź") : "Ostateczna odpowiedź!"}</button>
+          <button class="danger" id="quit">Wycofuję się z ${zl(p.won)}</button></div>`;
+      } else h += `<div class="say pulse" style="font-size:20px;margin-top:16px">Odpowiedź zatwierdzona – czekamy na pozostałych…</div>`;
+    } else if (ph === "q") h += `<div class="hint" style="margin-top:14px">Obserwujesz grę – ${p.st==="quit"?"wycofałeś się":"odpadłeś"} z kwotą ${zl(p.won)}.</div>`;
+    if (ph === "suspense") h += `<div class="say pulse">Sprawdźmy…</div>`;
+    if (show) {
+      const r = p.res;
+      h += r === "ok" ? `<div class="say ok">Dobrze! Masz ${zl(p.won)}</div>` : r === "bad" ? `<div class="say bad">Niestety… zostajesz z ${zl(p.won)}</div>` : r === "none" ? `<div class="say bad">Czas minął – zostajesz z ${zl(p.won)}</div>` : `<div class="hint">Poprawna odpowiedź: <b style="color:var(--tx)">${L[ci]}: ${esc(q.opts[ci])}</b></div>`;
+    }
+    h += `<div class="card" style="margin-top:20px">${playersHTML()}</div><div class="row" style="max-width:300px"><button class="alt" id="leave">Wyjdź z gry</button></div>`;
+    h += `</div>${ladderHTML(p.lv || 0, p.st)}</div>`;
+  }
+  app.innerHTML = h;
+  bind();
+  clearInterval(tick);
+  if (ph === "q") tick = setInterval(() => { const b = $("#bar"); if (b) b.style.width = Math.max(0, (room.tEnd - Date.now()) / room.tDur * 100) + "%"; }, 150);
+}
+// koło „Podgląd”: realne wybory rywali; gdy brak rywali – symulowany sondaż widowni
+function spyPoll(picksBy, p, ci){
+  const others = picksBy.map(a => a.filter(x => x.id !== uid).length), total = others.reduce((a, b) => a + b, 0);
+  if (total >= 1 && active(room).length > 1) return others.map(n => `${n} 👤`);
+  let s = (room.q.id * 7919 + uid.length * 131 + room.round * 17) % 2147483647; const rnd = () => (s = s * 16807 % 2147483647) / 2147483647;
+  const acc = [.72, .55, .42][room.q.tier] + rnd() * .15;
+  const cut = p.cutR === room.round ? p.cut || [] : [];
+  const w = [0, 1, 2, 3].map(i => cut.includes(i) ? 0 : i === ci ? acc * 100 : rnd() * 35);
+  const sum = w.reduce((a, b) => a + b, 0) || 1;
+  return w.map(x => Math.round(x / sum * 100) + "%");
+}
+function bind(){
+  const isHost = room.host === uid;
+  $("#leave")?.addEventListener("click", async () => {
+    if (isHost) await set(rc(), null);
+    else if (room.phase === "lobby") await set(ref(db, `rooms/${code}/players/${uid}`), null);
+    else if (me()?.st === "in") await update(ref(db, `rooms/${code}/players/${uid}`), {st:"quit", won: me().won});
+    leave();
+  });
+  $("#start")?.addEventListener("click", startGame);
+  $("#again")?.addEventListener("click", startGame);
+  document.querySelectorAll("[data-a]").forEach(b => b.onclick = () => {
+    const p = me(); if (room.phase !== "q" || p?.st !== "in" || p.pick != null) return;
+    const i = +b.dataset.a, max = p.dblR === room.round ? 2 : 1;
+    if ((p.cutR === room.round ? p.cut || [] : []).includes(i)) return;
+    if (picking.includes(i)) picking = picking.filter(x => x !== i);
+    else { picking.push(i); if (picking.length > max) picking.shift(); }
+    tone(600, .06, "square", .03); render();
+  });
+  $("#lock")?.addEventListener("click", async () => {
+    const p = me(); if (!p || p.pick != null) return;
+    SFX.lock();
+    await update(ref(db, `rooms/${code}/players/${uid}`), {pick: picking[0], pick2: picking[1] ?? null, pickR: room.round, t: Math.max(0, Date.now() - (room.tEnd - room.tDur))});
+  });
+  $("#quit")?.addEventListener("click", async () => {
+    const p = me(); if (!p || p.pick != null) return;
+    if (!confirm(`Na pewno wycofać się z ${zl(p.won)}?`)) return;
+    await update(ref(db, `rooms/${code}/players/${uid}`), {st:"quit"});
+  });
+  document.querySelectorAll("[data-ll]").forEach(b => b.onclick = async () => {
+    const k = b.dataset.ll, p = me(); if (!p || p.ll?.[k] || p.pick != null || room.phase !== "q") return;
+    if (!confirm(`Użyć koła „${LL[k][1]}”? ${LL[k][2]}`)) return;
+    SFX.ll();
+    const f = {[`ll/${k}`]: true};
+    if (k === "cut") { const ci = correctIdx(); const wrong = [0, 1, 2, 3].filter(i => i !== ci).sort(() => Math.random() - .5).slice(0, 2); f.cut = wrong; f.cutR = room.round; picking = picking.filter(i => !wrong.includes(i)); }
+    if (k === "spy") f.spyR = room.round;
+    if (k === "dbl") f.dblR = room.round;
+    await update(ref(db, `rooms/${code}/players/${uid}`), f);
+  });
+}
+
+/* ---------- logika prowadzącego (tylko host) ---------- */
+async function startGame(){
+  try{
+    const ps = {...room.players}; let i = 0;
+    Object.keys(ps).sort((a, b) => ps[a].order - ps[b].order).forEach(id => { ps[id] = fresh(ps[id].name, i++); });
+    lastHandled = "";
+    await update(rc(), {players:ps, used:null, round:0, ans:null});
+    await nextRound(1);
+  }catch(e){ showErr("Błąd startu: " + e.message); }
+}
+async function nextRound(r){
+  const q = pickQ(tierOf(r - 1)), d = TIME[q.tier];
+  await update(rc(), {phase:"q", round:r, q, ans:null, tEnd:Date.now() + d, tDur:d, [`used/${q.id}`]:true});
+}
+function hostLogic(){
+  if (!room || room.host !== uid) return;
+  clearTimeout(qTimer);
+  const ph = room.phase;
+  if (ph === "q") {
+    const act = active(room);
+    if (!act.length) { if (lastHandled === "end" + room.round) return; lastHandled = "end" + room.round; return update(rc(), {phase:"over"}); }
+    if (act.every(p => p.pick != null && p.pickR === room.round)) return toSuspense();
+    qTimer = setTimeout(toSuspense, Math.max(0, room.tEnd - Date.now()) + 300);
+  } else if (ph === "suspense") qTimer = setTimeout(reveal, SUSPENSE);
+  else if (ph === "reveal") qTimer = setTimeout(afterReveal, PAUSE);
+}
+async function toSuspense(){
+  if (room?.phase !== "q") return;
+  const key = "s" + room.round; if (lastHandled === key) return; lastHandled = key;
+  await update(rc(), {phase:"suspense"});
+}
+async function reveal(){
+  if (room?.phase !== "suspense") return;
+  const key = "r" + room.round; if (lastHandled === key) return; lastHandled = key;
+  const ci = correctIdx(), f = {phase:"reveal", ans:ci};
+  for (const p of plist(room)) {
+    const base = `players/${p.id}/`;
+    if (p.st !== "in") { f[base + "res"] = null; continue; }
+    const answered = p.pick != null && p.pickR === room.round;
+    const ok = answered && (p.pick === ci || p.pick2 === ci);
+    f[base + "tt"] = (p.tt || 0) + (answered ? p.t || 0 : room.tDur);
+    if (ok) { const lv = p.lv + 1; f[base + "lv"] = lv; f[base + "won"] = LADDER[lv - 1]; f[base + "res"] = "ok"; if (lv >= LADDER.length) f[base + "st"] = "win"; }
+    else { f[base + "st"] = "out"; f[base + "won"] = safeWon(p.lv); f[base + "res"] = answered ? "bad" : "none"; }
+  }
+  await update(rc(), f);
+}
+async function afterReveal(){
+  if (room?.phase !== "reveal") return;
+  const key = "a" + room.round; if (lastHandled === key) return; lastHandled = key;
+  const f = {};
+  for (const p of plist(room)) { f[`players/${p.id}/pick`] = null; f[`players/${p.id}/pick2`] = null; f[`players/${p.id}/res`] = null; }
+  await update(rc(), f);
+  if (!active(room).length || room.round >= LADDER.length) return update(rc(), {phase:"over"});
+  await nextRound(room.round + 1);
+}
+
+if (db) home();
+</script>
+</body>
+</html>
