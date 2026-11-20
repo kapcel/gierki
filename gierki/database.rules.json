@@ -1,0 +1,8 @@
+{
+  "rules": {
+    "lobbies": { ".read": "auth != null", "$lid": { ".write": "auth != null" } },
+    "turns":   { "$lid": { ".read": "auth != null", ".write": "auth != null" } },
+    "inbox":   { "$lid": { ".read": "auth != null", ".write": "auth != null" } },
+    "sync":    { "$lid": { ".read": "auth != null", ".write": "auth != null" } }
+  }
+}
