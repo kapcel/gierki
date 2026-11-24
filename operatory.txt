@@ -1,0 +1,99 @@
+
+
+Przedstawione w języku CSS formatowanie czcionki będzie obowiązywać dla
+Przedstawione w języku CSS formatowanie czcionki będzie obowiązywać dla
+znaczników o id równym *.
+znaczników z przypisaną klasą równą *.
+całego kodu HTML, niezależnie od późniejszych ustawień CSS.
+całego kodu HTML, jako formatowanie domyślne dla wszystkich elementów strony.
+Pytanie 2 z 13
+
+Przeglądarka internetowa wyświetliła stronę w następujący sposób. Wskaż kod HTML, który poprawnie definiuje przedstawioną hierarchiczną strukturę tekstu:
+Przeglądarka internetowa wyświetliła stronę w następujący sposób. Wskaż kod HTML, który poprawnie definiuje przedstawion...
+<h1>Rozdział 1<p>tekst <h2>Podrozdział 1.1<p>tekst <h2>Podrozdział 1.2
+<ul><li>Rozdział 1<li>tekst<li>Podrozdział 1.1<li>tekst<li>Podrozdział 1.2</ul>
+<big>Rozdział 1</big>tekst<big>Podrozdział 1.1</big>tekst<big>Podrozdział 1.2</big>
+<h1>Rozdział 1</h1> <p>tekst</p> <h2>Podrozdział 1.1</h2> <p>tekst</p> <h2>Podrozdział 1.2</h2>
+Pytanie 3 z 13
+
+Kolor zielony, w notacji szesnastkowej skróconej, można zapisać w CSS sekwencją
+#F00
+#0F0
+#00F
+#FFF
+Pytanie 4 z 13
+
+Podczas walidacji dokumentu HTML5 pojawił się komunikat o treści: „Error: Element head is missing a required instance of child element title”. Oznacza to, że w dokumencie
+element <title> nie jest wymagany.
+element <title> nie został zamknięty przez </title>.
+nie zdefiniowano elementu <title> w części <head> dokumentu.
+nie zdefiniowano obowiązkowego atrybutu title w znaczniku <img>.
+Pytanie 5 z 13
+
+Przy użyciu którego znacznika w języku HTML nie można umieścić na stronie grafiki dynamicznej?
+<img>
+<strike>
+<embed>
+<object>
+Pytanie 6 z 13
+W celu uzyskania efektu widocznego na rysunku, w kodzie HTML, należy umieścić znacznik skrótu z atrybutem
+W celu uzyskania efektu widocznego na rysunku, w kodzie HTML, należy umieścić znacznik skrótu z atrybutem
+alt
+dfn
+title
+name
+Pytanie 7 z 13
+
+W wyniku walidacji dokumentu HTML został wygenerowany błąd przedstawiony na zrzucie. Aby go wyeliminować należy
+W wyniku walidacji dokumentu HTML został wygenerowany błąd przedstawiony na zrzucie. Aby go wyeliminować należy
+dodać atrybut alt do obrazu
+zamienić zapis < /h1 > na < h1 >
+w znaczniku img zamienić nazwę atrybutu src na alt
+w znaczniku img zamienić nazwę atrybutu src na href
+Pytanie 8 z 13
+
+Który z obrazów został sformatowany za pomocą przedstawionego stylu CSS?
+Który z obrazów został sformatowany za pomocą przedstawionego stylu CSS?
+A
+B
+C
+D
+Pytanie 9 z 13
+
+Który kod języka HTML da efekt formatowania jak na przedstawionym rysunku?
+Który kod języka HTML da efekt formatowania jak na przedstawionym rysunku?
+<p> W tym <i> paragrafie zobaczysz sposoby formatowania </i> tekstu w HTML </p>
+<p> W tym <b> paragrafie <i> zobaczysz </i> sposoby formatowania </b> tekstu w HTML </p>
+<p> W tym <i> paragrafie <b> zobaczysz </b> sposoby formatowania </i> tekstu w HTML </p>
+<p> W tym <i> paragrafie </i> <b> zobaczysz </b> <i> sposoby formatowania </i> tekstu w HTML </p>
+Pytanie 10 z 13
+
+Dla przedstawionego fragmentu dokumentu HTML zdefiniowano formatowanie CSS selektora klasy "menu" tak, aby kolor tła bloku był zielony. Która definicja stylu CSS odpowiada temu formatowaniu?
+Dla przedstawionego fragmentu dokumentu HTML zdefiniowano formatowanie CSS selektora klasy "menu" tak, aby kolor tła blo...
+#menu { background-color: rgb(0,255,0); }
+div:menu { color: green; }
+div.menu { background-color: green; }
+menu { background-color: rgb(0,255,0); }
+Pytanie 11 z 13
+
+W ramce przedstawiono zapisane w języku CSS formatowanie selektora. Zakładając, że żadne inne formatowanie nie jest dodane, wskaż sposób formatowania znaczniki h1
+W ramce przedstawiono zapisane w języku CSS formatowanie selektora. Zakładając, że żadne inne formatowanie nie jest doda...
+Efekt 1
+Efekt 2
+Efekt 3
+Efekt 4
+Pytanie 12 z 13
+
+Poniżej przedstawiono fragment kodu języka HTML. Jest on definicją listy:
+Poniżej przedstawiono fragment kodu języka HTML. Jest on definicją listy:
+A
+B
+C
+D
+Pytanie 13 z 13
+
+Przy użyciu jakiego znacznika HTML otrzymamy tekst napisany czcionką o stałej szerokości znaku, który uwzględnia dodatkowe spacje, tabulacje i znaki końca linii?
+<ins> ... </ins>
+...
+...
+<blockquote> ... </blockquote>
