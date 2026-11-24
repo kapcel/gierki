@@ -97,3 +97,121 @@ Przy użyciu jakiego znacznika HTML otrzymamy tekst napisany czcionką o stałej
 ...
 ...
 <blockquote> ... </blockquote>
+
+
+
+ODPOWIEDZI
+
+
+Pytanie 1
+Błędna 0 pkt
+
+Przedstawione w języku CSS formatowanie czcionki będzie obowiązywać dla
+Przedstawione w języku CSS formatowanie czcionki będzie obowiązywać dla
+Twoja odpowiedź:
+znaczników z przypisaną klasą równą *.
+Poprawna:
+całego kodu HTML, jako formatowanie domyślne dla wszystkich elementów strony.
+Pytanie 2
+Poprawna 1 pkt
+
+Przeglądarka internetowa wyświetliła stronę w następujący sposób. Wskaż kod HTML, który poprawnie definiuje przedstawioną hierarchiczną strukturę tekstu:
+Przeglądarka internetowa wyświetliła stronę w następujący sposób. Wskaż kod HTML, który poprawnie definiuje przedstawion...
+Twoja odpowiedź:
+<h1>Rozdział 1</h1> <p>tekst</p> <h2>Podrozdział 1.1</h2> <p>tekst</p> <h2>Podrozdział 1.2</h2>
+Poprawna:
+<h1>Rozdział 1</h1> <p>tekst</p> <h2>Podrozdział 1.1</h2> <p>tekst</p> <h2>Podrozdział 1.2</h2>
+Pytanie 3
+Poprawna 1 pkt
+
+Kolor zielony, w notacji szesnastkowej skróconej, można zapisać w CSS sekwencją
+Twoja odpowiedź:
+#0F0
+Poprawna:
+#0F0
+Pytanie 4
+Błędna 0 pkt
+
+Podczas walidacji dokumentu HTML5 pojawił się komunikat o treści: „Error: Element head is missing a required instance of child element title”. Oznacza to, że w dokumencie
+Twoja odpowiedź:
+element <title> nie został zamknięty przez </title>.
+Poprawna:
+nie zdefiniowano elementu <title> w części <head> dokumentu.
+Pytanie 5
+Poprawna 1 pkt
+
+Przy użyciu którego znacznika w języku HTML nie można umieścić na stronie grafiki dynamicznej?
+Twoja odpowiedź:
+<strike>
+Poprawna:
+<strike>
+Pytanie 6
+Błędna 0 pkt
+W celu uzyskania efektu widocznego na rysunku, w kodzie HTML, należy umieścić znacznik skrótu z atrybutem
+W celu uzyskania efektu widocznego na rysunku, w kodzie HTML, należy umieścić znacznik skrótu z atrybutem
+Twoja odpowiedź:
+alt
+Poprawna:
+title
+Pytanie 7
+Błędna 0 pkt
+
+W wyniku walidacji dokumentu HTML został wygenerowany błąd przedstawiony na zrzucie. Aby go wyeliminować należy
+W wyniku walidacji dokumentu HTML został wygenerowany błąd przedstawiony na zrzucie. Aby go wyeliminować należy
+Twoja odpowiedź:
+w znaczniku img zamienić nazwę atrybutu src na alt
+Poprawna:
+dodać atrybut alt do obrazu
+Pytanie 8
+Błędna 0 pkt
+
+Który z obrazów został sformatowany za pomocą przedstawionego stylu CSS?
+Który z obrazów został sformatowany za pomocą przedstawionego stylu CSS?
+Twoja odpowiedź:
+B
+Poprawna:
+A
+Pytanie 9
+Błędna 0 pkt
+
+Który kod języka HTML da efekt formatowania jak na przedstawionym rysunku?
+Który kod języka HTML da efekt formatowania jak na przedstawionym rysunku?
+Twoja odpowiedź:
+<p> W tym <b> paragrafie <i> zobaczysz </i> sposoby formatowania </b> tekstu w HTML </p>
+Poprawna:
+<p> W tym <i> paragrafie <b> zobaczysz </b> sposoby formatowania </i> tekstu w HTML </p>
+Pytanie 10
+Błędna 0 pkt
+
+Dla przedstawionego fragmentu dokumentu HTML zdefiniowano formatowanie CSS selektora klasy "menu" tak, aby kolor tła bloku był zielony. Która definicja stylu CSS odpowiada temu formatowaniu?
+Dla przedstawionego fragmentu dokumentu HTML zdefiniowano formatowanie CSS selektora klasy "menu" tak, aby kolor tła blo...
+Twoja odpowiedź:
+#menu { background-color: rgb(0,255,0); }
+Poprawna:
+div.menu { background-color: green; }
+Pytanie 11
+Błędna 0 pkt
+
+W ramce przedstawiono zapisane w języku CSS formatowanie selektora. Zakładając, że żadne inne formatowanie nie jest dodane, wskaż sposób formatowania znaczniki h1
+W ramce przedstawiono zapisane w języku CSS formatowanie selektora. Zakładając, że żadne inne formatowanie nie jest doda...
+Twoja odpowiedź:
+Efekt 3
+Poprawna:
+Efekt 2
+Pytanie 12
+Poprawna 1 pkt
+
+Poniżej przedstawiono fragment kodu języka HTML. Jest on definicją listy:
+Poniżej przedstawiono fragment kodu języka HTML. Jest on definicją listy:
+Twoja odpowiedź:
+C
+Poprawna:
+C
+Pytanie 13
+Błędna 0 pkt
+
+Przy użyciu jakiego znacznika HTML otrzymamy tekst napisany czcionką o stałej szerokości znaku, który uwzględnia dodatkowe spacje, tabulacje i znaki końca linii?
+Twoja odpowiedź:
+<ins> ... </ins>
+Poprawna:
+...
