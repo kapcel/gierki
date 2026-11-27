@@ -1,6 +1,6 @@
 # 🎉 Party Mania
 
-Imprezowa gra w stylu Mario Party w przeglądarce: publiczne lobby, do 8 graczy, 30 minigier, Firebase Realtime Database.
+Imprezowa gra w stylu Mario Party w przeglądarce: publiczne lobby, do 8 graczy, 46 minigier, Firebase Realtime Database.
 
 ## Uruchomienie (ok. 10 min)
 
@@ -26,6 +26,10 @@ Każda karta przeglądarki to osobny gracz — możesz testować sam, otwierają
 
 - **Lobby**: nazwa, maks. graczy (2–8), liczba rund (3–30). Widoczne na liście publicznej, dopóki gra nie wystartuje.
 - **Runda = 1 minigra**: 8 s zasad → 10–45 s gry → 9 s wyników. Jedna runda trwa ok. 30–60 s, nigdy dłużej niż 5 min.
+- **Wybór minigier** (w lobby, sekcja „Minigry”, tylko host):
+  - *Losowo z puli* — zaznaczasz, które minigry mogą wypaść (domyślnie wszystkie).
+  - *Własna kolejność* — klikasz minigry w kolejności rund (można powtarzać, max 30); liczba rund = długość kolejki.
+    Minigra, która nie pasuje do liczby graczy, zostaje w swojej rundzie zastąpiona losową.
 - **Dobór minigier**: host losuje grę spośród pasujących do aktualnej liczby graczy (np. „Najwyższa unikalna” od 3 osób, „Przeciąganie liny” od 4, drużyny losowane automatycznie) i nie powtarza gier, dopóki pula się nie wyczerpie.
 - **Punkty za miejsce**: 10 / 7 / 5 / 4 / 3 / 2 / 1 / 1 (remis = to samo miejsce).
 - **Host 👑** steruje fazami gry. Gdy wyjdzie, rolę przejmuje następny gracz.
@@ -36,13 +40,14 @@ Każda karta przeglądarki to osobny gracz — możesz testować sam, otwierają
 | Plik | Zawartość |
 |---|---|
 | `js/app.js` | lobby, rundy, punktacja, logika hosta |
-| `js/games.js` | 30 minigier (każda to obiekt z `play(ctx)`) |
+| `js/games.js` | 29 podstawowych minigier (każda to obiekt z `play(ctx)`) |
+| `js/games-extra.js` | 17 nowych minigier (saper, 2048, cegły, sudoku…) |
 | `js/runner.js` | uruchamianie minigry + pomocniki (timery, canvas, klawisze, wspólny stan) |
 | `js/net.js` | połączenie z Firebase |
 | `style.css` | wygląd |
 
 ### Dodanie własnej minigry
-W `js/games.js` dopisz `def({ id, name, icon, desc, time, min, max, play(c) { … } })`.
+W `js/games-extra.js` (w funkcji `register`) dopisz `def({ id, name, icon, desc, time, min, max, play(c) { … } })`.
 W `play` budujesz UI w `c.el`, losujesz przez `c.rng()` (ten sam seed u wszystkich) i zgłaszasz wynik `c.score(liczba, 'opis')` — większa liczba = lepiej. `c.done()` kończy grę wcześniej.
 
 ## Ograniczenia
