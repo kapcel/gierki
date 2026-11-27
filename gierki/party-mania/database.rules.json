@@ -1,0 +1,11 @@
+{
+  "rules": {
+    "lobbies": {
+      ".read": "auth != null",
+      ".indexOn": ["status"],
+      "$lid": { ".write": "auth != null" }
+    },
+    "scores": { "$lid": { ".read": "auth != null", ".write": "auth != null" } },
+    "live":   { "$lid": { ".read": "auth != null", ".write": "auth != null" } }
+  }
+}
